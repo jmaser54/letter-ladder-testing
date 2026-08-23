@@ -18,6 +18,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 
 <meta charset="UTF-8">
+<meta property="og:title" content="Letter Ladder">
+<meta property="og:description" content="A daily word puzzle - add one letter at a time to climb from a short word to a long one.">
+<meta property="og:image" content="https://letterladder.io/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:url" content="https://letterladder.io/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Letter Ladder">
+<meta name="twitter:description" content="A daily word puzzle - add one letter at a time to climb from a short word to a long one.">
+<meta name="twitter:image" content="https://letterladder.io/og-image.png">
+<link rel="icon" href="/og-image.png">
+<link rel="apple-touch-icon" href="/og-image.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-visual">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -62,6 +74,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size: 2rem;
     letter-spacing: -0.01em;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-logo{
+    width: 1em;
+    height: 1em;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
   .brand .rung-i{ color: var(--amber); }
   .top-links{
@@ -515,7 +536,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="wrap">
   <header>
-    <h1 class="brand">Letter Ladder</h1>
+    <h1 class="brand"><img src="/og-image.png" alt="" class="brand-logo">Letter Ladder</h1>
     <div class="timer-widget" id="timer-widget"></div>
     <div class="top-links">
       <a href="about.html">How to play</a>
@@ -812,7 +833,7 @@ const TIERS = ['easy','medium','hard'];
 // "day number" shown in shared results matches what the schedule actually
 // uses. Update both together if you ever change the launch date.
 const LAUNCH_DATE_KEY = '2026-07-27';
-const SITE_URL = 'https://jmaser54.github.io/letter-ladder/';
+const SITE_URL = 'https://letterladder.io/';
 let activeTier = (function(){
   const saved = localStorage.getItem('letterladder:activeTier');
   return TIERS.includes(saved) ? saved : 'easy';
@@ -832,7 +853,6 @@ const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 let keyboardEnabled = isTouchDevice ? (localStorage.getItem('letterladder:keyboardEnabled') === 'true') : true; // bank-first on mobile, always-on on desktop
 const OLD_DOMAIN_HOSTNAME = 'jmaser54.github.io';
-const OLD_DOMAIN_PATH_PREFIX = '/letter-ladder/';
 const NEW_DOMAIN_HOSTNAME = 'letterladder.io';
 
 function collectMigratableData(){
@@ -866,7 +886,9 @@ function collectMigratableData(){
 }
 
 function importMigrationDataIfPresent(){
-  if(window.location.hostname !== NEW_DOMAIN_HOSTNAME) return;
+  const host = window.location.hostname;
+  const onNewDomain = host === NEW_DOMAIN_HOSTNAME || host.endsWith('.' + NEW_DOMAIN_HOSTNAME);
+  if(!onNewDomain) return;
   const params = new URLSearchParams(window.location.search);
   const migrateParam = params.get('migrate');
   if(!migrateParam) return;
@@ -940,8 +962,13 @@ function showMigrationWelcomeBannerIfNeeded(){
 }
 
 function showMigrationLinkBannerIfNeeded(){
+  // Any page on the old origin, not one specific path: once a custom
+  // domain is attached, the original project path HTTP-redirects to it
+  // before any script can run there, so pinning this to that path meant
+  // the banner could never appear. Other repos on the same account share
+  // the same origin (and therefore the same saved progress) without
+  // being redirected, so this can still do useful work from one of those.
   if(window.location.hostname !== OLD_DOMAIN_HOSTNAME) return;
-  if(window.location.pathname !== OLD_DOMAIN_PATH_PREFIX) return;
   if(localStorage.getItem('letterladder:migrationBannerDismissed')) return;
   const data = collectMigratableData();
   if(Object.keys(data).length === 0) return; // nothing meaningful to offer migrating
@@ -1056,6 +1083,32 @@ function loadStats(){
 function saveStats(stats){
   try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){}
 }
+// The old site's saved progress lives on a different origin, and browsers
+// won't let this one read it directly - the only way to reach it is to
+// briefly run code over there. Rather than making anyone do that by hand,
+// this bounces through automatically, once, on a first visit that looks
+// like it might have progress waiting.
+const MIGRATION_BRIDGE_URL = 'https://jmaser54.github.io/letter-ladder-testing/migrate.html';
+const MIGRATION_ATTEMPT_KEY = 'letterladder:migrationAttempted';
+
+function autoBounceForMigrationIfNeeded(){
+  if(window.location.hostname !== NEW_DOMAIN_HOSTNAME) return;
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('migrate')) return; // already on the way back, data in hand
+  if(localStorage.getItem(MIGRATION_ATTEMPT_KEY)) return; // only ever attempt this once
+  if(localStorage.getItem(STATS_KEY)){
+    // Already has progress on this domain, so there's nothing to go and
+    // fetch - just mark it done so this never runs again.
+    localStorage.setItem(MIGRATION_ATTEMPT_KEY, '1');
+    return;
+  }
+  // Set the flag BEFORE navigating: if anything goes wrong over there and
+  // the round trip never completes, this still can't turn into a loop.
+  localStorage.setItem(MIGRATION_ATTEMPT_KEY, '1');
+  window.location.replace(MIGRATION_BRIDGE_URL + '?return=' + encodeURIComponent(window.location.origin + '/'));
+}
+
+autoBounceForMigrationIfNeeded();
 importMigrationDataIfPresent(); // deferred to here so STATS_KEY/blankStat/loadStats/saveStats above are safely initialized before the merge logic can reference them
 function dateKeyMinusOneDay(key){
   const [y,m,d] = key.split('-').map(Number);
@@ -1472,9 +1525,14 @@ function buildShareText(){
         const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
         if(frozenElapsed !== null){
           const totalSeconds = Number(frozenElapsed) / 1000;
-          timeSuffix = totalSeconds < 60
-            ? `${totalSeconds.toFixed(1)}s`
-            : `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
+          if(totalSeconds < 60){
+            timeSuffix = `${totalSeconds.toFixed(1)}s`;
+          } else if(totalSeconds < 3600){
+            timeSuffix = `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
+          } else {
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            timeSuffix = `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m ${Math.round(totalSeconds % 60)}s`;
+          }
         }
       }
       let line;
@@ -1769,9 +1827,16 @@ function render(focusInput = false, pendingErrors = null){
             winMessage = `Puzzle completed in ${elapsedSecondsTenths} seconds`;
           } else {
             const totalSeconds = Math.round(elapsedMs / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
             const seconds = totalSeconds % 60;
-            winMessage = `Puzzle completed in ${minutes} minute${minutes === 1 ? '' : 's'} ${seconds} second${seconds === 1 ? '' : 's'}`;
+            if(totalSeconds < 3600){
+              const minutes = Math.floor(totalSeconds / 60);
+              winMessage = `Puzzle completed in ${minutes} minute${minutes === 1 ? '' : 's'} ${seconds} second${seconds === 1 ? '' : 's'}`;
+            } else {
+              const totalMinutes = Math.floor(totalSeconds / 60);
+              const hours = Math.floor(totalMinutes / 60);
+              const minutes = totalMinutes % 60;
+              winMessage = `Puzzle completed in ${hours} hour${hours === 1 ? '' : 's'} ${minutes} minute${minutes === 1 ? '' : 's'} ${seconds} second${seconds === 1 ? '' : 's'}`;
+            }
           }
         }
       }
@@ -1976,10 +2041,9 @@ function render(focusInput = false, pendingErrors = null){
   `;
   suppressBlurCommit = false;
 
-  const lastHintedLength = getLastHintedLength(activeTier);
-  if(lastHintedLength !== null && !guesses[lastHintedLength]){
+  if(activeLength !== null && !guesses[activeLength] && getHintInfo(activeTier, activeLength).count > 0){
     const hd = document.getElementById('hint-display');
-    if(hd) hd.innerHTML = buildHintDisplayHtml(activeTier, lastHintedLength);
+    if(hd) hd.innerHTML = buildHintDisplayHtml(activeTier, activeLength);
   }
 
   document.getElementById('clear-btn').addEventListener('click', ()=>{
