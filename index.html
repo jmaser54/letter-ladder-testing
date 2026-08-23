@@ -1153,6 +1153,10 @@ function revealSolutionAsLoss(tier){
   }
   saveGuesses(tier, revealedGuesses);
   localStorage.setItem(`letterladder:${dateKey}:${tier}:solutionRevealedAsLoss`, '1');
+  const startedAt = localStorage.getItem(timerStartKey(tier));
+  if(startedAt && !localStorage.getItem(timerElapsedKey(tier))){
+    localStorage.setItem(timerElapsedKey(tier), String(Date.now() - Number(startedAt)));
+  }
   recordLossIfNeeded(tier);
 }
 
@@ -1520,6 +1524,14 @@ function isTierComplete(tier){
   const { valid } = isValidChain(puzzle.start, guesses, puzzle.final);
   return valid;
 }
+function isTierGenuinelyWon(tier){
+  // isTierComplete alone can't tell a real win apart from a tier that was
+  // only filled in via "View solution" - this adds that distinction, for
+  // anywhere that specifically needs to exclude revealed solutions (the
+  // ladder-climb celebration, and the share text's win/not-played line).
+  if(!isTierComplete(tier)) return false;
+  return !localStorage.getItem(`letterladder:${dateKey}:${tier}:solutionRevealedAsLoss`);
+}
 
 function puzzleDayNumber(){
   const [ly, lm, ld] = LAUNCH_DATE_KEY.split('-').map(Number);
@@ -1537,7 +1549,7 @@ function buildShareText(){
   for(const tier of TIERS){
     const puzzle = getTodaysPuzzle(tier);
     if(!puzzle) continue; // nothing scheduled for this tier today, skip it
-    if(isTierComplete(tier)){
+    if(isTierGenuinelyWon(tier)){
       const hints = getHintsUsed(tier);
       let timeSuffix = null;
       if(timerChoice === 'timed'){
@@ -1585,7 +1597,7 @@ async function buildShareImage(){
   for(const tier of TIERS){
     const puzzle = getTodaysPuzzle(tier);
     if(!puzzle) continue;
-    if(isTierComplete(tier)){
+    if(isTierGenuinelyWon(tier)){
       const hints = getHintsUsed(tier);
       rows.push({ label: tierLabels[tier], status: hints > 0 ? '💡'.repeat(hints) : '✔', solved: true });
     } else {
@@ -1767,7 +1779,7 @@ function triggerLadderClimbCelebration(finalWord){
 }
 
 function checkAndCelebrateIfAllComplete(finalWord){
-  if(!TIERS.every(isTierComplete)) return;
+  if(!TIERS.every(isTierGenuinelyWon)) return;
   const flagKey = `letterladder:${dateKey}:summitShown`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
