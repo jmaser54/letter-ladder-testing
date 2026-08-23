@@ -607,6 +607,32 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script src="data/hints.js?v=1787376327"></script>
 <script>
 // ---------- date helpers ----------
+function bumpGuessCount(tier, L){
+  const key = `letterladder:${dateKey}:${tier}:guessCount:${L}`;
+  const current = Number(localStorage.getItem(key) || 0);
+  localStorage.setItem(key, String(current + 1));
+  return current + 1;
+}
+function getTotalGuessCount(tier){
+  let total = 0;
+  const prefix = `letterladder:${dateKey}:${tier}:guessCount:`;
+  for(let i = 0; i < localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(key && key.startsWith(prefix)) total += Number(localStorage.getItem(key) || 0);
+  }
+  return total;
+}
+
+function getPlayerId(){
+  const key = 'letterladder:playerId';
+  let id = localStorage.getItem(key);
+  if(!id){
+    id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : `p-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
 function todayKey(){
   const d = new Date();
   const y = d.getFullYear();
@@ -1220,8 +1246,10 @@ function markStartedIfNeeded(tier){
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
 
-  if(typeof gtag === 'function'){
-    gtag('event', 'puzzle_started', {
+  if(typeof dataLayer !== 'undefined'){
+    dataLayer.push({
+      event: 'puzzle_started',
+      player_id: getPlayerId(),
       tier: tier,
       puzzle_date: dateKey,
     });
@@ -1239,28 +1267,49 @@ function markSolvedIfNeeded(tier, guesses){
     localStorage.setItem(timerElapsedKey(tier), String(Date.now() - Number(startedAt)));
   }
 
-  // Track puzzle completions in GA4. Guarded since ad blockers commonly
-  // block analytics scripts entirely - that should never be able to
-  // break the actual game if gtag isn't available for any reason.
-  if(typeof gtag === 'function'){
-    gtag('event', 'puzzle_completed', {
+  // Pushed to the GTM data layer rather than called via gtag() directly -
+  // gtag('event', ...) routes straight to GA4 and never passes through
+  // GTM's own trigger system, so GTM has no way to see or act on it.
+  // Guarded since ad blockers commonly block analytics scripts entirely -
+  // that should never be able to break the actual game if dataLayer isn't
+  // available for any reason.
+  if(typeof dataLayer !== 'undefined'){
+    const elapsedMs = localStorage.getItem(timerElapsedKey(tier));
+    const timerChoice = getTimerChoice();
+    dataLayer.push({
+      event: 'puzzle_completed',
+      player_id: getPlayerId(),
       tier: tier,
-      hints_used: getHintsUsed(tier),
       puzzle_date: dateKey,
+      hints_used: getHintsUsed(tier),
+      guess_count: getTotalGuessCount(tier),
+      timed_or_untimed: timerChoice,
+      completion_time_seconds: (timerChoice === 'timed' && elapsedMs !== null) ? Math.round(Number(elapsedMs) / 1000) : null,
     });
 
-    // Track which specific word was used at each rung length, using the
-    // final settled answer at the moment of completion rather than every
-    // intermediate attempt - this fires exactly once per rung per player
-    // (guarded by the same one-time flag as puzzle_completed above), so
-    // changing an answer back and forth (e.g. table -> bleat -> table)
-    // only ever counts as a single "table" for that position.
+    // Which specific word ended up in the player's own completed path at
+    // each rung, using the final settled answer at the moment of
+    // completion rather than every intermediate attempt (those are
+    // separately covered by word_submitted above) - this fires exactly
+    // once per rung per player (guarded by the same one-time flag as
+    // puzzle_completed), so changing an answer back and forth only ever
+    // counts as a single word for that position. Also flags whether that
+    // word happens to match the creator's designated solution at this
+    // rung, since a player's real path and the creator's path aren't
+    // always the same word.
+    const daySolution = (typeof HINTS_SCHEDULE !== 'undefined' && HINTS_SCHEDULE[dateKey] && HINTS_SCHEDULE[dateKey][tier])
+      ? HINTS_SCHEDULE[dateKey][tier].solution : null;
     for(const len of Object.keys(guesses)){
-      gtag('event', 'word_used', {
+      const creatorWordAtLength = daySolution ? daySolution.find(w => w.length === Number(len)) : null;
+      dataLayer.push({
+        event: 'word_used',
+        player_id: getPlayerId(),
         tier: tier,
         puzzle_date: dateKey,
         rung_length: Number(len),
         word: guesses[len],
+        is_player_solution_word: true,
+        is_creator_solution_word: creatorWordAtLength === guesses[len],
       });
     }
   }
@@ -2215,6 +2264,16 @@ function render(focusInput = false, pendingErrors = null){
         saveHintInfo(activeTier, targetLength, updatedInfo);
         setLastHintedLength(activeTier, targetLength);
         recordHintUsed(activeTier);
+        if(typeof dataLayer !== 'undefined'){
+          dataLayer.push({
+            event: 'hint_used',
+            player_id: getPlayerId(),
+            tier: activeTier,
+            puzzle_date: dateKey,
+            rung_length: targetLength,
+            hint_level: isSecondHint ? 2 : 1,
+          });
+        }
         render(true);
       });
     });
@@ -2357,6 +2416,18 @@ function render(focusInput = false, pendingErrors = null){
       }
 
       if(errs.length > 0){
+        bumpGuessCount(activeTier, L);
+        if(typeof dataLayer !== 'undefined'){
+          dataLayer.push({
+            event: 'word_submitted',
+            player_id: getPlayerId(),
+            tier: activeTier,
+            puzzle_date: dateKey,
+            rung_length: L,
+            word: raw,
+            is_accepted: false,
+          });
+        }
         activeInput.value = '';
         bankState[activeTier] = null;
         if(viaEnter){
@@ -2380,6 +2451,22 @@ function render(focusInput = false, pendingErrors = null){
       saveGuesses(activeTier, newGuesses);
       lastFeedback[activeTier] = null;
       markStartedIfNeeded(activeTier);
+      bumpGuessCount(activeTier, L);
+      if(typeof dataLayer !== 'undefined'){
+        const daySolution = (typeof HINTS_SCHEDULE !== 'undefined' && HINTS_SCHEDULE[dateKey] && HINTS_SCHEDULE[dateKey][activeTier])
+          ? HINTS_SCHEDULE[dateKey][activeTier].solution : null;
+        const creatorWordAtLength = daySolution ? daySolution.find(w => w.length === L) : null;
+        dataLayer.push({
+          event: 'word_submitted',
+          player_id: getPlayerId(),
+          tier: activeTier,
+          puzzle_date: dateKey,
+          rung_length: L,
+          word: raw,
+          is_accepted: true,
+          is_creator_solution_word: creatorWordAtLength === raw,
+        });
+      }
 
       // Auto-advance to the next incomplete box - the highest unfilled
       // one, not the lowest. On iOS specifically, explicitly blurring the
