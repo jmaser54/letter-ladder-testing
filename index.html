@@ -68,18 +68,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   header{ position: relative; text-align:center; margin-bottom: 12px; flex-shrink:0; }
+  .brand-row{
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+    font-size: 2rem;
+  }
   .brand{
+    grid-column: 2;
     font-family:'Fraunces', serif;
     font-weight:700;
-    font-size: 2rem;
+    font-size: inherit;
     letter-spacing: -0.01em;
     margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
   }
   .brand-logo{
+    grid-column: 1;
+    justify-self: end;
     width: 1em;
     height: 1em;
     border-radius: 50%;
@@ -425,7 +431,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   @media (max-width: 420px){
     .rung{ min-width: calc(var(--rung-minw, 140px) * 0.8); }
-    .brand{ font-size: 1.7rem; }
+    .brand-row{ font-size: 1.7rem; }
     .timer-widget-btn{ font-size: 0.85rem; }
   }
 
@@ -549,7 +555,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="wrap">
   <header>
-    <h1 class="brand"><img src="/og-image.png" alt="" class="brand-logo">Letter Ladder</h1>
+    <div class="brand-row">
+      <img src="/og-image.png" alt="" class="brand-logo">
+      <h1 class="brand">Letter Ladder</h1>
+    </div>
     <div class="timer-widget" id="timer-widget"></div>
     <div class="top-links">
       <a href="about.html">How to play</a>
@@ -1102,32 +1111,7 @@ function loadStats(){
 function saveStats(stats){
   try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){}
 }
-// The old site's saved progress lives on a different origin, and browsers
-// won't let this one read it directly - the only way to reach it is to
-// briefly run code over there. Rather than making anyone do that by hand,
-// this bounces through automatically, once, on a first visit that looks
-// like it might have progress waiting.
-const MIGRATION_BRIDGE_URL = 'https://jmaser54.github.io/letter-ladder-testing/migrate.html';
-const MIGRATION_ATTEMPT_KEY = 'letterladder:migrationAttempted';
 
-function autoBounceForMigrationIfNeeded(){
-  if(window.location.hostname !== NEW_DOMAIN_HOSTNAME) return;
-  const params = new URLSearchParams(window.location.search);
-  if(params.get('migrate')) return; // already on the way back, data in hand
-  if(localStorage.getItem(MIGRATION_ATTEMPT_KEY)) return; // only ever attempt this once
-  if(localStorage.getItem(STATS_KEY)){
-    // Already has progress on this domain, so there's nothing to go and
-    // fetch - just mark it done so this never runs again.
-    localStorage.setItem(MIGRATION_ATTEMPT_KEY, '1');
-    return;
-  }
-  // Set the flag BEFORE navigating: if anything goes wrong over there and
-  // the round trip never completes, this still can't turn into a loop.
-  localStorage.setItem(MIGRATION_ATTEMPT_KEY, '1');
-  window.location.replace(MIGRATION_BRIDGE_URL + '?return=' + encodeURIComponent(window.location.origin + '/'));
-}
-
-autoBounceForMigrationIfNeeded();
 importMigrationDataIfPresent(); // deferred to here so STATS_KEY/blankStat/loadStats/saveStats above are safely initialized before the merge logic can reference them
 function dateKeyMinusOneDay(key){
   const [y,m,d] = key.split('-').map(Number);
