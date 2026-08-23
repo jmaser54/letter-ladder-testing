@@ -395,26 +395,38 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   .timer-widget{
     position: absolute; top: 0; right: 0;
-    display: flex; align-items:center; gap: 8px;
   }
-  .timer-display{
+  .timer-widget-btn{
+    position: relative;
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    padding: 4px 6px;
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
-    color: var(--amber); font-size: 0.95rem; min-width: 3.2em;
+    color: var(--amber); font-size: 0.95rem;
   }
-  .timer-toggle{
-    background: none; border: none; color: var(--ink-dim); text-decoration: underline dotted;
-    font-family:'Inter',sans-serif; font-size: 0.72rem; cursor: pointer; padding: 4px 0;
+  .timer-emoji{ font-size: 0.9em; line-height: 1; }
+  .timer-display{ min-width: 2.4em; text-align: left; }
+  .timer-tooltip{
+    position: absolute; top: 100%; right: 0; margin-top: 6px;
+    background: var(--bg-panel); color: var(--ink);
+    font-family:'Inter',sans-serif; font-weight:600; font-size: 0.72rem;
+    padding: 6px 10px; border-radius: 8px; white-space: nowrap;
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+    z-index: 50;
   }
-  .timer-toggle:hover{ color: var(--amber); }
+  .timer-widget-btn:hover .timer-tooltip{
+    opacity: 1; visibility: visible;
+    transition-delay: 1s;
+  }
 
   footer{ text-align:center; margin-top: 8px; color: var(--ink-dim); font-size: 0.7rem; flex-shrink:0; }
 
   @media (max-width: 420px){
     .rung{ min-width: calc(var(--rung-minw, 140px) * 0.8); }
     .brand{ font-size: 1.7rem; }
-    .timer-widget{ flex-direction: column; align-items: flex-end; gap: 2px; }
-    .timer-display{ font-size: 0.85rem; min-width: 0; }
-    .timer-toggle{ font-size: 0.65rem; }
+    .timer-widget-btn{ font-size: 0.85rem; }
   }
 
   .confetti-piece{
@@ -1023,7 +1035,7 @@ function renderTimerWidget(){
   }
 
   const choice = getTimerChoice();
-  let timeHtml = '';
+  let displayText = '—';
   if(choice === 'timed'){
     const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
     const startedAt = localStorage.getItem(timerStartKey(activeTier));
@@ -1035,11 +1047,17 @@ function renderTimerWidget(){
     } else {
       elapsedMs = 0;
     }
-    timeHtml = `<span class="timer-display">${formatElapsed(elapsedMs)}</span>`;
+    displayText = formatElapsed(elapsedMs);
   }
 
-  widget.innerHTML = `${timeHtml}<button type="button" class="timer-toggle">${choice === 'timed' ? 'Turn off timer' : 'Turn on timer'}</button>`;
-  bindTapAction(widget.querySelector('.timer-toggle'), ()=>{
+  const tooltipText = choice === 'timed' ? 'Timer: On — click to turn off' : 'Timer: Off — click to turn on';
+  widget.innerHTML = `
+    <button type="button" class="timer-widget-btn">
+      <span class="timer-emoji">⏱️</span><span class="timer-display">${displayText}</span>
+      <span class="timer-tooltip">${tooltipText}</span>
+    </button>
+  `;
+  bindTapAction(widget.querySelector('.timer-widget-btn'), ()=>{
     setTimerChoice(choice === 'timed' ? 'untimed' : 'timed');
     render();
   });
