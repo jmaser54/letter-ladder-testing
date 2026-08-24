@@ -1933,6 +1933,12 @@ function render(focusInput = false, pendingErrors = null){
   }
 
   const isWon = feedbackClass === 'win';
+  // Distinct from isWon: this covers both a genuine win AND a puzzle
+  // filled in via View Solution, since some UI decisions (hiding the hint
+  // button, showing the "clear to find a new path" prompt) should apply
+  // either way - there's nothing left to hint at or discover once every
+  // rung is filled in, regardless of how it got that way.
+  const isMechanicallyComplete = isTierComplete(activeTier);
   // Editing after a win is allowed (clicking a rung + its delete-X reopens
   // it), so activeLength is no longer force-reset just because isWon is
   // true - only the actual guess-acceptance/delete logic controls it now.
@@ -2034,7 +2040,7 @@ function render(focusInput = false, pendingErrors = null){
     ? activeLength
     : (unfilledForHint.length > 0 ? Math.max(...unfilledForHint) : null);
   const hintMaxedForTarget = hintTargetLength !== null && getHintInfo(activeTier, hintTargetLength).count >= 2;
-  const showHintBtn = !isWon && !hintMaxedForTarget;
+  const showHintBtn = !isMechanicallyComplete && !hintMaxedForTarget;
 
   let bankHtml = '';
   let kbToggleHtml = '';
@@ -2087,7 +2093,7 @@ function render(focusInput = false, pendingErrors = null){
       ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters">🔀</button>` : ''}
       ${showHintBtn ? `<button type="button" class="bank-ctrl-btn" id="hint-btn" aria-label="Hint">${lightbulbIcon}</button>` : ''}
       <button type="button" class="bank-ctrl-btn" id="clear-btn" aria-label="Clear guesses">${trashIcon}</button>
-      ${isWon ? `<span class="clear-hint-text">Clear puzzle to find a new path?</span>` : ''}
+      ${isMechanicallyComplete ? `<span class="clear-hint-text">Clear puzzle to find a new path?</span>` : ''}
       ${backspaceButtonHtml}
     </div>
   `;
