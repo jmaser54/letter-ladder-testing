@@ -2227,6 +2227,12 @@ function render(focusInput = false, pendingErrors = null){
   panel.querySelectorAll('.bank-tile').forEach(tile => {
     bindTapAction(tile, ()=>{
       if(skipNextBankTap){ skipNextBankTap = false; return; } // this tap was actually the release of a drag - don't also select the letter
+      // Some mobile browsers don't reliably block touch events on disabled
+      // buttons the way they block click events - relying on the native
+      // disabled attribute alone let an already-used (faded) tile's letter
+      // still get added. Checking it explicitly here closes that gap
+      // regardless of the underlying browser quirk causing it.
+      if(tile.disabled) return;
       const inputEl = document.getElementById(`rung-input-${activeLength}`);
       if(!inputEl) return;
       if(activeSlotHasUntouchedGuess){
