@@ -436,6 +436,34 @@ const PUZZLE_SCHEDULE = {
   },
   "2026-08-27": {
     "easy": {
+      "start": "fin",
+      "final": "friend"
+    },
+    "medium": {
+      "start": "all",
+      "final": "collage"
+    },
+    "hard": {
+      "start": "an",
+      "final": "bargeman"
+    }
+  },
+  "2026-08-28": {
+    "easy": {
+      "start": "ski",
+      "final": "sticky"
+    },
+    "medium": {
+      "start": "wine",
+      "final": "swindler"
+    },
+    "hard": {
+      "start": "rise",
+      "final": "compilers"
+    }
+  },
+  "2026-08-29": {
+    "easy": {
       "start": "rid",
       "final": "driven"
     },
@@ -448,7 +476,7 @@ const PUZZLE_SCHEDULE = {
       "final": "withering"
     }
   },
-  "2026-08-28": {
+  "2026-08-30": {
     "easy": {
       "start": "of",
       "final": "floor"
@@ -460,34 +488,6 @@ const PUZZLE_SCHEDULE = {
     "hard": {
       "start": "tire",
       "final": "ministries"
-    }
-  },
-  "2026-08-29": {
-    "easy": {
-      "start": "fin",
-      "final": "friend"
-    },
-    "medium": {
-      "start": "all",
-      "final": "collage"
-    },
-    "hard": {
-      "start": "sun",
-      "final": "ruminates"
-    }
-  },
-  "2026-08-30": {
-    "easy": {
-      "start": "ski",
-      "final": "sticky"
-    },
-    "medium": {
-      "start": "wine",
-      "final": "swindler"
-    },
-    "hard": {
-      "start": "rise",
-      "final": "compilers"
     }
   },
   "2026-08-31": {
@@ -534,6 +534,34 @@ const PUZZLE_SCHEDULE = {
   },
   "2026-09-03": {
     "easy": {
+      "start": "by",
+      "final": "tabby"
+    },
+    "medium": {
+      "start": "lie",
+      "final": "literary"
+    },
+    "hard": {
+      "start": "sun",
+      "final": "ruminates"
+    }
+  },
+  "2026-09-04": {
+    "easy": {
+      "start": "at",
+      "final": "chant"
+    },
+    "medium": {
+      "start": "new",
+      "final": "renown"
+    },
+    "hard": {
+      "start": "rant",
+      "final": "decorating"
+    }
+  },
+  "2026-09-05": {
+    "easy": {
       "start": "an",
       "final": "blank"
     },
@@ -546,7 +574,7 @@ const PUZZLE_SCHEDULE = {
       "final": "nostalgic"
     }
   },
-  "2026-09-04": {
+  "2026-09-06": {
     "easy": {
       "start": "is",
       "final": "fishy"

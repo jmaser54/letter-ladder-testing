@@ -1117,6 +1117,77 @@ const HINTS_SCHEDULE = {
   },
   "2026-08-27": {
     "easy": {
+      "start": "fin",
+      "final": "friend",
+      "solution": [
+        "fin",
+        "find",
+        "fined",
+        "friend"
+      ]
+    },
+    "medium": {
+      "start": "all",
+      "final": "collage",
+      "solution": [
+        "all",
+        "call",
+        "local",
+        "locale",
+        "collage"
+      ]
+    },
+    "hard": {
+      "start": "an",
+      "final": "bargeman",
+      "solution": [
+        "an",
+        "ran",
+        "rang",
+        "anger",
+        "manger",
+        "manager",
+        "bargeman"
+      ]
+    }
+  },
+  "2026-08-28": {
+    "easy": {
+      "start": "ski",
+      "final": "sticky",
+      "solution": [
+        "ski",
+        "sick",
+        "stick",
+        "sticky"
+      ]
+    },
+    "medium": {
+      "start": "wine",
+      "final": "swindler",
+      "solution": [
+        "wine",
+        "swine",
+        "widens",
+        "rewinds",
+        "swindler"
+      ]
+    },
+    "hard": {
+      "start": "rise",
+      "final": "compilers",
+      "solution": [
+        "rise",
+        "pries",
+        "primes",
+        "promise",
+        "implores",
+        "compilers"
+      ]
+    }
+  },
+  "2026-08-29": {
+    "easy": {
       "start": "rid",
       "final": "driven",
       "solution": [
@@ -1150,7 +1221,7 @@ const HINTS_SCHEDULE = {
       ]
     }
   },
-  "2026-08-28": {
+  "2026-08-30": {
     "easy": {
       "start": "of",
       "final": "floor",
@@ -1183,77 +1254,6 @@ const HINTS_SCHEDULE = {
         "minister",
         "ministers",
         "ministries"
-      ]
-    }
-  },
-  "2026-08-29": {
-    "easy": {
-      "start": "fin",
-      "final": "friend",
-      "solution": [
-        "fin",
-        "find",
-        "fined",
-        "friend"
-      ]
-    },
-    "medium": {
-      "start": "all",
-      "final": "collage",
-      "solution": [
-        "all",
-        "call",
-        "local",
-        "locale",
-        "collage"
-      ]
-    },
-    "hard": {
-      "start": "sun",
-      "final": "ruminates",
-      "solution": [
-        "sun",
-        "stun",
-        "tunes",
-        "tuners",
-        "saunter",
-        "urinates",
-        "ruminates"
-      ]
-    }
-  },
-  "2026-08-30": {
-    "easy": {
-      "start": "ski",
-      "final": "sticky",
-      "solution": [
-        "ski",
-        "sick",
-        "stick",
-        "sticky"
-      ]
-    },
-    "medium": {
-      "start": "wine",
-      "final": "swindler",
-      "solution": [
-        "wine",
-        "swine",
-        "widens",
-        "rewinds",
-        "swindler"
-      ]
-    },
-    "hard": {
-      "start": "rise",
-      "final": "compilers",
-      "solution": [
-        "rise",
-        "pries",
-        "primes",
-        "promise",
-        "implores",
-        "compilers"
       ]
     }
   },
@@ -1364,6 +1364,78 @@ const HINTS_SCHEDULE = {
   },
   "2026-09-03": {
     "easy": {
+      "start": "by",
+      "final": "tabby",
+      "solution": [
+        "by",
+        "bay",
+        "baby",
+        "tabby"
+      ]
+    },
+    "medium": {
+      "start": "lie",
+      "final": "literary",
+      "solution": [
+        "lie",
+        "rile",
+        "relit",
+        "retail",
+        "trailer",
+        "literary"
+      ]
+    },
+    "hard": {
+      "start": "sun",
+      "final": "ruminates",
+      "solution": [
+        "sun",
+        "stun",
+        "tunes",
+        "tuners",
+        "saunter",
+        "urinates",
+        "ruminates"
+      ]
+    }
+  },
+  "2026-09-04": {
+    "easy": {
+      "start": "at",
+      "final": "chant",
+      "solution": [
+        "at",
+        "cat",
+        "chat",
+        "chant"
+      ]
+    },
+    "medium": {
+      "start": "new",
+      "final": "renown",
+      "solution": [
+        "new",
+        "wren",
+        "owner",
+        "renown"
+      ]
+    },
+    "hard": {
+      "start": "rant",
+      "final": "decorating",
+      "solution": [
+        "rant",
+        "train",
+        "rating",
+        "ingrate",
+        "treading",
+        "redacting",
+        "decorating"
+      ]
+    }
+  },
+  "2026-09-05": {
+    "easy": {
       "start": "an",
       "final": "blank",
       "solution": [
@@ -1396,7 +1468,7 @@ const HINTS_SCHEDULE = {
       ]
     }
   },
-  "2026-09-04": {
+  "2026-09-06": {
     "easy": {
       "start": "is",
       "final": "fishy",
