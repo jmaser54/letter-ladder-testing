@@ -620,8 +620,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      so returning visitors' browsers are guaranteed to fetch the new version
      instead of a cached copy. -->
 <script src="data/words.js?v=2"></script>
-<script src="data/puzzles.js?v=1787376327"></script>
-<script src="data/hints.js?v=1787376327"></script>
+<script src="data/puzzles.js?v=1787623818"></script>
+<script src="data/hints.js?v=1787623818"></script>
 <script>
 // ---------- date helpers ----------
 function bumpGuessCount(tier, L){
@@ -2460,6 +2460,7 @@ function render(focusInput = false, pendingErrors = null){
             rung_length: L,
             word: raw,
             is_accepted: false,
+            is_creator_solution_word: false,
           });
         }
         activeInput.value = '';
