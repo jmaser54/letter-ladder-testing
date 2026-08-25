@@ -419,5 +419,145 @@ const PUZZLE_SCHEDULE = {
       "start": "ma",
       "final": "inflame"
     }
+  },
+  "2026-08-26": {
+    "easy": {
+      "start": "by",
+      "final": "bossy"
+    },
+    "medium": {
+      "start": "lid",
+      "final": "bridle"
+    },
+    "hard": {
+      "start": "unctions",
+      "final": "continuous"
+    }
+  },
+  "2026-08-27": {
+    "easy": {
+      "start": "rid",
+      "final": "driven"
+    },
+    "medium": {
+      "start": "best",
+      "final": "bristle"
+    },
+    "hard": {
+      "start": "wig",
+      "final": "withering"
+    }
+  },
+  "2026-08-28": {
+    "easy": {
+      "start": "of",
+      "final": "floor"
+    },
+    "medium": {
+      "start": "oat",
+      "final": "flotsam"
+    },
+    "hard": {
+      "start": "tire",
+      "final": "ministries"
+    }
+  },
+  "2026-08-29": {
+    "easy": {
+      "start": "fin",
+      "final": "friend"
+    },
+    "medium": {
+      "start": "all",
+      "final": "collage"
+    },
+    "hard": {
+      "start": "sun",
+      "final": "ruminates"
+    }
+  },
+  "2026-08-30": {
+    "easy": {
+      "start": "ski",
+      "final": "sticky"
+    },
+    "medium": {
+      "start": "wine",
+      "final": "swindler"
+    },
+    "hard": {
+      "start": "rise",
+      "final": "compilers"
+    }
+  },
+  "2026-08-31": {
+    "easy": {
+      "start": "on",
+      "final": "crown"
+    },
+    "medium": {
+      "start": "me",
+      "final": "monkey"
+    },
+    "hard": {
+      "start": "girl",
+      "final": "ridgeline"
+    }
+  },
+  "2026-09-01": {
+    "easy": {
+      "start": "go",
+      "final": "lodge"
+    },
+    "medium": {
+      "start": "ye",
+      "final": "pretty"
+    },
+    "hard": {
+      "start": "age",
+      "final": "traveling"
+    }
+  },
+  "2026-09-02": {
+    "easy": {
+      "start": "in",
+      "final": "blink"
+    },
+    "medium": {
+      "start": "per",
+      "final": "scooper"
+    },
+    "hard": {
+      "start": "air",
+      "final": "pyramid"
+    }
+  },
+  "2026-09-03": {
+    "easy": {
+      "start": "an",
+      "final": "blank"
+    },
+    "medium": {
+      "start": "maul",
+      "final": "lumbar"
+    },
+    "hard": {
+      "start": "tag",
+      "final": "nostalgic"
+    }
+  },
+  "2026-09-04": {
+    "easy": {
+      "start": "is",
+      "final": "fishy"
+    },
+    "medium": {
+      "start": "mans",
+      "final": "normals"
+    },
+    "hard": {
+      "start": "sane",
+      "final": "readiness"
+    }
   }
 };

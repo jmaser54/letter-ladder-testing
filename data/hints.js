@@ -1083,5 +1083,351 @@ const HINTS_SCHEDULE = {
         "inflame"
       ]
     }
+  },
+  "2026-08-26": {
+    "easy": {
+      "start": "by",
+      "final": "bossy",
+      "solution": [
+        "by",
+        "boy",
+        "boys",
+        "bossy"
+      ]
+    },
+    "medium": {
+      "start": "lid",
+      "final": "bridle",
+      "solution": [
+        "lid",
+        "deli",
+        "riled",
+        "bridle"
+      ]
+    },
+    "hard": {
+      "start": "unctions",
+      "final": "continuous",
+      "solution": [
+        "unctions",
+        "contusion",
+        "continuous"
+      ]
+    }
+  },
+  "2026-08-27": {
+    "easy": {
+      "start": "rid",
+      "final": "driven",
+      "solution": [
+        "rid",
+        "ride",
+        "diver",
+        "driven"
+      ]
+    },
+    "medium": {
+      "start": "best",
+      "final": "bristle",
+      "solution": [
+        "best",
+        "bites",
+        "tribes",
+        "bristle"
+      ]
+    },
+    "hard": {
+      "start": "wig",
+      "final": "withering",
+      "solution": [
+        "wig",
+        "wing",
+        "wring",
+        "wiring",
+        "writing",
+        "writhing",
+        "withering"
+      ]
+    }
+  },
+  "2026-08-28": {
+    "easy": {
+      "start": "of",
+      "final": "floor",
+      "solution": [
+        "of",
+        "for",
+        "roof",
+        "floor"
+      ]
+    },
+    "medium": {
+      "start": "oat",
+      "final": "flotsam",
+      "solution": [
+        "oat",
+        "atom",
+        "moats",
+        "almost",
+        "flotsam"
+      ]
+    },
+    "hard": {
+      "start": "tire",
+      "final": "ministries",
+      "solution": [
+        "tire",
+        "inter",
+        "tinier",
+        "mintier",
+        "minister",
+        "ministers",
+        "ministries"
+      ]
+    }
+  },
+  "2026-08-29": {
+    "easy": {
+      "start": "fin",
+      "final": "friend",
+      "solution": [
+        "fin",
+        "find",
+        "fined",
+        "friend"
+      ]
+    },
+    "medium": {
+      "start": "all",
+      "final": "collage",
+      "solution": [
+        "all",
+        "call",
+        "local",
+        "locale",
+        "collage"
+      ]
+    },
+    "hard": {
+      "start": "sun",
+      "final": "ruminates",
+      "solution": [
+        "sun",
+        "stun",
+        "tunes",
+        "tuners",
+        "saunter",
+        "urinates",
+        "ruminates"
+      ]
+    }
+  },
+  "2026-08-30": {
+    "easy": {
+      "start": "ski",
+      "final": "sticky",
+      "solution": [
+        "ski",
+        "sick",
+        "stick",
+        "sticky"
+      ]
+    },
+    "medium": {
+      "start": "wine",
+      "final": "swindler",
+      "solution": [
+        "wine",
+        "swine",
+        "widens",
+        "rewinds",
+        "swindler"
+      ]
+    },
+    "hard": {
+      "start": "rise",
+      "final": "compilers",
+      "solution": [
+        "rise",
+        "pries",
+        "primes",
+        "promise",
+        "implores",
+        "compilers"
+      ]
+    }
+  },
+  "2026-08-31": {
+    "easy": {
+      "start": "on",
+      "final": "crown",
+      "solution": [
+        "on",
+        "now",
+        "worn",
+        "crown"
+      ]
+    },
+    "medium": {
+      "start": "me",
+      "final": "monkey",
+      "solution": [
+        "me",
+        "men",
+        "omen",
+        "money",
+        "monkey"
+      ]
+    },
+    "hard": {
+      "start": "girl",
+      "final": "ridgeline",
+      "solution": [
+        "girl",
+        "liger",
+        "linger",
+        "reeling",
+        "lingered",
+        "ridgeline"
+      ]
+    }
+  },
+  "2026-09-01": {
+    "easy": {
+      "start": "go",
+      "final": "lodge",
+      "solution": [
+        "go",
+        "dog",
+        "gold",
+        "lodge"
+      ]
+    },
+    "medium": {
+      "start": "ye",
+      "final": "pretty",
+      "solution": [
+        "ye",
+        "yet",
+        "type",
+        "petty",
+        "pretty"
+      ]
+    },
+    "hard": {
+      "start": "age",
+      "final": "traveling",
+      "solution": [
+        "age",
+        "gear",
+        "anger",
+        "regain",
+        "tangier",
+        "averting",
+        "traveling"
+      ]
+    }
+  },
+  "2026-09-02": {
+    "easy": {
+      "start": "in",
+      "final": "blink",
+      "solution": [
+        "in",
+        "ink",
+        "link",
+        "blink"
+      ]
+    },
+    "medium": {
+      "start": "per",
+      "final": "scooper",
+      "solution": [
+        "per",
+        "rope",
+        "spore",
+        "corpse",
+        "scooper"
+      ]
+    },
+    "hard": {
+      "start": "air",
+      "final": "pyramid",
+      "solution": [
+        "air",
+        "raid",
+        "dairy",
+        "myriad",
+        "pyramid"
+      ]
+    }
+  },
+  "2026-09-03": {
+    "easy": {
+      "start": "an",
+      "final": "blank",
+      "solution": [
+        "an",
+        "ban",
+        "bank",
+        "blank"
+      ]
+    },
+    "medium": {
+      "start": "maul",
+      "final": "lumbar",
+      "solution": [
+        "maul",
+        "album",
+        "lumbar"
+      ]
+    },
+    "hard": {
+      "start": "tag",
+      "final": "nostalgic",
+      "solution": [
+        "tag",
+        "gait",
+        "giant",
+        "acting",
+        "casting",
+        "coasting",
+        "nostalgic"
+      ]
+    }
+  },
+  "2026-09-04": {
+    "easy": {
+      "start": "is",
+      "final": "fishy",
+      "solution": [
+        "is",
+        "his",
+        "fish",
+        "fishy"
+      ]
+    },
+    "medium": {
+      "start": "mans",
+      "final": "normals",
+      "solution": [
+        "mans",
+        "moans",
+        "salmon",
+        "normals"
+      ]
+    },
+    "hard": {
+      "start": "sane",
+      "final": "readiness",
+      "solution": [
+        "sane",
+        "nears",
+        "snared",
+        "sandier",
+        "sardines",
+        "readiness"
+      ]
+    }
   }
 };
