@@ -620,8 +620,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      so returning visitors' browsers are guaranteed to fetch the new version
      instead of a cached copy. -->
 <script src="data/words.js?v=2"></script>
-<script src="data/puzzles.js?v=1787623818"></script>
-<script src="data/hints.js?v=1787623818"></script>
+<script src="data/puzzles.js?v=1787664373"></script>
+<script src="data/hints.js?v=1787664373"></script>
 <script>
 // ---------- date helpers ----------
 function bumpGuessCount(tier, L){
@@ -1366,14 +1366,14 @@ function markSolvedIfNeeded(tier, guesses){
 
 // ---------- rendering ----------
 const panel = document.getElementById('panel');
-function weekendLabelSuffix(key){
+function specialDayLabelSuffix(key){
   const [y, m, d] = key.split('-').map(Number);
-  const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0 = Sunday, 6 = Saturday
-  if(dayOfWeek === 6) return ' - Spicy Saturday';
-  if(dayOfWeek === 0) return ' - Summit Sunday';
+  const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0 = Sunday, 4 = Thursday, 5 = Friday
+  if(dayOfWeek === 4) return ' - Thinking Thursday';
+  if(dayOfWeek === 5) return ' - Freaky Friday';
   return '';
 }
-document.getElementById('date-row').textContent = prettyDate(dateKey) + weekendLabelSuffix(dateKey);
+document.getElementById('date-row').textContent = prettyDate(dateKey) + specialDayLabelSuffix(dateKey);
 
 function handleViewSolutionClick(){
   if(isArchiveMode){
