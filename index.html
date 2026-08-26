@@ -367,10 +367,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .leaderboard-prompt-dismiss{
     position: absolute; top: 12px; right: 14px;
     font-size: 0.68rem; color: var(--ink-dim); cursor: pointer;
-    text-decoration: none; border-bottom: 1px dotted var(--ink-dim);
+    text-decoration: none;
     touch-action: manipulation;
   }
-  .leaderboard-prompt-dismiss:hover{ color: var(--amber); border-color: var(--amber); }
+  .leaderboard-prompt-dismiss:hover{ color: var(--amber); }
   .leaderboard-prompt-title{ font-size: 1rem; text-align:center; margin: 6px 0 20px 0; padding-right: 60px; }
   .leaderboard-prompt-actions{ display:flex; flex-direction:column; gap:10px; }
   .leaderboard-prompt-actions button{ width:100%; }
@@ -380,6 +380,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     background: rgba(245,239,224,0.06); color: var(--ink); font-size: 0.95rem;
   }
   .leaderboard-form-error{ color: #E27272; font-size: 0.82rem; margin-bottom: 10px; min-height: 1.1em; }
+  .leaderboard-form-hint{ color: var(--ink-dim); font-size: 0.76rem; margin: -6px 0 12px 0; }
 
   .howto-overlay{
     position: fixed; inset: 0; background: rgba(10,16,26,0.6);
@@ -432,6 +433,38 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .timer-widget{
     position: absolute; bottom: 0; right: 0;
   }
+  .account-widget{
+    position: absolute; bottom: 0; left: 0;
+  }
+  .account-icon-btn{
+    width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation; padding: 0;
+  }
+  .account-icon-btn.has-account{
+    background: var(--amber); color: #1B2A41;
+    font-family:'Fraunces', serif; font-weight:700; font-size: 1rem;
+  }
+  .account-icon-btn.is-guest{
+    background: rgba(245,239,224,0.12); color: var(--ink-dim);
+  }
+  .account-icon-btn.is-guest svg{ width: 18px; height: 18px; }
+  .account-dropdown{
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: var(--bg-panel); border-radius: 12px; padding: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45); min-width: 180px; z-index: 200;
+    text-align: left;
+  }
+  .account-dropdown-username{
+    font-weight: 700; font-size: 0.95rem; color: var(--ink);
+    padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(245,239,224,0.1);
+    word-break: break-word;
+  }
+  .account-dropdown a{
+    display: block; color: var(--ink-dim); text-decoration:none; font-size: 0.88rem;
+    padding: 6px 0; touch-action: manipulation;
+  }
+  .account-dropdown a:hover{ color: var(--amber); }
   .timer-widget-btn{
     position: relative;
     background: none; border: none; cursor: pointer;
@@ -587,7 +620,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    signInAnonymously, signOut, onAuthStateChanged
+    signInAnonymously, signOut, onAuthStateChanged, sendPasswordResetEmail
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, collection, doc, setDoc, getDoc, addDoc,
@@ -618,6 +651,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
     return `${normalized}@players.letterladder.io`;
   }
+  function normalizeUsername(username){
+    return username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+  }
+  async function findPlayerByUsername(username){
+    const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(username)));
+    const snap = await getDocs(q);
+    if(snap.empty) return null;
+    const docSnap = snap.docs[0];
+    return { uid: docSnap.id, ...docSnap.data() };
+  }
 
   // Firebase's raw error codes and messages talk about "email" throughout,
   // which would be confusing/wrong to show directly given the disguise -
@@ -633,13 +676,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     return 'Something went wrong. Please try again.';
   }
 
-  async function createAccount(username, password){
+  async function createAccount(username, password, recoveryEmail){
     try{
-      const cred = await createUserWithEmailAndPassword(auth, usernameToSyntheticEmail(username), password);
+      const trimmedEmail = recoveryEmail && recoveryEmail.trim();
+      // If a real email was provided, register the actual Firebase account
+      // under that email directly - this is what makes Firebase's own,
+      // genuine password-reset email actually reach them, since Firebase
+      // always sends it to whatever email is genuinely registered on the
+      // account. Without one, there's no real inbox to deliver a reset
+      // link to, so that account falls back to the synthetic,
+      // un-recoverable email as before.
+      const registeredEmail = trimmedEmail || usernameToSyntheticEmail(username);
+      const cred = await createUserWithEmailAndPassword(auth, registeredEmail, password);
       // Store the player's real, human-chosen username alongside their
-      // account - Firebase auth itself only ever sees the synthetic email,
-      // so the actual display name needs to be saved here separately.
-      await setDoc(doc(db, 'players', cred.user.uid), { username: username.trim(), createdAt: Date.now() });
+      // account, plus a lowercased copy for case-insensitive lookups (the
+      // synthetic-email path got this for free by always lowercasing;
+      // this keeps that same behavior now that login may need to look
+      // this record up directly instead of just computing an email).
+      const playerDoc = {
+        username: username.trim(),
+        usernameLower: normalizeUsername(username),
+        createdAt: Date.now(),
+      };
+      if(trimmedEmail) playerDoc.recoveryEmail = trimmedEmail;
+      await setDoc(doc(db, 'players', cred.user.uid), playerDoc);
       return { success: true, uid: cred.user.uid, username: username.trim() };
     }catch(error){
       return { success: false, error: friendlyAuthError(error) };
@@ -648,10 +708,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   async function login(username, password){
     try{
-      const cred = await signInWithEmailAndPassword(auth, usernameToSyntheticEmail(username), password);
-      return { success: true, uid: cred.user.uid, username: username.trim() };
+      const player = await findPlayerByUsername(username);
+      // If this username has a real registered email on file, that's what
+      // the account actually needs to sign in with - otherwise (unknown
+      // username, or a known one that never provided an email) fall back
+      // to the deterministic synthetic formula, which correctly covers
+      // both those cases the same way account creation would have.
+      const registeredEmail = (player && player.recoveryEmail) || usernameToSyntheticEmail(username);
+      const cred = await signInWithEmailAndPassword(auth, registeredEmail, password);
+      return { success: true, uid: cred.user.uid, username: (player && player.username) || username.trim() };
     }catch(error){
       return { success: false, error: friendlyAuthError(error) };
+    }
+  }
+
+  async function requestPasswordReset(username){
+    try{
+      const player = await findPlayerByUsername(username);
+      if(!player || !player.recoveryEmail){
+        return { success: false, error: 'No recovery email is on file for that username.' };
+      }
+      await sendPasswordResetEmail(auth, player.recoveryEmail);
+      return { success: true };
+    }catch(error){
+      return { success: false, error: 'Something went wrong. Please try again.' };
     }
   }
 
@@ -689,7 +769,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   // Exposed on window since this lives in its own ES module scope,
   // separate from the game's main (non-module) script.
   window.LetterLadderAuth = {
-    createAccount, login, playAsGuest, logOut, submitScore,
+    createAccount, login, playAsGuest, logOut, submitScore, requestPasswordReset,
     getCurrentUser: () => auth.currentUser,
     onAuthReady: (callback) => onAuthStateChanged(auth, callback),
     db, doc, setDoc, getDoc, collection, query, where, orderBy, limit, getDocs,
@@ -706,13 +786,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="brand-row">
       <img src="og-image.png" alt="" class="brand-logo">
       <h1 class="brand">Letter Ladder</h1>
+      <div class="account-widget" id="account-widget"></div>
       <div class="timer-widget" id="timer-widget"></div>
     </div>
     <div class="top-links">
       <a href="about.html">How to play</a>
       <a href="index.html" id="todays-puzzles-link" style="display:none;">Today's puzzles</a>
       <a href="past-puzzles.html">Past puzzles</a>
-      <a href="stats.html">Your stats</a>
     </div>
   </header>
 
@@ -1341,6 +1421,10 @@ function revealSolutionAsLoss(tier){
   recordLossIfNeeded(tier);
 }
 
+function hasRealAccount(){
+  return !!localStorage.getItem('letterladder:accountUsername');
+}
+
 function recordLossIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never count toward stats or analytics
   const flagKey = `letterladder:${dateKey}:${tier}:lossCounted`;
@@ -1349,13 +1433,16 @@ function recordLossIfNeeded(tier){
 
   markPlayedIfNeeded(tier);
 
-  const stats = loadStats();
-  stats[tier].currentStreak = 0; // explicitly break the streak - this is a loss
-  saveStats(stats);
+  if(hasRealAccount()){
+    const stats = loadStats();
+    stats[tier].currentStreak = 0; // explicitly break the streak - this is a loss
+    saveStats(stats);
+  }
 }
 
 function markPlayedIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never count toward stats or analytics
+  if(!hasRealAccount()) return; // guests don't get personal stats tracked at all
   const flagKey = `letterladder:${dateKey}:${tier}:playedCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
@@ -1427,6 +1514,171 @@ function markStartedIfNeeded(tier){
   }
 }
 
+const BLANK_PERSON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"></path></svg>`;
+
+function closeAnyOpenAccountDropdown(){
+  const existing = document.querySelector('.account-dropdown');
+  if(existing) existing.remove();
+}
+
+function renderAccountWidget(){
+  const container = document.getElementById('account-widget');
+  if(!container) return;
+  const currentUser = window.LetterLadderAuth ? window.LetterLadderAuth.getCurrentUser() : null;
+  const hasAccount = !!(currentUser && !currentUser.isAnonymous);
+  const savedUsername = localStorage.getItem('letterladder:accountUsername');
+
+  if(hasAccount && savedUsername){
+    const initial = savedUsername.trim().charAt(0).toUpperCase();
+    container.innerHTML = `<button type="button" class="account-icon-btn has-account" id="account-icon-btn" aria-label="Account menu">${initial}</button>`;
+    bindTapAction(container.querySelector('#account-icon-btn'), ()=>{
+      if(document.querySelector('.account-dropdown')){ closeAnyOpenAccountDropdown(); return; }
+      const dropdown = document.createElement('div');
+      dropdown.className = 'account-dropdown';
+      dropdown.innerHTML = `
+        <div class="account-dropdown-username">${savedUsername}</div>
+        <a href="stats.html">Stats</a>
+        <a href="profile.html">Profile</a>
+      `;
+      container.appendChild(dropdown);
+      setTimeout(()=>{
+        document.addEventListener('click', function outsideClick(e){
+          if(!container.contains(e.target)){ closeAnyOpenAccountDropdown(); document.removeEventListener('click', outsideClick); }
+        });
+      }, 0);
+    });
+  } else {
+    container.innerHTML = `<button type="button" class="account-icon-btn is-guest" id="account-icon-btn" aria-label="Create account or log in">${BLANK_PERSON_ICON}</button>`;
+    bindTapAction(container.querySelector('#account-icon-btn'), ()=>{
+      if(document.querySelector('.account-dropdown')){ closeAnyOpenAccountDropdown(); return; }
+      const dropdown = document.createElement('div');
+      dropdown.className = 'account-dropdown';
+      dropdown.innerHTML = `
+        <a href="#" id="account-create-link">Create account</a>
+        <a href="#" id="account-login-link">Log in</a>
+      `;
+      container.appendChild(dropdown);
+      bindTapAction(dropdown.querySelector('#account-create-link'), ()=>{
+        closeAnyOpenAccountDropdown();
+        showAccountForm('create');
+      });
+      bindTapAction(dropdown.querySelector('#account-login-link'), ()=>{
+        closeAnyOpenAccountDropdown();
+        showAccountForm('login');
+      });
+      setTimeout(()=>{
+        document.addEventListener('click', function outsideClick(e){
+          if(!container.contains(e.target)){ closeAnyOpenAccountDropdown(); document.removeEventListener('click', outsideClick); }
+        });
+      }, 0);
+    });
+  }
+}
+
+// Standalone create-account / log-in flow, reachable from the header icon
+// directly (not just after winning a timed puzzle) - shares the same
+// underlying Firebase calls and error handling as the post-win popup.
+function showAccountForm(mode){
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  const isLogin = mode === 'login';
+  overlay.innerHTML = `
+    <div class="leaderboard-prompt-card">
+      <div class="leaderboard-prompt-title">${isLogin ? 'Log in' : 'Choose a username and password'}</div>
+      <div class="leaderboard-form-error" id="acct-form-error"></div>
+      <input type="text" class="leaderboard-form-field" id="acct-username-field" placeholder="Username" autocomplete="username">
+      <input type="password" class="leaderboard-form-field" id="acct-password-field" placeholder="Password" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
+      ${isLogin ? '' : `
+        <input type="email" class="leaderboard-form-field" id="acct-email-field" placeholder="Email (optional)" autocomplete="email">
+        <div class="leaderboard-form-hint">Your email will only be used for password recovery purposes.</div>
+      `}
+      <div class="leaderboard-prompt-actions">
+        <button type="button" class="btn-primary" id="acct-submit-btn">${isLogin ? 'Log in' : 'Create account'}</button>
+        <button type="button" class="btn-ghost" id="acct-cancel-btn">Cancel</button>
+      </div>
+      ${isLogin ? '<a href="#" class="leaderboard-form-hint" id="acct-forgot-link" style="display:block; text-align:center; margin-top:12px; cursor:pointer;">Forgot password?</a>' : ''}
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  function close(){ overlay.remove(); }
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+  bindTapAction(overlay.querySelector('#acct-cancel-btn'), close);
+
+  const errorEl = overlay.querySelector('#acct-form-error');
+
+  if(isLogin){
+    bindTapAction(overlay.querySelector('#acct-forgot-link'), ()=>{
+      close();
+      showForgotPasswordForm();
+    });
+  }
+
+  bindTapAction(overlay.querySelector('#acct-submit-btn'), async ()=>{
+    const username = overlay.querySelector('#acct-username-field').value.trim();
+    const password = overlay.querySelector('#acct-password-field').value;
+    if(!username || !password){
+      errorEl.textContent = 'Please fill in both fields.';
+      return;
+    }
+    errorEl.textContent = '';
+    const emailField = overlay.querySelector('#acct-email-field');
+    const result = isLogin
+      ? await window.LetterLadderAuth.login(username, password)
+      : await window.LetterLadderAuth.createAccount(username, password, emailField ? emailField.value : '');
+    if(!result.success){
+      errorEl.textContent = result.error;
+      return;
+    }
+    localStorage.setItem('letterladder:accountUsername', result.username);
+    close();
+    renderAccountWidget();
+  });
+}
+
+function showForgotPasswordForm(){
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="leaderboard-prompt-card">
+      <div class="leaderboard-prompt-title">Reset your password</div>
+      <div class="leaderboard-form-error" id="fp-form-error"></div>
+      <input type="text" class="leaderboard-form-field" id="fp-username-field" placeholder="Username" autocomplete="username">
+      <div class="leaderboard-prompt-actions">
+        <button type="button" class="btn-primary" id="fp-submit-btn">Send reset email</button>
+        <button type="button" class="btn-ghost" id="fp-cancel-btn">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  function close(){ overlay.remove(); }
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+  bindTapAction(overlay.querySelector('#fp-cancel-btn'), close);
+
+  const errorEl = overlay.querySelector('#fp-form-error');
+  bindTapAction(overlay.querySelector('#fp-submit-btn'), async ()=>{
+    const username = overlay.querySelector('#fp-username-field').value.trim();
+    if(!username){
+      errorEl.textContent = 'Please enter your username.';
+      return;
+    }
+    errorEl.textContent = '';
+    const result = await window.LetterLadderAuth.requestPasswordReset(username);
+    if(!result.success){
+      errorEl.textContent = result.error;
+      return;
+    }
+    const card = overlay.querySelector('.leaderboard-prompt-card');
+    card.innerHTML = `
+      <div class="leaderboard-prompt-title">Check your email</div>
+      <div class="leaderboard-form-hint" style="text-align:center;">A password reset link has been sent. Click Cancel or close this to return to the game.</div>
+      <div class="leaderboard-prompt-actions">
+        <button type="button" class="btn-ghost" id="fp-done-btn">Close</button>
+      </div>
+    `;
+    bindTapAction(card.querySelector('#fp-done-btn'), close);
+  });
+}
+
 const LEADERBOARD_PROMPT_DISMISSED_KEY = 'letterladder:leaderboardPromptDismissed';
 
 async function submitCurrentScore(tier, displayName){
@@ -1453,7 +1705,7 @@ function showLeaderboardPromptIfNeeded(tier){
   overlay.className = 'confirm-overlay';
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card">
-      <a href="#" class="leaderboard-prompt-dismiss" id="lb-dismiss-link">Do not show this message again ✕</a>
+      <a href="#" class="leaderboard-prompt-dismiss" id="lb-dismiss-link">Do not show this message again</a>
       <div class="leaderboard-prompt-title" id="lb-prompt-title">Create account or play as guest?</div>
       <div id="lb-prompt-body">
         <div class="leaderboard-prompt-actions">
@@ -1489,6 +1741,8 @@ function showLeaderboardPromptIfNeeded(tier){
       <div class="leaderboard-form-error" id="lb-form-error"></div>
       <input type="text" class="leaderboard-form-field" id="lb-username-field" placeholder="Username" autocomplete="username">
       <input type="password" class="leaderboard-form-field" id="lb-password-field" placeholder="Password" autocomplete="new-password">
+      <input type="email" class="leaderboard-form-field" id="lb-email-field" placeholder="Email (optional)" autocomplete="email">
+      <div class="leaderboard-form-hint">Your email will only be used for password recovery purposes.</div>
       <div class="leaderboard-prompt-actions">
         <button type="button" class="btn-primary" id="lb-submit-account-btn">Create account</button>
       </div>
@@ -1502,7 +1756,8 @@ function showLeaderboardPromptIfNeeded(tier){
         return;
       }
       errorEl.textContent = '';
-      const result = await window.LetterLadderAuth.createAccount(username, password);
+      const email = bodyEl.querySelector('#lb-email-field').value;
+      const result = await window.LetterLadderAuth.createAccount(username, password, email);
       if(!result.success){
         errorEl.textContent = result.error;
         return;
@@ -1572,30 +1827,32 @@ function markSolvedIfNeeded(tier, guesses){
     }
   }
 
-  const stats = loadStats();
-  const stat = stats[tier];
-  stat.solved += 1;
-  stats.total.solved += 1;
-  bumpStreak(stat, dateKey);
+  if(hasRealAccount()){
+    const stats = loadStats();
+    const stat = stats[tier];
+    stat.solved += 1;
+    stats.total.solved += 1;
+    bumpStreak(stat, dateKey);
 
-  // Score: reward the length of every word the person actually had to
-  // guess (the start/final words are given to you, so they don't count),
-  // minus a small penalty for each hint used on this specific puzzle.
-  const guessedWords = Object.values(guesses);
-  const basePoints = guessedWords.reduce((sum, w) => sum + w.length, 0);
-  const penalty = getHintsUsed(tier) * HINT_PENALTY_PER_USE;
-  stat.score += Math.max(0, basePoints - penalty);
-  stats.total.score = stats.easy.score + stats.medium.score + stats.hard.score;
+    // Score: reward the length of every word the person actually had to
+    // guess (the start/final words are given to you, so they don't count),
+    // minus a small penalty for each hint used on this specific puzzle.
+    const guessedWords = Object.values(guesses);
+    const basePoints = guessedWords.reduce((sum, w) => sum + w.length, 0);
+    const penalty = getHintsUsed(tier) * HINT_PENALTY_PER_USE;
+    stat.score += Math.max(0, basePoints - penalty);
+    stats.total.score = stats.easy.score + stats.medium.score + stats.hard.score;
 
-  // If this solve completes all three tiers for today, the "total" streak
-  // (a separate concept from the per-tier ones - it tracks consecutive
-  // days you completed EVERY puzzle, tying into the summit celebration)
-  // gets its own bump.
-  if(TIERS.every(isTierComplete)){
-    bumpStreak(stats.total, dateKey);
+    // If this solve completes all three tiers for today, the "total" streak
+    // (a separate concept from the per-tier ones - it tracks consecutive
+    // days you completed EVERY puzzle, tying into the summit celebration)
+    // gets its own bump.
+    if(TIERS.every(isTierComplete)){
+      bumpStreak(stats.total, dateKey);
+    }
+
+    saveStats(stats);
   }
-
-  saveStats(stats);
 
   // Confetti for the 1st and 2nd puzzle completed today, whichever tiers
   // those happen to be - the 3rd (finishing all three) gets the bigger
@@ -2982,6 +3239,17 @@ render(!isTouchDevice);
 showHowToPlayPopupIfNeeded();
 showMigrationWelcomeBannerIfNeeded();
 showMigrationLinkBannerIfNeeded();
+
+(function waitForLetterLadderAuth(attemptsLeft){
+  if(attemptsLeft === undefined) attemptsLeft = 100; // ~5 seconds total at 50ms intervals
+  if(window.LetterLadderAuth){
+    window.LetterLadderAuth.onAuthReady(() => renderAccountWidget());
+  } else if(attemptsLeft > 0){
+    setTimeout(() => waitForLetterLadderAuth(attemptsLeft - 1), 50);
+  }
+  // If it never loads (ad-blocker, offline, etc.), this quietly gives up -
+  // the account widget just stays empty rather than polling forever.
+})();
 timerTickInterval = setInterval(renderTimerWidget, 1000);
 
 </script>
