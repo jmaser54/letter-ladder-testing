@@ -1584,7 +1584,7 @@ function showAccountForm(mode){
   const isLogin = mode === 'login';
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card">
-      <div class="leaderboard-prompt-title">${isLogin ? 'Log in' : 'Choose a username and password'}</div>
+      ${isLogin ? `<div class="leaderboard-prompt-title">Log in</div>` : ''}
       <div class="leaderboard-form-error" id="acct-form-error"></div>
       <input type="text" class="leaderboard-form-field" id="acct-username-field" placeholder="Username" autocomplete="username">
       <input type="password" class="leaderboard-form-field" id="acct-password-field" placeholder="Password" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
@@ -1736,7 +1736,7 @@ function showLeaderboardPromptIfNeeded(tier){
   bindTapAction(overlay.querySelector('#lb-create-account-btn'), ()=>{
     const titleEl = overlay.querySelector('#lb-prompt-title');
     const bodyEl = overlay.querySelector('#lb-prompt-body');
-    titleEl.textContent = 'Choose a username and password';
+    titleEl.textContent = '';
     bodyEl.innerHTML = `
       <div class="leaderboard-form-error" id="lb-form-error"></div>
       <input type="text" class="leaderboard-form-field" id="lb-username-field" placeholder="Username" autocomplete="username">
