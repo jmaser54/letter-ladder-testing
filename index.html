@@ -1396,8 +1396,11 @@ function handleViewSolutionClick(){
     window.location.href = `solutions.html?date=${dateKey}&tier=${activeTier}`;
     return;
   }
-  if(isTierComplete(activeTier)){
-    // Already a genuine win - viewing the solution now has no stats consequence
+  const hasEverFinishedToday = !!(localStorage.getItem(`letterladder:${dateKey}:${activeTier}:solvedCounted`) || localStorage.getItem(`letterladder:${dateKey}:${activeTier}:lossCounted`));
+  if(hasEverFinishedToday){
+    // Already finished this one today (genuine win or an earlier reveal) -
+    // viewing the solution again has no further stats consequence, even
+    // if they've since re-opened a rung to fiddle with it.
     window.location.href = `solutions.html?date=${dateKey}&tier=${activeTier}`;
     return;
   }
@@ -1954,6 +1957,14 @@ function render(focusInput = false, pendingErrors = null){
   // either way - there's nothing left to hint at or discover once every
   // rung is filled in, regardless of how it got that way.
   const isMechanicallyComplete = isTierComplete(activeTier);
+  // Distinct from isMechanicallyComplete: that reflects the live, moment-
+  // to-moment state of the guesses, which can briefly look incomplete
+  // again if the player re-opens an already-finished rung to edit it -
+  // clearing the rungs above it for new input is intentional, but it
+  // would also incorrectly bring View Solution back if that link relied
+  // on the live check. These flags are set once and never cleared, so
+  // they correctly stay true regardless of any later re-editing.
+  const hasEverFinishedToday = !!(localStorage.getItem(`letterladder:${dateKey}:${activeTier}:solvedCounted`) || localStorage.getItem(`letterladder:${dateKey}:${activeTier}:lossCounted`));
   // Editing after a win is allowed (clicking a rung + its delete-X reopens
   // it), so activeLength is no longer force-reset just because isWon is
   // true - only the actual guess-acceptance/delete logic controls it now.
@@ -2129,7 +2140,7 @@ function render(focusInput = false, pendingErrors = null){
     <div class="feedback ${feedbackClassFinal}">${feedbackHtml}</div>
     ${details.map(d=>`<div class="details">${d}</div>`).join('')}
     <div class="hint-display" id="hint-display"></div>
-    ${!isMechanicallyComplete && activeLength != null ? `<a href="#" id="solution-link" class="view-solution-link">View solution</a>` : ''}
+    ${!hasEverFinishedToday && activeLength != null ? `<a href="#" id="solution-link" class="view-solution-link">View solution</a>` : ''}
     ${bankHtml}
     ${primaryActionsHtml}
     <div class="actions-row">
@@ -2292,7 +2303,7 @@ function render(focusInput = false, pendingErrors = null){
       const targetWord = tierHint ? tierHint.solution.find(w => w.length === targetLength) : null;
 
       if(!targetWord){
-        hintDisplay.innerHTML = `No hints available for this puzzle yet`;
+        hintDisplay.innerHTML = `No hint available for this puzzle yet`;
         return;
       }
 
