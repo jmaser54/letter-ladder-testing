@@ -1401,12 +1401,12 @@ function handleViewSolutionClick(){
     window.location.href = `solutions.html?date=${dateKey}&tier=${activeTier}`;
     return;
   }
-  if(isTierComplete(activeTier)){
-    // Currently filled in and valid (genuine win or a still-standing
-    // reveal) - viewing the solution right now has no further stats
-    // consequence. If they later clear the puzzle or reopen a rung,
-    // it genuinely stops being complete, and this check will correctly
-    // start warning again on the next click.
+  const alreadyFinishedToday = !!(localStorage.getItem(`letterladder:${dateKey}:${activeTier}:solvedCounted`) || localStorage.getItem(`letterladder:${dateKey}:${activeTier}:lossCounted`));
+  if(alreadyFinishedToday){
+    // The stats/streak consequence already happened once today (a genuine
+    // win or an earlier reveal) - warning about it again after a clear or
+    // a reopened rung would be misleading, since there's no new
+    // consequence left to warn about.
     window.location.href = `solutions.html?date=${dateKey}&tier=${activeTier}`;
     return;
   }
