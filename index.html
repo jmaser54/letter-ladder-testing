@@ -1062,6 +1062,29 @@ function getTimerChoice(){ return localStorage.getItem(TIMER_CHOICE_KEY) || 'unt
 function setTimerChoice(choice){ localStorage.setItem(TIMER_CHOICE_KEY, choice); }
 function timerStartKey(tier){ return `letterladder:${dateKey}:${tier}:timerStartedAt`; }
 function timerElapsedKey(tier){ return `letterladder:${dateKey}:${tier}:timerElapsedMs`; }
+function timerAccumulatedKey(tier){ return `letterladder:${dateKey}:${tier}:timerAccumulatedMs`; }
+
+// The timer should only advance while the player is actually here, on this
+// puzzle - not while the tab is hidden, another tier is active, or they've
+// navigated to a different page entirely. Rather than tracking a single
+// start timestamp and assuming it always represents unbroken elapsed time,
+// this banks completed segments into an accumulated total and only ever
+// treats timerStartKey as "the current segment's start" - present exactly
+// while actively running, absent while paused.
+function getCurrentElapsedMs(tier){
+  const accumulated = Number(localStorage.getItem(timerAccumulatedKey(tier)) || 0);
+  const segmentStart = localStorage.getItem(timerStartKey(tier));
+  const running = segmentStart !== null ? (Date.now() - Number(segmentStart)) : 0;
+  return accumulated + running;
+}
+function pauseTimer(tier){
+  const segmentStart = localStorage.getItem(timerStartKey(tier));
+  if(segmentStart === null) return; // already paused (or never started) - nothing to fold in
+  const elapsed = getCurrentElapsedMs(tier);
+  localStorage.setItem(timerAccumulatedKey(tier), String(elapsed));
+  localStorage.removeItem(timerStartKey(tier));
+}
+
 function formatElapsed(ms){
   const totalSeconds = Math.floor(ms / 1000);
   const m = Math.floor(totalSeconds / 60);
@@ -1090,15 +1113,7 @@ function renderTimerWidget(){
   let displayText = '—';
   if(choice === 'timed'){
     const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
-    const startedAt = localStorage.getItem(timerStartKey(activeTier));
-    let elapsedMs;
-    if(frozenElapsed !== null){
-      elapsedMs = Number(frozenElapsed);
-    } else if(startedAt !== null){
-      elapsedMs = Date.now() - Number(startedAt);
-    } else {
-      elapsedMs = 0;
-    }
+    const elapsedMs = frozenElapsed !== null ? Number(frozenElapsed) : getCurrentElapsedMs(activeTier);
     displayText = formatElapsed(elapsedMs);
   }
 
@@ -1180,9 +1195,9 @@ function revealSolutionAsLoss(tier){
   }
   saveGuesses(tier, revealedGuesses);
   localStorage.setItem(`letterladder:${dateKey}:${tier}:solutionRevealedAsLoss`, '1');
-  const startedAt = localStorage.getItem(timerStartKey(tier));
-  if(startedAt && !localStorage.getItem(timerElapsedKey(tier))){
-    localStorage.setItem(timerElapsedKey(tier), String(Date.now() - Number(startedAt)));
+  const hasEverStarted = localStorage.getItem(timerStartKey(tier)) !== null || localStorage.getItem(timerAccumulatedKey(tier)) !== null;
+  if(hasEverStarted && !localStorage.getItem(timerElapsedKey(tier))){
+    localStorage.setItem(timerElapsedKey(tier), String(getCurrentElapsedMs(tier)));
   }
   recordLossIfNeeded(tier);
 }
@@ -1279,9 +1294,9 @@ function markSolvedIfNeeded(tier, guesses){
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
 
-  const startedAt = localStorage.getItem(timerStartKey(tier));
-  if(startedAt){
-    localStorage.setItem(timerElapsedKey(tier), String(Date.now() - Number(startedAt)));
+  const hasEverStarted = localStorage.getItem(timerStartKey(tier)) !== null || localStorage.getItem(timerAccumulatedKey(tier)) !== null;
+  if(hasEverStarted){
+    localStorage.setItem(timerElapsedKey(tier), String(getCurrentElapsedMs(tier)));
   }
 
   // Pushed to the GTM data layer rather than called via gtag() directly -
@@ -2114,7 +2129,7 @@ function render(focusInput = false, pendingErrors = null){
     <div class="feedback ${feedbackClassFinal}">${feedbackHtml}</div>
     ${details.map(d=>`<div class="details">${d}</div>`).join('')}
     <div class="hint-display" id="hint-display"></div>
-    ${!isWon && activeLength != null ? `<a href="#" id="solution-link" class="view-solution-link">View solution</a>` : ''}
+    ${!isMechanicallyComplete && activeLength != null ? `<a href="#" id="solution-link" class="view-solution-link">View solution</a>` : ''}
     ${bankHtml}
     ${primaryActionsHtml}
     <div class="actions-row">
@@ -2707,12 +2722,26 @@ function render(focusInput = false, pendingErrors = null){
 document.getElementById('tabs').addEventListener('click', (e)=>{
   const tab = e.target.closest('.tab');
   if(!tab) return;
+  const previousTier = activeTier;
   activeTier = tab.dataset.tier;
+  if(previousTier !== activeTier) pauseTimer(previousTier);
   localStorage.setItem('letterladder:activeTier', activeTier);
   activeLength = null;
   document.querySelectorAll('.confetti-piece').forEach(piece => piece.remove());
   startTimerIfNeeded(activeTier);
   render(!isTouchDevice);
+});
+
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){
+    pauseTimer(activeTier);
+  } else {
+    startTimerIfNeeded(activeTier);
+    renderTimerWidget();
+  }
+});
+window.addEventListener('pagehide', ()=>{
+  pauseTimer(activeTier);
 });
 
 render(!isTouchDevice);
