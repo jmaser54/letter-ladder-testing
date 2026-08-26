@@ -576,6 +576,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <div class="top-links">
       <a href="about.html">How to play</a>
+      <a href="index.html" id="todays-puzzles-link" style="display:none;">Today's puzzles</a>
       <a href="past-puzzles.html">Past puzzles</a>
       <a href="stats.html">Your stats</a>
     </div>
@@ -1055,6 +1056,10 @@ function showMigrationLinkBannerIfNeeded(){
 }
 
 const { key: dateKey, isArchive: isArchiveMode } = resolveDateKey();
+if(isArchiveMode){
+  const todaysPuzzlesLink = document.getElementById('todays-puzzles-link');
+  if(todaysPuzzlesLink) todaysPuzzlesLink.style.display = '';
+}
 
 // ---------- optional per-puzzle timer ----------
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';

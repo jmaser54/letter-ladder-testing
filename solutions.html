@@ -79,6 +79,17 @@ const params = new URLSearchParams(window.location.search);
 const requestedDate = params.get('date');
 const requestedTier = params.get('tier');
 
+function todayKey(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+if(requestedDate && requestedDate !== todayKey()){
+  document.querySelector('.back').href = `index.html?archive=${requestedDate}`;
+}
+
 const day = requestedDate && HINTS_SCHEDULE ? HINTS_SCHEDULE[requestedDate] : null;
 const puzzle = day && requestedTier ? day[requestedTier] : null;
 
