@@ -2292,7 +2292,7 @@ function render(focusInput = false, pendingErrors = null){
       const targetWord = tierHint ? tierHint.solution.find(w => w.length === targetLength) : null;
 
       if(!targetWord){
-        hintDisplay.innerHTML = `No hint available for this puzzle yet`;
+        hintDisplay.innerHTML = `No hints available for this puzzle yet`;
         return;
       }
 
