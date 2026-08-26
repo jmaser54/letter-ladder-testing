@@ -561,6 +561,100 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     100%{ left: var(--ladder-x); top: -60px; opacity: 0; transform: translateY(0); }
   }
 </style>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signInAnonymously, signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
+    authDomain: "letter-ladder-c6b15.firebaseapp.com",
+    projectId: "letter-ladder-c6b15",
+    storageBucket: "letter-ladder-c6b15.firebasestorage.app",
+    messagingSenderId: "131656230098",
+    appId: "1:131656230098:web:2b752fc4fa953f3557b90b",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Firebase's email/password auth genuinely needs an email as the account
+  // identifier - there's no native username-only option. Rather than ever
+  // showing the player an email field, a chosen username is quietly turned
+  // into a synthetic, never-displayed email behind the scenes. Firebase's
+  // own built-in "no two accounts can share an email" enforcement then
+  // transparently doubles as username-uniqueness checking, with nothing
+  // extra needed to build that ourselves.
+  function usernameToSyntheticEmail(username){
+    const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+    return `${normalized}@players.letterladder.io`;
+  }
+
+  // Firebase's raw error codes and messages talk about "email" throughout,
+  // which would be confusing/wrong to show directly given the disguise -
+  // this translates the ones a player could realistically hit into
+  // messages that talk about usernames instead.
+  function friendlyAuthError(error){
+    const code = error && error.code;
+    if(code === 'auth/email-already-in-use') return 'That username is already taken - try another.';
+    if(code === 'auth/invalid-email') return 'That username has characters that aren\'t allowed - try letters and numbers only.';
+    if(code === 'auth/weak-password') return 'Password should be at least 6 characters.';
+    if(code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') return 'Username or password is incorrect.';
+    if(code === 'auth/too-many-requests') return 'Too many attempts - please wait a moment and try again.';
+    return 'Something went wrong. Please try again.';
+  }
+
+  async function createAccount(username, password){
+    try{
+      const cred = await createUserWithEmailAndPassword(auth, usernameToSyntheticEmail(username), password);
+      // Store the player's real, human-chosen username alongside their
+      // account - Firebase auth itself only ever sees the synthetic email,
+      // so the actual display name needs to be saved here separately.
+      await setDoc(doc(db, 'players', cred.user.uid), { username: username.trim(), createdAt: Date.now() });
+      return { success: true, uid: cred.user.uid, username: username.trim() };
+    }catch(error){
+      return { success: false, error: friendlyAuthError(error) };
+    }
+  }
+
+  async function login(username, password){
+    try{
+      const cred = await signInWithEmailAndPassword(auth, usernameToSyntheticEmail(username), password);
+      return { success: true, uid: cred.user.uid, username: username.trim() };
+    }catch(error){
+      return { success: false, error: friendlyAuthError(error) };
+    }
+  }
+
+  async function playAsGuest(){
+    try{
+      const cred = await signInAnonymously(auth);
+      return { success: true, uid: cred.user.uid, isGuest: true };
+    }catch(error){
+      return { success: false, error: friendlyAuthError(error) };
+    }
+  }
+
+  async function logOut(){
+    await signOut(auth);
+  }
+
+  // Exposed on window since this lives in its own ES module scope,
+  // separate from the game's main (non-module) script.
+  window.LetterLadderAuth = {
+    createAccount, login, playAsGuest, logOut,
+    getCurrentUser: () => auth.currentUser,
+    onAuthReady: (callback) => onAuthStateChanged(auth, callback),
+    db, doc, setDoc, getDoc, collection,
+  };
+</script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
