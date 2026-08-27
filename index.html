@@ -2088,7 +2088,7 @@ function setupBankTileDragging(){
 
   bankTiles.querySelectorAll('.bank-tile').forEach(tile => {
     tile.addEventListener('pointerdown', (e)=>{
-      if(tile.disabled) return;
+      if(tile.classList.contains('used')) return;
       if(!bankState[activeTier]) return;
 
       const startClientX = e.clientX;
@@ -2819,7 +2819,7 @@ function render(focusInput = false, pendingErrors = null){
       const belowWord = getBelowWord(startingWord, guesses, steps, activeLength);
       const belowMatchSet = computeBelowMatchIndices(order, belowWord);
       const tilesHtml = order.map((letter, i) =>
-        `<button type="button" class="bank-tile ${belowMatchSet.has(i) ? 'from-below' : ''} ${usedSet.has(stableIds[i]) ? 'used' : ''}" data-letter="${letter}" data-index="${i}" data-stable-id="${stableIds[i]}" ${usedSet.has(stableIds[i]) ? 'disabled' : ''}>${letter.toUpperCase()}</button>`
+        `<button type="button" class="bank-tile ${belowMatchSet.has(i) ? 'from-below' : ''} ${usedSet.has(stableIds[i]) ? 'used' : ''}" data-letter="${letter}" data-index="${i}" data-stable-id="${stableIds[i]}">${letter.toUpperCase()}</button>`
       ).join('');
       bankTilesHtml = `<div class="bank-tiles" id="bank-tiles">${tilesHtml}</div>`;
       const backspaceIcon = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6H9l-6 6 6 6h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Z"></path><line x1="12" y1="9" x2="18" y2="15"></line><line x1="18" y1="9" x2="12" y2="15"></line></svg>`;
@@ -2986,14 +2986,31 @@ function render(focusInput = false, pendingErrors = null){
   panel.querySelectorAll('.bank-tile').forEach(tile => {
     bindTapAction(tile, ()=>{
       if(skipNextBankTap){ skipNextBankTap = false; return; } // this tap was actually the release of a drag - don't also select the letter
-      // Some mobile browsers don't reliably block touch events on disabled
-      // buttons the way they block click events - relying on the native
-      // disabled attribute alone let an already-used (faded) tile's letter
-      // still get added. Checking it explicitly here closes that gap
-      // regardless of the underlying browser quirk causing it.
-      if(tile.disabled) return;
       const inputEl = document.getElementById(`rung-input-${activeLength}`);
       if(!inputEl) return;
+
+      if(tile.classList.contains('used')){
+        // Tapping an already-used (faded) tile removes that specific
+        // letter from the current guess, wherever it appears - rather
+        // than doing nothing, which was the previous behavior. The
+        // tile's stable ID (not its current bank position) is what
+        // identifies exactly which character in the guess it
+        // corresponds to, since usedIndices is built in the same order
+        // letters were typed.
+        if(!bankState[activeTier]) return;
+        const stableId = Number(tile.dataset.stableId);
+        const usedIndices = bankState[activeTier].usedIndices;
+        const pos = usedIndices.indexOf(stableId);
+        if(pos === -1) return;
+
+        activeSlotHasUntouchedGuess = false; // this is a genuine edit now
+        inputEl.value = inputEl.value.slice(0, pos) + inputEl.value.slice(pos + 1);
+        usedIndices.splice(pos, 1);
+        bankSyncSkip = true;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        return;
+      }
+
       if(activeSlotHasUntouchedGuess){
         activeSlotHasUntouchedGuess = false;
         inputEl.value = '';
