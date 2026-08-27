@@ -2186,10 +2186,19 @@ function setupBankTileDragging(){
         tile.style.left = `${ev.clientX - grabOffsetX}px`;
         tile.style.top = `${ev.clientY - grabOffsetY}px`;
 
-        // Nothing moves at all while still above the letter bank -
-        // only once the pointer actually reaches the top of the tiles
-        // does a live preview begin.
-        const withinBank = ev.clientY >= bankTop;
+        // The dragged tile's own rendered center - not the raw finger/
+        // cursor position - is what determines overlap from here on.
+        // The tile sits offset above the finger (so it isn't obscured
+        // by it), so using the finger's position directly would trigger
+        // reordering before the tile itself visually reaches another
+        // tile's spot.
+        const tileCenterX = (ev.clientX - grabOffsetX) + rect.width / 2;
+        const tileCenterY = (ev.clientY - grabOffsetY) + rect.height / 2;
+
+        // Nothing moves at all while the dragged tile is still above the
+        // letter bank - only once it actually reaches the top of the
+        // tiles does a live preview begin.
+        const withinBank = tileCenterY >= bankTop;
         let targetGapIndex;
         if(!withinBank){
           targetGapIndex = originalIndex;
@@ -2197,13 +2206,13 @@ function setupBankTileDragging(){
           // Group into rows by baseline top value - flex-wrap lays tiles
           // out in horizontal rows, so tiles sharing a row share the
           // same top. Comparing X-position needs to happen only within
-          // whichever row the pointer is actually hovering over, not
+          // whichever row the dragged tile is actually overlapping, not
           // across every row at once.
           const rowTops = [...new Set(baselineRects.map(r => r.top))].sort((a,b) => a - b);
           let targetRowTop = rowTops[0];
           let closestDist = Infinity;
           for(const top of rowTops){
-            const dist = Math.abs(ev.clientY - (top + 24)); // compare against each row's vertical center
+            const dist = Math.abs(tileCenterY - (top + 24)); // compare against each row's vertical center
             if(dist < closestDist){ closestDist = dist; targetRowTop = top; }
           }
 
@@ -2214,7 +2223,7 @@ function setupBankTileDragging(){
           targetGapIndex = rowEntries.length ? rowEntries[rowEntries.length - 1].i + 1 : otherTiles.length;
           for(const entry of rowEntries){
             const midX = (entry.r.left + entry.r.right) / 2;
-            if(ev.clientX < midX){ targetGapIndex = entry.i; break; }
+            if(tileCenterX < midX){ targetGapIndex = entry.i; break; }
           }
         }
 
