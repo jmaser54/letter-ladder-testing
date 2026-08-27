@@ -1322,6 +1322,18 @@ function showMigrationLinkBannerIfNeeded(){
 }
 
 const { key: dateKey, isArchive: isArchiveMode } = resolveDateKey();
+
+// The selected tier should never carry over between different puzzle
+// days - only within the same day's session. Whenever the viewed date
+// changes from whatever was last recorded (including the very first
+// visit), reset back to Easy rather than reusing a stale saved tier
+// that belonged to a different day's puzzle.
+const LAST_VIEWED_DATE_KEY = 'letterladder:lastViewedDateKey';
+if(localStorage.getItem(LAST_VIEWED_DATE_KEY) !== dateKey){
+  activeTier = 'easy';
+  localStorage.setItem('letterladder:activeTier', 'easy');
+  localStorage.setItem(LAST_VIEWED_DATE_KEY, dateKey);
+}
 // Isolates all per-day puzzle-progress and stats keys by account, so
 // logging out of one account and into another on the same device never
 // bleeds data between them. Guests share one common 'guest' namespace,
