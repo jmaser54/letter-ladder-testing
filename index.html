@@ -353,15 +353,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     z-index: 1000; padding: 20px;
   }
   .play-overlay{
-    position: fixed; inset: 0; background: rgba(10,16,26,0.94);
+    position: fixed; inset: 0; background: rgba(10,16,26,0.75);
     display: flex; align-items:center; justify-content:center;
     z-index: 1000; padding: 20px;
+  }
+  .play-card{
+    background: var(--bg-panel); border-radius: 20px; padding: 48px 36px;
+    max-width: 360px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    display: flex; align-items:center; justify-content:center;
   }
   .play-btn-big{
     font-family:'Fraunces',serif; font-weight:700; font-size: 1.6rem;
     background: var(--amber); color: #1B2A41; border: none; border-radius: 18px;
     padding: 22px 64px; cursor: pointer; touch-action: manipulation;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
   .play-btn-big:hover{ filter: brightness(1.05); }
   .confirm-card{
@@ -944,6 +948,21 @@ function bindTapAction(el, action){
   });
 }
 
+// Lets Enter submit a form from any of its input fields, by triggering
+// the same submit button's click handler - avoids duplicating submit
+// logic separately for keyboard vs. mouse/touch across every form.
+function bindEnterToSubmit(inputEls, submitBtnEl){
+  inputEls.forEach(inputEl => {
+    if(!inputEl) return;
+    inputEl.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        submitBtnEl.click();
+      }
+    });
+  });
+}
+
 function showConfirmModal(message, onConfirm){
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
@@ -1352,7 +1371,11 @@ function showPlayPopupIfNeeded(tier, onPlay){
   }
   const overlay = document.createElement('div');
   overlay.className = 'play-overlay';
-  overlay.innerHTML = `<button type="button" class="play-btn-big" id="play-btn-big">Play</button>`;
+  overlay.innerHTML = `
+    <div class="play-card">
+      <button type="button" class="play-btn-big" id="play-btn-big">Play</button>
+    </div>
+  `;
   document.body.appendChild(overlay);
   bindTapAction(overlay.querySelector('#play-btn-big'), ()=>{
     overlay.remove();
@@ -1422,6 +1445,18 @@ function blankStat(){
 }
 function loadStats(){
   try{
+    // One-time recovery: stats accumulated before account-scoping existed
+    // lived under this same, unscoped key. The very first time a given
+    // account loads its own (still-empty) scoped stats, inherit a copy of
+    // that pre-existing history rather than silently losing it - the old
+    // key is left in place rather than deleted, since it's ambiguous
+    // which account should end up claiming it.
+    if(accountScope !== 'guest' && localStorage.getItem(STATS_KEY) === null){
+      const legacyRaw = localStorage.getItem('letterladder:stats');
+      if(legacyRaw){
+        localStorage.setItem(STATS_KEY, legacyRaw);
+      }
+    }
     const raw = localStorage.getItem(STATS_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
@@ -1686,6 +1721,12 @@ function showAccountForm(mode){
   bindTapAction(overlay.querySelector('#acct-cancel-btn'), close);
 
   const errorEl = overlay.querySelector('#acct-form-error');
+  const submitBtnEl = overlay.querySelector('#acct-submit-btn');
+  bindEnterToSubmit([
+    overlay.querySelector('#acct-username-field'),
+    overlay.querySelector('#acct-password-field'),
+    overlay.querySelector('#acct-email-field'),
+  ], submitBtnEl);
 
   if(isLogin){
     bindTapAction(overlay.querySelector('#acct-forgot-link'), ()=>{
@@ -1735,7 +1776,9 @@ function showForgotPasswordForm(){
   bindTapAction(overlay.querySelector('#fp-cancel-btn'), close);
 
   const errorEl = overlay.querySelector('#fp-form-error');
-  bindTapAction(overlay.querySelector('#fp-submit-btn'), async ()=>{
+  const fpSubmitBtn = overlay.querySelector('#fp-submit-btn');
+  bindEnterToSubmit([overlay.querySelector('#fp-username-field')], fpSubmitBtn);
+  bindTapAction(fpSubmitBtn, async ()=>{
     const username = overlay.querySelector('#fp-username-field').value.trim();
     if(!username){
       errorEl.textContent = 'Please enter your username.';
@@ -1829,7 +1872,13 @@ function showLeaderboardPromptIfNeeded(tier){
       </div>
     `;
     const errorEl = bodyEl.querySelector('#lb-form-error');
-    bindTapAction(bodyEl.querySelector('#lb-submit-account-btn'), async ()=>{
+    const lbSubmitBtn = bodyEl.querySelector('#lb-submit-account-btn');
+    bindEnterToSubmit([
+      bodyEl.querySelector('#lb-username-field'),
+      bodyEl.querySelector('#lb-password-field'),
+      bodyEl.querySelector('#lb-email-field'),
+    ], lbSubmitBtn);
+    bindTapAction(lbSubmitBtn, async ()=>{
       const username = bodyEl.querySelector('#lb-username-field').value.trim();
       const password = bodyEl.querySelector('#lb-password-field').value;
       if(!username || !password){
@@ -2865,7 +2914,7 @@ function render(focusInput = false, pendingErrors = null){
         ? "Are you sure you'd like to use a second hint? This one reveals the first letter."
         : "Are you sure you'd like to use a hint?";
       if(getTimerChoice() === 'timed'){
-        confirmMsg += `<div class="confirm-submessage">(Each hint adds 3 minutes to the timer.)</div>`;
+        confirmMsg += `<div class="confirm-submessage">(Each hint adds 3 minutes to the timer)</div>`;
       }
 
       showConfirmModal(confirmMsg, ()=>{

@@ -85,6 +85,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 
 <script>
+// Matches index.html's exact scoping scheme - the same synchronous,
+// immediately-available flag is used here too, since this page has no
+// Firebase connection of its own and doesn't need one for this.
+const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
+const STATS_KEY = `letterladder:${accountScope}:stats`;
+
+function blankStat(){
+  return { played:0, solved:0, currentStreak:0, maxStreak:0, lastSolvedDate:null };
+}
+function loadStats(){
+  try{
+    // Same one-time recovery as index.html - stats accumulated before
+    // account-scoping existed lived under this same, unscoped key.
+    if(accountScope !== 'guest' && localStorage.getItem(STATS_KEY) === null){
+      const legacyRaw = localStorage.getItem('letterladder:stats');
+      if(legacyRaw){
+        localStorage.setItem(STATS_KEY, legacyRaw);
+      }
+    }
+    const raw = localStorage.getItem(STATS_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      for(const key of ['easy','medium','hard','total']){
+        parsed[key] = Object.assign(blankStat(), parsed[key] || {});
+      }
+      return parsed;
+    }
+  }catch(e){}
+  return { easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() };
+}
+
+</script>
+<script>
 function showConfirmModal(message, onConfirm){
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
@@ -109,30 +142,13 @@ function showConfirmModal(message, onConfirm){
 
 document.getElementById('reset-btn').addEventListener('click', () => {
   showConfirmModal('Are you sure you want to reset your stats? This action cannot be undone.', ()=>{
-    localStorage.removeItem('letterladder:stats');
+    localStorage.removeItem(STATS_KEY);
     location.reload();
   });
 });
 </script>
 
 <script>
-function blankStat(){
-  return { played:0, solved:0, currentStreak:0, maxStreak:0, lastSolvedDate:null };
-}
-function loadStats(){
-  try{
-    const raw = localStorage.getItem('letterladder:stats');
-    if(raw){
-      const parsed = JSON.parse(raw);
-      for(const key of ['easy','medium','hard','total']){
-        parsed[key] = Object.assign(blankStat(), parsed[key] || {});
-      }
-      return parsed;
-    }
-  }catch(e){}
-  return { easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() };
-}
-
 const stats = loadStats();
 const container = document.getElementById('stats-list');
 
