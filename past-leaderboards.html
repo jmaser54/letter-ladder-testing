@@ -160,6 +160,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         `;
       }).join('');
     }catch(e){
+      console.error('Past leaderboards failed to load:', e);
       container.innerHTML = `<div class="empty-state">Couldn't load past leaderboards right now - try refreshing.</div>`;
     }
   }

@@ -152,6 +152,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }));
       contentEl.innerHTML = tierSections.join('');
     }catch(e){
+      console.error('Leaderboard failed to load:', e);
       contentEl.innerHTML = `<div class="empty-state">Couldn't load the leaderboard right now - try refreshing.</div>`;
     }
   }
