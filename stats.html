@@ -51,6 +51,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   .empty-state{ text-align:center; color: var(--ink-dim); padding: 40px 20px; background: var(--bg-panel); border-radius:18px; }
 
+  .summary-card{ background: var(--bg-panel); border-radius:18px; padding: 22px; margin-bottom:18px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); }
+  .summary-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.15rem; margin-bottom:14px; }
+  .summary-table{ width:100%; border-collapse: collapse; font-size: 0.88rem; }
+  .summary-table th{
+    text-align:left; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em;
+    color: var(--ink-dim); font-weight:600; padding-bottom:10px; border-bottom: 1px solid rgba(245,239,224,0.12);
+  }
+  .summary-table td{ padding: 10px 0; border-bottom: 1px solid rgba(245,239,224,0.08); }
+  .summary-table tr:last-child td{ border-bottom:none; }
+  .summary-table td:not(:first-child), .summary-table th:not(:first-child){ text-align:right; }
+  .summary-table .level-cell{ display:flex; align-items:center; gap:8px; font-weight:600; }
+  .summary-table .total-row td{ font-weight:700; color: var(--amber); }
+
   .confirm-overlay{
     position: fixed; inset: 0; background: rgba(10,16,26,0.6);
     display: flex; align-items:center; justify-content:center;
@@ -78,6 +91,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="wrap">
   <a class="back" href="index.html">← Back to game</a>
   <h1>Your Stats</h1>
+  <div id="summary-table-container"></div>
   <div id="stats-list"></div>
   <div style="text-align:center; margin-top: 10px;">
     <button id="reset-btn" style="background:rgba(245,239,224,0.08); color:var(--ink-dim); border:none; border-radius:10px; padding:10px 18px; font-family:'Inter',sans-serif; font-size:0.85rem; cursor:pointer;">Reset my stats</button>
@@ -175,10 +189,10 @@ function renderStatsPage(stats){
     }
 
     container.innerHTML = [
-      renderCard('Total', 'total', stats.total, true),
       renderCard('Easy', 'easy', stats.easy, false),
       renderCard('Medium', 'medium', stats.medium, false),
       renderCard('Hard', 'hard', stats.hard, false),
+      renderCard('Total', 'total', stats.total, true),
     ].join('');
   }
 }
@@ -189,7 +203,7 @@ renderStatsPage(loadStats());
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -203,20 +217,104 @@ renderStatsPage(loadStats());
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  function formatTime(ms){
+    if(ms === null) return '—';
+    const totalSeconds = Math.round(ms / 1000);
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2,'0')}`;
+  }
+
+  // Sums three possibly-null values, staying null if any one of them is
+  // null - matches the spec's "Total = Easy + Medium + Hard" rule, but a
+  // sum across an incomplete set of tiers wouldn't be a meaningful total.
+  function sumOrNull(a, b, c){
+    if(a === null || b === null || c === null) return null;
+    return a + b + c;
+  }
+
+  async function fetchTierTimeStats(uid, tier){
+    const myQ = query(collection(db, 'scores'), where('uid', '==', uid), where('tier', '==', tier));
+    const mySnap = await getDocs(myQ);
+    const myTimes = mySnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');
+
+    const globalQ = query(collection(db, 'scores'), where('tier', '==', tier));
+    const globalSnap = await getDocs(globalQ);
+    const globalTimes = globalSnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');
+
+    return {
+      best: myTimes.length ? Math.min(...myTimes) : null,
+      average: myTimes.length ? myTimes.reduce((a,b) => a+b, 0) / myTimes.length : null,
+      globalAverage: globalTimes.length ? globalTimes.reduce((a,b) => a+b, 0) / globalTimes.length : null,
+    };
+  }
+
+  async function renderTimeSummaryTable(user){
+    const container = document.getElementById('summary-table-container');
+    try{
+      const [easyStats, mediumStats, hardStats] = await Promise.all([
+        fetchTierTimeStats(user.uid, 'easy'),
+        fetchTierTimeStats(user.uid, 'medium'),
+        fetchTierTimeStats(user.uid, 'hard'),
+      ]);
+
+      // Per the spec, the Total row sums the three tiers' own already-
+      // calculated values directly, rather than being recalculated
+      // independently from the underlying score documents.
+      const totalStats = {
+        best: sumOrNull(easyStats.best, mediumStats.best, hardStats.best),
+        average: sumOrNull(easyStats.average, mediumStats.average, hardStats.average),
+        globalAverage: sumOrNull(easyStats.globalAverage, mediumStats.globalAverage, hardStats.globalAverage),
+      };
+
+      function row(label, dotClass, stats){
+        return `
+          <tr class="${dotClass === 'total' ? 'total-row' : ''}">
+            <td><span class="level-cell"><span class="tier-dot ${dotClass}"></span>${label}</span></td>
+            <td>${formatTime(stats.best)}</td>
+            <td>${formatTime(stats.average)}</td>
+            <td>${formatTime(stats.globalAverage)}</td>
+          </tr>`;
+      }
+
+      container.innerHTML = `
+        <div class="summary-card">
+          <div class="summary-title">Time Summary</div>
+          <table class="summary-table">
+            <thead>
+              <tr><th>Level</th><th>Best Time</th><th>Average Time</th><th>Global Average</th></tr>
+            </thead>
+            <tbody>
+              ${row('Easy', 'easy', easyStats)}
+              ${row('Medium', 'medium', mediumStats)}
+              ${row('Hard', 'hard', hardStats)}
+              ${row('Total', 'total', totalStats)}
+            </tbody>
+          </table>
+        </div>`;
+    }catch(e){
+      console.error('Time summary failed to load:', e);
+    }
+  }
+
   // Matches index.html's same "only pull when local looks genuinely
   // empty" rule, so a fresh device correctly pulls real stats down from
   // the cloud without ever risking overwriting newer local changes on a
   // device that already has some.
   onAuthStateChanged(auth, async (user) => {
     if(!user || user.isAnonymous) return;
-    if(localStorage.getItem(STATS_KEY)) return;
-    try{
-      const snap = await getDoc(doc(db, 'playerStats', user.uid));
-      if(snap.exists()){
-        localStorage.setItem(STATS_KEY, JSON.stringify(snap.data()));
-        renderStatsPage(loadStats());
-      }
-    }catch(e){}
+
+    if(!localStorage.getItem(STATS_KEY)){
+      try{
+        const snap = await getDoc(doc(db, 'playerStats', user.uid));
+        if(snap.exists()){
+          localStorage.setItem(STATS_KEY, JSON.stringify(snap.data()));
+          renderStatsPage(loadStats());
+        }
+      }catch(e){}
+    }
+
+    renderTimeSummaryTable(user);
   });
 </script>
 </body>
