@@ -284,6 +284,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     opacity: 0.4;
     cursor: default;
   }
+  .bank-tile-placeholder{
+    width: 48px; height: 48px;
+    border: 2px dashed rgba(245,239,224,0.2);
+    border-radius: 10px;
+    background: transparent;
+    box-sizing: border-box;
+  }
   .bank-controls{
     display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
     margin-top: 22px;
@@ -2095,6 +2102,18 @@ function setupBankTileDragging(){
       let dragging = false;
       let holdTimeout = null;
 
+      // Preview-only state while dragging - the real bankState order
+      // isn't touched until an actual drop. originalIndex is where the
+      // dragged tile truly lives; previewGapIndex is where the empty
+      // placeholder currently visually sits, which only matches
+      // originalIndex until the pointer moves elsewhere within the bank.
+      const originalIndex = Number(tile.dataset.index);
+      let previewGapIndex = originalIndex;
+      let otherTiles = [];
+      let baselineRects = [];
+      let placeholder = null;
+      let bankTop = 0;
+
       function beginDrag(){
         dragging = true;
         skipNextBankTap = true;
@@ -2105,6 +2124,53 @@ function setupBankTileDragging(){
         tile.style.width = `${rect.width}px`;
         tile.style.height = `${rect.height}px`;
         tile.style.margin = '0';
+
+        otherTiles = [...bankTiles.querySelectorAll('.bank-tile')].filter(t => t !== tile);
+        // Captured once, before any preview shifting happens - these stay
+        // valid, stable reference points for the gap-index calculation
+        // for the entire drag, regardless of whatever transforms get
+        // applied to individual tiles later during the preview.
+        baselineRects = otherTiles.map(t => t.getBoundingClientRect());
+        bankTop = bankTiles.getBoundingClientRect().top;
+
+        // Placeholder takes the dragged tile's exact spot in the flex
+        // row - same size, faded, no letter - so nothing else shifts
+        // the instant the drag begins, only once the pointer actually
+        // moves somewhere new.
+        placeholder = document.createElement('div');
+        placeholder.className = 'bank-tile-placeholder';
+        tile.parentNode.insertBefore(placeholder, tile);
+      }
+
+      // Moves the placeholder to sit right before otherTiles[gapIndex]
+      // (or at the very end if gapIndex is past the last tile), then
+      // FLIP-animates any other tile whose position actually changed
+      // as a result - this is what makes the shift read as tiles
+      // sliding aside to open a space, not a silent snap.
+      function movePlaceholderTo(gapIndex){
+        const beforeRects = new Map();
+        otherTiles.forEach(t => beforeRects.set(t, t.getBoundingClientRect()));
+
+        if(gapIndex >= otherTiles.length){
+          bankTiles.appendChild(placeholder);
+        } else {
+          bankTiles.insertBefore(placeholder, otherTiles[gapIndex]);
+        }
+
+        otherTiles.forEach(t => {
+          const before = beforeRects.get(t);
+          const after = t.getBoundingClientRect();
+          const dx = before.left - after.left;
+          if(dx === 0) return;
+          t.style.transition = 'none';
+          t.style.transform = `translateX(${dx}px)`;
+          requestAnimationFrame(() => {
+            t.style.transition = 'transform 0.15s ease';
+            t.style.transform = '';
+          });
+        });
+
+        previewGapIndex = gapIndex;
       }
 
       function onMove(ev){
@@ -2120,51 +2186,23 @@ function setupBankTileDragging(){
         tile.style.left = `${ev.clientX - grabOffsetX}px`;
         tile.style.top = `${ev.clientY - grabOffsetY}px`;
 
-        // Figure out whether the pointer has moved over a different,
-        // still-available tile - if so, that tile takes the dragged
-        // one's old spot and everything between shifts accordingly.
-        const others = [...bankTiles.querySelectorAll('.bank-tile')].filter(t => t !== tile && !t.disabled);
-        for(const other of others){
-          const oRect = other.getBoundingClientRect();
-          if(ev.clientX < oRect.left || ev.clientX > oRect.right || ev.clientY < oRect.top || ev.clientY > oRect.bottom) continue;
-          const draggedIndex = Number(tile.dataset.index);
-          const targetIndex = Number(other.dataset.index);
-          if(draggedIndex === targetIndex) continue;
+        // Nothing moves at all while still above the letter bank -
+        // only once the pointer actually reaches the top of the tiles
+        // does a live preview begin.
+        const withinBank = ev.clientY >= bankTop;
+        let targetGapIndex;
+        if(!withinBank){
+          targetGapIndex = originalIndex;
+        } else {
+          targetGapIndex = otherTiles.length;
+          for(let i = 0; i < otherTiles.length; i++){
+            const midX = (baselineRects[i].left + baselineRects[i].right) / 2;
+            if(ev.clientX < midX){ targetGapIndex = i; break; }
+          }
+        }
 
-          const order = bankState[activeTier].order;
-          const stableIds = bankState[activeTier].stableIds;
-          const [moved] = order.splice(draggedIndex, 1);
-          order.splice(targetIndex, 0, moved);
-          const [movedId] = stableIds.splice(draggedIndex, 1);
-          stableIds.splice(targetIndex, 0, movedId);
-
-          // FLIP animation: capture where every other (non-dragged) tile
-          // sits right now, before relocating the DOM node - this is
-          // what lets them visibly slide into their new spot afterward,
-          // rather than silently snapping there.
-          const beforeRects = new Map();
-          others.forEach(t => beforeRects.set(t, t.getBoundingClientRect()));
-
-          // Relocate the actual DOM node rather than rebuilding the
-          // list, so the drag gesture (and this tile's identity/
-          // listeners) is never interrupted mid-motion.
-          if(draggedIndex < targetIndex){ other.after(tile); } else { other.before(tile); }
-          [...bankTiles.querySelectorAll('.bank-tile')].forEach((el, i) => { el.dataset.index = String(i); });
-
-          others.forEach(t => {
-            const before = beforeRects.get(t);
-            const after = t.getBoundingClientRect();
-            const dx = before.left - after.left;
-            const dy = before.top - after.top;
-            if(dx === 0 && dy === 0) return;
-            t.style.transition = 'none';
-            t.style.transform = `translate(${dx}px, ${dy}px)`;
-            requestAnimationFrame(() => {
-              t.style.transition = 'transform 0.2s ease';
-              t.style.transform = '';
-            });
-          });
-          break;
+        if(targetGapIndex !== previewGapIndex){
+          movePlaceholderTo(targetGapIndex);
         }
       }
 
@@ -2174,6 +2212,23 @@ function setupBankTileDragging(){
         document.removeEventListener('pointerup', onUp);
         document.removeEventListener('pointercancel', onUp);
         if(dragging){
+          // Only now, on an actual drop, does the real order/stableIds
+          // data get touched - everything up to this point was purely
+          // visual preview.
+          if(previewGapIndex !== originalIndex){
+            const order = bankState[activeTier].order;
+            const stableIds = bankState[activeTier].stableIds;
+            const remainingOrder = [...order];
+            const [movedLetter] = remainingOrder.splice(originalIndex, 1);
+            remainingOrder.splice(previewGapIndex, 0, movedLetter);
+            const remainingIds = [...stableIds];
+            const [movedId] = remainingIds.splice(originalIndex, 1);
+            remainingIds.splice(previewGapIndex, 0, movedId);
+            bankState[activeTier].order = remainingOrder;
+            bankState[activeTier].stableIds = remainingIds;
+          }
+
+          if(placeholder && placeholder.parentNode) placeholder.remove();
           tile.classList.remove('dragging');
           tile.style.position = '';
           tile.style.left = '';
@@ -2181,6 +2236,11 @@ function setupBankTileDragging(){
           tile.style.width = '';
           tile.style.height = '';
           tile.style.margin = '';
+
+          // Clean rebuild in the newly-committed order, rather than
+          // trying to reconcile whatever ad-hoc DOM state the preview
+          // left behind.
+          render(false);
         }
       }
 
