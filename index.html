@@ -790,12 +790,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   async function submitScore({ date, tier, timeMs, hintsUsed, displayName }){
     try{
       const user = auth.currentUser;
-      await addDoc(collection(db, 'scores'), {
+      const scoreData = {
         date, tier, timeMs, hintsUsed, displayName,
         uid: user ? user.uid : null,
         isGuest: !user || user.isAnonymous,
         createdAt: Date.now(),
-      });
+      };
+      if(user && !user.isAnonymous){
+        // Deterministic ID per (uid, date, tier) - this is what actually
+        // prevents duplicate leaderboard entries for the same person's
+        // same puzzle, no matter how many separate sessions or devices
+        // submit it. A later submission correctly overwrites an earlier
+        // one for the same puzzle, rather than creating a second entry.
+        await setDoc(doc(db, 'scores', `${user.uid}_${date}_${tier}`), scoreData);
+      } else {
+        // Guests have no persistent identity to deduplicate against, so
+        // they keep the previous auto-ID behavior unchanged.
+        await addDoc(collection(db, 'scores'), scoreData);
+      }
       return { success: true };
     }catch(error){
       return { success: false, error: 'Could not save your score right now.' };
