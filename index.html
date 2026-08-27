@@ -1505,6 +1505,12 @@ function saveStats(stats){
 // and can eventually follow the account across devices. Local storage
 // remains the fast, synchronous source of truth for everything currently
 // on this page - this just mirrors it outward in the background.
+let dailyProgressSyncTimeout = null;
+function scheduleDailyProgressSync(){
+  clearTimeout(dailyProgressSyncTimeout);
+  dailyProgressSyncTimeout = setTimeout(syncDailyProgressToCloud, 2000);
+}
+
 function syncStatsToCloud(stats){
   if(!window.LetterLadderAuth) return;
   const user = window.LetterLadderAuth.getCurrentUser();
@@ -1515,6 +1521,66 @@ function syncStatsToCloud(stats){
       stats
     ).catch(()=>{});
   }catch(e){}
+}
+
+// Captures every localStorage key under today's account+date prefix as
+// one bundle - guesses, timer state, hints, completion flags, all of it
+// - rather than listing each specific key type individually, which would
+// risk silently missing something as the game's state model grows.
+function getTodaysProgressSnapshot(){
+  const prefix = `letterladder:${accountScope}:${dateKey}:`;
+  const snapshot = {};
+  for(let i = 0; i < localStorage.length; i++){
+    const key = localStorage.key(i);
+    if(key && key.startsWith(prefix)){
+      snapshot[key] = localStorage.getItem(key);
+    }
+  }
+  return snapshot;
+}
+
+function applyProgressSnapshot(snapshot){
+  for(const key of Object.keys(snapshot)){
+    localStorage.setItem(key, snapshot[key]);
+  }
+}
+
+// Same fire-and-forget pattern as stats: keeps a durable, cloud-backed
+// copy of today's actual puzzle progress in sync, so a genuinely fresh
+// browser or device can restore it rather than starting from scratch.
+function syncDailyProgressToCloud(){
+  if(!window.LetterLadderAuth) return;
+  if(isArchiveMode) return; // archive plays never sync progress
+  const user = window.LetterLadderAuth.getCurrentUser();
+  if(!user || user.isAnonymous) return;
+  try{
+    const snapshot = getTodaysProgressSnapshot();
+    window.LetterLadderAuth.setDoc(
+      window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`),
+      { snapshot }
+    ).catch(()=>{});
+  }catch(e){}
+}
+
+// Only pulls when today's local progress looks genuinely empty (no
+// snapshot keys found at all), matching the same "never clobber newer
+// local changes" rule the stats sync already uses.
+async function pullDailyProgressFromCloudIfNeeded(){
+  if(!window.LetterLadderAuth) return false;
+  if(isArchiveMode) return false;
+  const user = window.LetterLadderAuth.getCurrentUser();
+  if(!user || user.isAnonymous) return false;
+  if(Object.keys(getTodaysProgressSnapshot()).length > 0) return false;
+  try{
+    const snap = await window.LetterLadderAuth.getDoc(
+      window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`)
+    );
+    if(snap.exists() && snap.data().snapshot){
+      applyProgressSnapshot(snap.data().snapshot);
+      return true;
+    }
+  }catch(e){}
+  return false;
 }
 
 importMigrationDataIfPresent(); // deferred to here so STATS_KEY/blankStat/loadStats/saveStats above are safely initialized before the merge logic can reference them
@@ -3496,6 +3562,7 @@ function render(focusInput = false, pendingErrors = null){
   }
 
   renderTimerWidget();
+  scheduleDailyProgressSync();
 }
 
 document.getElementById('tabs').addEventListener('click', (e)=>{
@@ -3521,6 +3588,8 @@ document.addEventListener('visibilitychange', ()=>{
 });
 window.addEventListener('pagehide', ()=>{
   pauseTimer(activeTier);
+  clearTimeout(dailyProgressSyncTimeout);
+  syncDailyProgressToCloud();
 });
 
 render(!isTouchDevice);
@@ -3552,9 +3621,14 @@ async function pullStatsFromCloudIfNeeded(){
 (function waitForLetterLadderAuth(attemptsLeft){
   if(attemptsLeft === undefined) attemptsLeft = 100; // ~5 seconds total at 50ms intervals
   if(window.LetterLadderAuth){
-    window.LetterLadderAuth.onAuthReady(() => {
+    window.LetterLadderAuth.onAuthReady(async () => {
       renderAccountWidget();
       pullStatsFromCloudIfNeeded();
+      const restored = await pullDailyProgressFromCloudIfNeeded();
+      if(restored){
+        render(false);
+        renderTimerWidget();
+      }
     });
   } else if(attemptsLeft > 0){
     setTimeout(() => waitForLetterLadderAuth(attemptsLeft - 1), 50);
