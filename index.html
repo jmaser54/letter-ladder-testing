@@ -361,7 +361,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     background: var(--bg-panel); border-radius: 20px; padding: 36px;
     width: min(90vw, 580px); height: min(78vh, 480px);
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    display: flex; align-items:center; justify-content:center;
+    display: flex; flex-direction: column; align-items:center; justify-content:center; gap: 28px;
+  }
+  .play-prompt-text{
+    font-family:'Fraunces',serif; font-weight:700; color: var(--ink);
+    font-size: 4.08rem; text-align: center; line-height: 1.1;
   }
   .play-btn-big{
     font-family:'Fraunces',serif; font-weight:700; font-size: 1.36rem;
@@ -1374,6 +1378,7 @@ function showPlayPopupIfNeeded(tier, onPlay){
   overlay.className = 'play-overlay';
   overlay.innerHTML = `
     <div class="play-card">
+      <div class="play-prompt-text">Ready to begin?</div>
       <button type="button" class="play-btn-big" id="play-btn-big">Play</button>
     </div>
   `;
