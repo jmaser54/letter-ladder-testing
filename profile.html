@@ -60,6 +60,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     background: rgba(245,239,224,0.08); color: var(--ink); touch-action: manipulation;
   }
   .empty-state{ text-align:center; color: var(--ink-dim); padding: 40px 20px; background: var(--bg-panel); border-radius:18px; }
+  .page-footer{ text-align:center; margin-top: 8px; color: var(--ink-dim); font-size: 0.85rem; }
+  .page-footer a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation; }
 </style>
 </head>
 <body>
@@ -137,6 +139,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <div class="profile-card">
         <button type="button" class="btn-ghost" id="logout-btn" style="width:100%;">Log out</button>
+      </div>
+      <div class="page-footer">
+        <a href="delete-account.html">Delete Account</a>
       </div>
     `;
 
