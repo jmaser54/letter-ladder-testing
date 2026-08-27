@@ -2194,10 +2194,27 @@ function setupBankTileDragging(){
         if(!withinBank){
           targetGapIndex = originalIndex;
         } else {
-          targetGapIndex = otherTiles.length;
-          for(let i = 0; i < otherTiles.length; i++){
-            const midX = (baselineRects[i].left + baselineRects[i].right) / 2;
-            if(ev.clientX < midX){ targetGapIndex = i; break; }
+          // Group into rows by baseline top value - flex-wrap lays tiles
+          // out in horizontal rows, so tiles sharing a row share the
+          // same top. Comparing X-position needs to happen only within
+          // whichever row the pointer is actually hovering over, not
+          // across every row at once.
+          const rowTops = [...new Set(baselineRects.map(r => r.top))].sort((a,b) => a - b);
+          let targetRowTop = rowTops[0];
+          let closestDist = Infinity;
+          for(const top of rowTops){
+            const dist = Math.abs(ev.clientY - (top + 24)); // compare against each row's vertical center
+            if(dist < closestDist){ closestDist = dist; targetRowTop = top; }
+          }
+
+          const rowEntries = baselineRects
+            .map((r, i) => ({ i, r }))
+            .filter(entry => entry.r.top === targetRowTop);
+
+          targetGapIndex = rowEntries.length ? rowEntries[rowEntries.length - 1].i + 1 : otherTiles.length;
+          for(const entry of rowEntries){
+            const midX = (entry.r.left + entry.r.right) / 2;
+            if(ev.clientX < midX){ targetGapIndex = entry.i; break; }
           }
         }
 
