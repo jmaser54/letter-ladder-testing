@@ -372,6 +372,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .leaderboard-prompt-dismiss:hover{ color: var(--amber); }
   .leaderboard-prompt-title{ font-size: 1rem; text-align:center; margin: 6px 0 20px 0; padding-right: 60px; }
+  .leaderboard-form-title{ font-family:'Fraunces', serif; font-weight:700; font-size: 1.1rem; text-align:left; margin: 6px 0 16px 0; }
   .leaderboard-prompt-actions{ display:flex; flex-direction:column; gap:10px; }
   .leaderboard-prompt-actions button{ width:100%; }
   .leaderboard-form-field{
@@ -432,6 +433,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   .timer-widget{
     position: absolute; bottom: 0; right: 0;
+  }
+  .hint-time-penalty-indicator{
+    position: absolute; bottom: -20px; right: 0;
+    font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
+    color: var(--amber); font-size: 0.8rem;
   }
   .account-widget{
     position: absolute; bottom: 0; left: 0;
@@ -793,6 +799,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="about.html">How to play</a>
       <a href="index.html" id="todays-puzzles-link" style="display:none;">Today's puzzles</a>
       <a href="past-puzzles.html">Past puzzles</a>
+      <a href="leaderboard.html">Leaderboard</a>
     </div>
   </header>
 
@@ -998,6 +1005,7 @@ function showTimerChoicePopupIfNeeded(){
         <button type="button" class="timer-choice-timed">Timed</button>
         <button type="button" class="timer-choice-untimed">Untimed</button>
       </div>
+      <p style="font-size:0.8rem; margin-top:14px; margin-bottom:0;">Top times are posted on the leaderboard.</p>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -1452,10 +1460,42 @@ function markPlayedIfNeeded(tier){
   saveStats(stats);
 }
 
+const HINT_TIME_PENALTY_MS = 3 * 60 * 1000;
+
+function showHintTimePenaltyIndicator(){
+  const existing = document.getElementById('hint-time-penalty-indicator');
+  if(existing) existing.remove();
+
+  const brandRow = document.querySelector('.brand-row');
+  if(!brandRow) return;
+
+  const indicator = document.createElement('div');
+  indicator.id = 'hint-time-penalty-indicator';
+  indicator.className = 'hint-time-penalty-indicator';
+  indicator.textContent = '+3 mins';
+  brandRow.appendChild(indicator);
+
+  setTimeout(() => {
+    if(indicator.parentNode) indicator.remove();
+  }, 3000);
+}
+
 function recordHintUsed(tier){
   const key = `letterladder:${dateKey}:${tier}:hintsUsed`;
   const current = parseInt(localStorage.getItem(key) || '0', 10);
   localStorage.setItem(key, String(current + 1));
+
+  // Applied directly to the accumulated total (not deferred until the
+  // puzzle is completed), so the very next timer display tick already
+  // reflects the penalty - regardless of whether the timer is currently
+  // running or paused at this exact moment.
+  const accumulatedKey = timerAccumulatedKey(tier);
+  const currentAccumulated = Number(localStorage.getItem(accumulatedKey) || 0);
+  localStorage.setItem(accumulatedKey, String(currentAccumulated + HINT_TIME_PENALTY_MS));
+
+  if(getTimerChoice() === 'timed'){
+    showHintTimePenaltyIndicator();
+  }
 }
 function getHintsUsed(tier){
   return parseInt(localStorage.getItem(`letterladder:${dateKey}:${tier}:hintsUsed`) || '0', 10);
@@ -1584,7 +1624,7 @@ function showAccountForm(mode){
   const isLogin = mode === 'login';
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card">
-      ${isLogin ? `<div class="leaderboard-prompt-title">Log in</div>` : ''}
+      ${isLogin ? `<div class="leaderboard-prompt-title">Log in</div>` : `<div class="leaderboard-form-title">Create account</div>`}
       <div class="leaderboard-form-error" id="acct-form-error"></div>
       <input type="text" class="leaderboard-form-field" id="acct-username-field" placeholder="Username" autocomplete="username">
       <input type="password" class="leaderboard-form-field" id="acct-password-field" placeholder="Password" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
@@ -1736,7 +1776,8 @@ function showLeaderboardPromptIfNeeded(tier){
   bindTapAction(overlay.querySelector('#lb-create-account-btn'), ()=>{
     const titleEl = overlay.querySelector('#lb-prompt-title');
     const bodyEl = overlay.querySelector('#lb-prompt-body');
-    titleEl.textContent = '';
+    titleEl.className = 'leaderboard-form-title';
+    titleEl.textContent = 'Create account';
     bodyEl.innerHTML = `
       <div class="leaderboard-form-error" id="lb-form-error"></div>
       <input type="text" class="leaderboard-form-field" id="lb-username-field" placeholder="Username" autocomplete="username">
@@ -3250,6 +3291,9 @@ showMigrationLinkBannerIfNeeded();
   // If it never loads (ad-blocker, offline, etc.), this quietly gives up -
   // the account widget just stays empty rather than polling forever.
 })();
+if(new URLSearchParams(window.location.search).get('showsignup') === '1'){
+  showAccountForm('create');
+}
 timerTickInterval = setInterval(renderTimerWidget, 1000);
 
 </script>

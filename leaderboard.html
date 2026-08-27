@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K8X9ZNZP');</script>
+<!-- End Google Tag Manager -->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Leaderboard — Letter Ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1B2A41; --bg-panel:#24384F; --rung:#F5EFE0; --ink:#F5EFE0; --ink-dim:#9FB3C8; --amber:#E8A33D; --green:#6FBF8B;
+  }
+  body{
+    margin:0; padding: 32px 16px 80px;
+    background: radial-gradient(120% 140% at 50% -10%, #24384F 0%, #1B2A41 55%, #142132 100%);
+    color: var(--ink); font-family:'Inter',system-ui,sans-serif;
+  }
+  .wrap{ max-width: 560px; margin:0 auto; position: relative; }
+  h1{ font-family:'Fraunces',serif; font-weight:700; font-size:2rem; margin-bottom:4px; padding-right: 130px; }
+  a{ color: var(--amber); }
+  .back{ display:inline-block; margin-bottom: 22px; color: var(--ink-dim); text-decoration:none; touch-action: manipulation; }
+  .back:hover{ color: var(--amber); }
+  .intro{ color: var(--ink-dim); margin-bottom: 24px; }
+
+  .create-account-link{
+    position: absolute; top: 32px; right: 0;
+    font-weight:600; font-size:0.85rem; text-decoration:none;
+    touch-action: manipulation;
+  }
+  .create-account-link:hover{ text-decoration: underline; }
+
+  .tier-card{
+    background: var(--bg-panel); border-radius:18px; padding: 20px 22px; margin-bottom:18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  }
+  .tier-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.2rem; margin-bottom:14px; }
+  .score-row{
+    display:flex; align-items:center; gap:12px; padding: 8px 0;
+    border-bottom: 1px solid rgba(245,239,224,0.08);
+  }
+  .score-row:last-child{ border-bottom: none; }
+  .score-rank{ font-family:'Fraunces',serif; font-weight:700; color: var(--amber); width: 1.4em; flex-shrink:0; }
+  .score-name{ flex:1; font-weight:600; word-break: break-word; }
+  .score-hints{ font-size: 0.85rem; }
+  .score-time{ font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums; }
+  .empty-tier{ color: var(--ink-dim); font-size: 0.9rem; }
+
+  .past-leaderboards-link{ display:block; text-align:center; margin-top: 8px; font-weight:600; }
+  .empty-state{ text-align:center; color: var(--ink-dim); padding: 40px 20px; background: var(--bg-panel); border-radius:18px; }
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K8X9ZNZP"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<div class="wrap">
+  <a class="back" href="index.html">← Back to game</a>
+  <a class="create-account-link" href="index.html?showsignup=1" id="create-account-link" style="display:none;">Create account</a>
+  <h1>Leaderboard</h1>
+  <div class="intro">Each hint used adds 3 minutes to the timer.</div>
+  <div id="leaderboard-content">
+    <div class="empty-state">Loading…</div>
+  </div>
+  <a class="past-leaderboards-link" href="past-leaderboards.html">Past Leaderboards →</a>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
+    authDomain: "letter-ladder-c6b15.firebaseapp.com",
+    projectId: "letter-ladder-c6b15",
+    storageBucket: "letter-ladder-c6b15.firebasestorage.app",
+    messagingSenderId: "131656230098",
+    appId: "1:131656230098:web:2b752fc4fa953f3557b90b",
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  function todayKey(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function formatTime(ms){
+    const totalSeconds = Math.floor(ms / 1000);
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${String(s).padStart(2,'0')}`;
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    const link = document.getElementById('create-account-link');
+    if(!user || user.isAnonymous){
+      link.style.display = '';
+    }
+  });
+
+  const tierNames = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+
+  async function loadLeaderboard(){
+    const contentEl = document.getElementById('leaderboard-content');
+    const today = todayKey();
+
+    try{
+      const tierSections = await Promise.all(['easy','medium','hard'].map(async (tier) => {
+        const q = query(
+          collection(db, 'scores'),
+          where('date', '==', today),
+          where('tier', '==', tier),
+          orderBy('timeMs', 'asc'),
+          limit(3)
+        );
+        const snap = await getDocs(q);
+        const rows = snap.docs.map(d => d.data());
+        const rowsHtml = rows.length === 0
+          ? `<div class="empty-tier">No times posted yet today - be the first!</div>`
+          : rows.map((row, i) => `
+              <div class="score-row">
+                <div class="score-rank">${i+1}</div>
+                <div class="score-name">${row.displayName || 'Guest'}</div>
+                <div class="score-hints">${'💡'.repeat(row.hintsUsed || 0)}</div>
+                <div class="score-time">${formatTime(row.timeMs)}</div>
+              </div>
+            `).join('');
+        return `
+          <div class="tier-card">
+            <div class="tier-title">${tierNames[tier]}</div>
+            ${rowsHtml}
+          </div>
+        `;
+      }));
+      contentEl.innerHTML = tierSections.join('');
+    }catch(e){
+      contentEl.innerHTML = `<div class="empty-state">Couldn't load the leaderboard right now - try refreshing.</div>`;
+    }
+  }
+
+  loadLeaderboard();
+</script>
+</body>
+</html>
