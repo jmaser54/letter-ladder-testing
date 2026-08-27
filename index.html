@@ -352,6 +352,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; align-items:center; justify-content:center;
     z-index: 1000; padding: 20px;
   }
+  .play-overlay{
+    position: fixed; inset: 0; background: rgba(10,16,26,0.94);
+    display: flex; align-items:center; justify-content:center;
+    z-index: 1000; padding: 20px;
+  }
+  .play-btn-big{
+    font-family:'Fraunces',serif; font-weight:700; font-size: 1.6rem;
+    background: var(--amber); color: #1B2A41; border: none; border-radius: 18px;
+    padding: 22px 64px; cursor: pointer; touch-action: manipulation;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .play-btn-big:hover{ filter: brightness(1.05); }
   .confirm-card{
     background: var(--bg-panel); border-radius: 16px; padding: 24px 22px;
     max-width: 340px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
@@ -991,8 +1003,8 @@ function showHowToPlayPopupIfNeeded(){
 const TIMER_CHOICE_MADE_KEY = 'letterladder:timerChoiceMade';
 function showTimerChoicePopupIfNeeded(){
   if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
-    startTimerIfNeeded(activeTier);
     render(!isTouchDevice);
+    showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
     return;
   }
 
@@ -1015,8 +1027,8 @@ function showTimerChoicePopupIfNeeded(){
     setTimerChoice(choice);
     localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
     overlay.remove();
-    startTimerIfNeeded(activeTier);
     render(!isTouchDevice);
+    showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
   }
   bindTapAction(overlay.querySelector('.timer-choice-timed'), ()=>choose('timed'));
   bindTapAction(overlay.querySelector('.timer-choice-untimed'), ()=>choose('untimed'));
@@ -1325,6 +1337,29 @@ function formatElapsed(ms){
   const s = totalSeconds % 60;
   return `${m}:${String(s).padStart(2,'0')}`;
 }
+function hasEverStartedTimer(tier){
+  const accumulated = Number(localStorage.getItem(timerAccumulatedKey(tier)) || 0);
+  return accumulated > 0
+    || localStorage.getItem(timerElapsedKey(tier)) !== null
+    || localStorage.getItem(timerStartKey(tier)) !== null;
+}
+
+function showPlayPopupIfNeeded(tier, onPlay){
+  const hasScheduledPuzzle = PUZZLE_SCHEDULE[dateKey] && PUZZLE_SCHEDULE[dateKey][tier];
+  if(isArchiveMode || !hasScheduledPuzzle || hasEverStartedTimer(tier)){
+    onPlay();
+    return;
+  }
+  const overlay = document.createElement('div');
+  overlay.className = 'play-overlay';
+  overlay.innerHTML = `<button type="button" class="play-btn-big" id="play-btn-big">Play</button>`;
+  document.body.appendChild(overlay);
+  bindTapAction(overlay.querySelector('#play-btn-big'), ()=>{
+    overlay.remove();
+    onPlay();
+  });
+}
+
 function startTimerIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never get timed
   if(!(PUZZLE_SCHEDULE[dateKey] && PUZZLE_SCHEDULE[dateKey][tier])) return; // nothing scheduled to time
@@ -3259,8 +3294,8 @@ document.getElementById('tabs').addEventListener('click', (e)=>{
   localStorage.setItem('letterladder:activeTier', activeTier);
   activeLength = null;
   document.querySelectorAll('.confetti-piece').forEach(piece => piece.remove());
-  startTimerIfNeeded(activeTier);
   render(!isTouchDevice);
+  showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
 });
 
 document.addEventListener('visibilitychange', ()=>{
