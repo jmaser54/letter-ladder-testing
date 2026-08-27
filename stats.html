@@ -149,39 +149,75 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 </script>
 
 <script>
-const stats = loadStats();
-const container = document.getElementById('stats-list');
+function renderStatsPage(stats){
+  const container = document.getElementById('stats-list');
+  const totalEverPlayed = stats.easy.played + stats.medium.played + stats.hard.played;
 
-const totalEverPlayed = stats.easy.played + stats.medium.played + stats.hard.played;
+  if(totalEverPlayed === 0){
+    container.innerHTML = `<div class="empty-state">No puzzles played yet on this device.</div>`;
+  } else {
+    function solvePct(stat){
+      return stat.played === 0 ? 0 : Math.round((stat.solved / stat.played) * 100);
+    }
+    function renderCard(label, dotClass, stat, isTotal){
+      const streakNote = isTotal ? `<div class="streak-note">Complete all 3 puzzles to maintain this streak</div>` : '';
+      return `
+        <div class="stat-card ${isTotal ? 'total' : ''}">
+          <div class="stat-title"><span class="tier-dot ${dotClass}"></span>${label}</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="stat-value">${stat.played}</div><div class="stat-label">Played</div></div>
+            <div class="stat-box"><div class="stat-value">${solvePct(stat)}%</div><div class="stat-label">Solved</div></div>
+            <div class="stat-box"><div class="stat-value">${stat.currentStreak}</div><div class="stat-label">Current Streak</div></div>
+            <div class="stat-box"><div class="stat-value">${stat.maxStreak}</div><div class="stat-label">Max Streak</div></div>
+          </div>
+          ${streakNote}
+        </div>`;
+    }
 
-if(totalEverPlayed === 0){
-  container.innerHTML = `<div class="empty-state">No puzzles played yet on this device.</div>`;
-} else {
-  function solvePct(stat){
-    return stat.played === 0 ? 0 : Math.round((stat.solved / stat.played) * 100);
+    container.innerHTML = [
+      renderCard('Total', 'total', stats.total, true),
+      renderCard('Easy', 'easy', stats.easy, false),
+      renderCard('Medium', 'medium', stats.medium, false),
+      renderCard('Hard', 'hard', stats.hard, false),
+    ].join('');
   }
-  function renderCard(label, dotClass, stat, isTotal){
-    const streakNote = isTotal ? `<div class="streak-note">Complete all 3 puzzles to maintain this streak</div>` : '';
-    return `
-      <div class="stat-card ${isTotal ? 'total' : ''}">
-        <div class="stat-title"><span class="tier-dot ${dotClass}"></span>${label}</div>
-        <div class="stat-grid">
-          <div class="stat-box"><div class="stat-value">${stat.played}</div><div class="stat-label">Played</div></div>
-          <div class="stat-box"><div class="stat-value">${solvePct(stat)}%</div><div class="stat-label">Solved</div></div>
-          <div class="stat-box"><div class="stat-value">${stat.currentStreak}</div><div class="stat-label">Current Streak</div></div>
-          <div class="stat-box"><div class="stat-value">${stat.maxStreak}</div><div class="stat-label">Max Streak</div></div>
-        </div>
-        ${streakNote}
-      </div>`;
-  }
-
-  container.innerHTML = [
-    renderCard('Total', 'total', stats.total, true),
-    renderCard('Easy', 'easy', stats.easy, false),
-    renderCard('Medium', 'medium', stats.medium, false),
-    renderCard('Hard', 'hard', stats.hard, false),
-  ].join('');
 }
+
+renderStatsPage(loadStats());
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
+    authDomain: "letter-ladder-c6b15.firebaseapp.com",
+    projectId: "letter-ladder-c6b15",
+    storageBucket: "letter-ladder-c6b15.firebasestorage.app",
+    messagingSenderId: "131656230098",
+    appId: "1:131656230098:web:2b752fc4fa953f3557b90b",
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Matches index.html's same "only pull when local looks genuinely
+  // empty" rule, so a fresh device correctly pulls real stats down from
+  // the cloud without ever risking overwriting newer local changes on a
+  // device that already has some.
+  onAuthStateChanged(auth, async (user) => {
+    if(!user || user.isAnonymous) return;
+    if(localStorage.getItem(STATS_KEY)) return;
+    try{
+      const snap = await getDoc(doc(db, 'playerStats', user.uid));
+      if(snap.exists()){
+        localStorage.setItem(STATS_KEY, JSON.stringify(snap.data()));
+        renderStatsPage(loadStats());
+      }
+    }catch(e){}
+  });
 </script>
 </body>
 </html>

@@ -358,14 +358,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     z-index: 1000; padding: 20px;
   }
   .play-card{
-    background: var(--bg-panel); border-radius: 20px; padding: 48px 36px;
-    max-width: 360px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    background: var(--bg-panel); border-radius: 20px; padding: 36px;
+    width: min(92vw, 480px); height: min(88vh, 720px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     display: flex; align-items:center; justify-content:center;
   }
   .play-btn-big{
-    font-family:'Fraunces',serif; font-weight:700; font-size: 1.6rem;
-    background: var(--amber); color: #1B2A41; border: none; border-radius: 18px;
-    padding: 22px 64px; cursor: pointer; touch-action: manipulation;
+    font-family:'Fraunces',serif; font-weight:700; font-size: 0.95rem;
+    background: var(--amber); color: #1B2A41; border: none; border-radius: 10px;
+    padding: 12px 18px; cursor: pointer; touch-action: manipulation;
   }
   .play-btn-big:hover{ filter: brightness(1.05); }
   .confirm-card{
@@ -1471,6 +1472,24 @@ function loadStats(){
 }
 function saveStats(stats){
   try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){}
+  syncStatsToCloud(stats);
+}
+
+// Fire-and-forget: keeps a durable, cloud-backed copy of stats in sync
+// with every local change, so they survive local storage getting cleared
+// and can eventually follow the account across devices. Local storage
+// remains the fast, synchronous source of truth for everything currently
+// on this page - this just mirrors it outward in the background.
+function syncStatsToCloud(stats){
+  if(!window.LetterLadderAuth) return;
+  const user = window.LetterLadderAuth.getCurrentUser();
+  if(!user || user.isAnonymous) return;
+  try{
+    window.LetterLadderAuth.setDoc(
+      window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', user.uid),
+      stats
+    ).catch(()=>{});
+  }catch(e){}
 }
 
 importMigrationDataIfPresent(); // deferred to here so STATS_KEY/blankStat/loadStats/saveStats above are safely initialized before the merge logic can reference them
@@ -3364,10 +3383,34 @@ showHowToPlayPopupIfNeeded();
 showMigrationWelcomeBannerIfNeeded();
 showMigrationLinkBannerIfNeeded();
 
+// Only pulls when the local cache looks genuinely empty (a fresh device
+// or browser that's never accumulated any local stats), so this can't
+// clobber newer local changes with a potentially stale cloud copy in the
+// far more common case of just reloading the same device. Still solves
+// the actual cross-device need: signing into a real account on a new
+// device correctly pulls its real stats down from the cloud.
+async function pullStatsFromCloudIfNeeded(){
+  if(!window.LetterLadderAuth) return;
+  const user = window.LetterLadderAuth.getCurrentUser();
+  if(!user || user.isAnonymous) return;
+  if(localStorage.getItem(STATS_KEY)) return;
+  try{
+    const snap = await window.LetterLadderAuth.getDoc(
+      window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', user.uid)
+    );
+    if(snap.exists()){
+      localStorage.setItem(STATS_KEY, JSON.stringify(snap.data()));
+    }
+  }catch(e){}
+}
+
 (function waitForLetterLadderAuth(attemptsLeft){
   if(attemptsLeft === undefined) attemptsLeft = 100; // ~5 seconds total at 50ms intervals
   if(window.LetterLadderAuth){
-    window.LetterLadderAuth.onAuthReady(() => renderAccountWidget());
+    window.LetterLadderAuth.onAuthReady(() => {
+      renderAccountWidget();
+      pullStatsFromCloudIfNeeded();
+    });
   } else if(attemptsLeft > 0){
     setTimeout(() => waitForLetterLadderAuth(attemptsLeft - 1), 50);
   }
