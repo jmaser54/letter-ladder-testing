@@ -271,6 +271,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     z-index: 50;
     box-shadow: 0 8px 18px rgba(0,0,0,0.45);
     transition: none;
+    scale: 1.3;
     animation: tile-jiggle 0.15s ease-in-out infinite;
   }
   @keyframes tile-jiggle{
@@ -365,7 +366,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .play-prompt-text{
     font-family:'Fraunces',serif; font-weight:700; color: var(--ink);
-    font-size: 4.08rem; text-align: center; line-height: 1.1;
+    font-size: 2.04rem; text-align: center; line-height: 1.1;
   }
   .play-btn-big{
     font-family:'Fraunces',serif; font-weight:700; font-size: 1.36rem;
@@ -2087,7 +2088,10 @@ function setupBankTileDragging(){
       const startClientY = e.clientY;
       const rect = tile.getBoundingClientRect();
       const grabOffsetX = e.clientX - rect.left;
-      const grabOffsetY = e.clientY - rect.top;
+      // Fixed rather than exact touch-relative offset, so the dragged
+      // tile consistently sits above the finger (not obscured by it)
+      // regardless of exactly where within the tile it was grabbed.
+      const grabOffsetY = rect.height * 1.5;
       let dragging = false;
       let holdTimeout = null;
 
@@ -2134,11 +2138,32 @@ function setupBankTileDragging(){
           const [movedId] = stableIds.splice(draggedIndex, 1);
           stableIds.splice(targetIndex, 0, movedId);
 
+          // FLIP animation: capture where every other (non-dragged) tile
+          // sits right now, before relocating the DOM node - this is
+          // what lets them visibly slide into their new spot afterward,
+          // rather than silently snapping there.
+          const beforeRects = new Map();
+          others.forEach(t => beforeRects.set(t, t.getBoundingClientRect()));
+
           // Relocate the actual DOM node rather than rebuilding the
           // list, so the drag gesture (and this tile's identity/
           // listeners) is never interrupted mid-motion.
           if(draggedIndex < targetIndex){ other.after(tile); } else { other.before(tile); }
           [...bankTiles.querySelectorAll('.bank-tile')].forEach((el, i) => { el.dataset.index = String(i); });
+
+          others.forEach(t => {
+            const before = beforeRects.get(t);
+            const after = t.getBoundingClientRect();
+            const dx = before.left - after.left;
+            const dy = before.top - after.top;
+            if(dx === 0 && dy === 0) return;
+            t.style.transition = 'none';
+            t.style.transform = `translate(${dx}px, ${dy}px)`;
+            requestAnimationFrame(() => {
+              t.style.transition = 'transform 0.2s ease';
+              t.style.transform = '';
+            });
+          });
           break;
         }
       }
