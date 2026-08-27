@@ -357,6 +357,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     max-width: 340px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
   .confirm-message{ font-size: 1rem; margin-bottom: 20px; text-align:center; }
+  .confirm-submessage{ font-size: 0.82rem; color: var(--ink-dim); margin-top: 8px; }
   .confirm-actions{ display:flex; gap:10px; justify-content:center; }
   .confirm-actions button{ flex:1; }
   .leaderboard-prompt-card{
@@ -847,14 +848,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>
 // ---------- date helpers ----------
 function bumpGuessCount(tier, L){
-  const key = `letterladder:${dateKey}:${tier}:guessCount:${L}`;
+  const key = `letterladder:${accountScope}:${dateKey}:${tier}:guessCount:${L}`;
   const current = Number(localStorage.getItem(key) || 0);
   localStorage.setItem(key, String(current + 1));
   return current + 1;
 }
 function getTotalGuessCount(tier){
   let total = 0;
-  const prefix = `letterladder:${dateKey}:${tier}:guessCount:`;
+  const prefix = `letterladder:${accountScope}:${dateKey}:${tier}:guessCount:`;
   for(let i = 0; i < localStorage.length; i++){
     const key = localStorage.key(i);
     if(key && key.startsWith(prefix)) total += Number(localStorage.getItem(key) || 0);
@@ -1207,7 +1208,6 @@ function importMigrationDataIfPresent(){
           merged[tier] = {
             played: (a.played || 0) + (b.played || 0),
             solved: (a.solved || 0) + (b.solved || 0),
-            score: (a.score || 0) + (b.score || 0),
             maxStreak: Math.max(a.maxStreak || 0, b.maxStreak || 0),
             lastSolvedDate: aMoreRecent ? a.lastSolvedDate : b.lastSolvedDate,
             currentStreak: aMoreRecent ? (a.currentStreak || 0) : (b.currentStreak || 0),
@@ -1278,6 +1278,13 @@ function showMigrationLinkBannerIfNeeded(){
 }
 
 const { key: dateKey, isArchive: isArchiveMode } = resolveDateKey();
+// Isolates all per-day puzzle-progress and stats keys by account, so
+// logging out of one account and into another on the same device never
+// bleeds data between them. Guests share one common 'guest' namespace,
+// matching how things worked before accounts existed - guests don't get
+// personal stats tracked anyway, so this only matters for the day's
+// in-progress guesses/hints, which is fine to share among guest sessions.
+const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
 if(isArchiveMode){
   const todaysPuzzlesLink = document.getElementById('todays-puzzles-link');
   if(todaysPuzzlesLink) todaysPuzzlesLink.style.display = '';
@@ -1287,9 +1294,9 @@ if(isArchiveMode){
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
 function getTimerChoice(){ return localStorage.getItem(TIMER_CHOICE_KEY) || 'untimed'; }
 function setTimerChoice(choice){ localStorage.setItem(TIMER_CHOICE_KEY, choice); }
-function timerStartKey(tier){ return `letterladder:${dateKey}:${tier}:timerStartedAt`; }
-function timerElapsedKey(tier){ return `letterladder:${dateKey}:${tier}:timerElapsedMs`; }
-function timerAccumulatedKey(tier){ return `letterladder:${dateKey}:${tier}:timerAccumulatedMs`; }
+function timerStartKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}:timerStartedAt`; }
+function timerElapsedKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}:timerElapsedMs`; }
+function timerAccumulatedKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}:timerAccumulatedMs`; }
 
 // The timer should only advance while the player is actually here, on this
 // puzzle - not while the tab is hidden, another tier is active, or they've
@@ -1357,7 +1364,7 @@ function renderTimerWidget(){
   });
 }
 
-function storageKey(tier){ return `letterladder:${dateKey}:${tier}`; }
+function storageKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}`; }
 function loadGuesses(tier){
   try{
     const raw = localStorage.getItem(storageKey(tier));
@@ -1373,11 +1380,10 @@ function clearGuesses(tier){
 
 // ---------- stats, streaks & score (all local to this device/browser -
 // there are no accounts, so none of this follows you to another device) ----------
-const STATS_KEY = 'letterladder:stats';
-const HINT_PENALTY_PER_USE = 5; // tweak this to make hints cost more/less
+const STATS_KEY = `letterladder:${accountScope}:stats`;
 
 function blankStat(){
-  return { played:0, solved:0, currentStreak:0, maxStreak:0, lastSolvedDate:null, score:0 };
+  return { played:0, solved:0, currentStreak:0, maxStreak:0, lastSolvedDate:null };
 }
 function loadStats(){
   try{
@@ -1421,7 +1427,7 @@ function revealSolutionAsLoss(tier){
     revealedGuesses[solution[i].length] = solution[i];
   }
   saveGuesses(tier, revealedGuesses);
-  localStorage.setItem(`letterladder:${dateKey}:${tier}:solutionRevealedAsLoss`, '1');
+  localStorage.setItem(`letterladder:${accountScope}:${dateKey}:${tier}:solutionRevealedAsLoss`, '1');
   const hasEverStarted = localStorage.getItem(timerStartKey(tier)) !== null || localStorage.getItem(timerAccumulatedKey(tier)) !== null;
   if(hasEverStarted && !localStorage.getItem(timerElapsedKey(tier))){
     localStorage.setItem(timerElapsedKey(tier), String(getCurrentElapsedMs(tier)));
@@ -1435,7 +1441,7 @@ function hasRealAccount(){
 
 function recordLossIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never count toward stats or analytics
-  const flagKey = `letterladder:${dateKey}:${tier}:lossCounted`;
+  const flagKey = `letterladder:${accountScope}:${dateKey}:${tier}:lossCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
 
@@ -1451,7 +1457,7 @@ function recordLossIfNeeded(tier){
 function markPlayedIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never count toward stats or analytics
   if(!hasRealAccount()) return; // guests don't get personal stats tracked at all
-  const flagKey = `letterladder:${dateKey}:${tier}:playedCounted`;
+  const flagKey = `letterladder:${accountScope}:${dateKey}:${tier}:playedCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
   const stats = loadStats();
@@ -1481,7 +1487,7 @@ function showHintTimePenaltyIndicator(){
 }
 
 function recordHintUsed(tier){
-  const key = `letterladder:${dateKey}:${tier}:hintsUsed`;
+  const key = `letterladder:${accountScope}:${dateKey}:${tier}:hintsUsed`;
   const current = parseInt(localStorage.getItem(key) || '0', 10);
   localStorage.setItem(key, String(current + 1));
 
@@ -1498,27 +1504,27 @@ function recordHintUsed(tier){
   }
 }
 function getHintsUsed(tier){
-  return parseInt(localStorage.getItem(`letterladder:${dateKey}:${tier}:hintsUsed`) || '0', 10);
+  return parseInt(localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:hintsUsed`) || '0', 10);
 }
 
 function getHintInfo(tier, L){
   try{
-    const raw = localStorage.getItem(`letterladder:${dateKey}:${tier}:hintInfo:${L}`);
+    const raw = localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:hintInfo:${L}`);
     return raw ? JSON.parse(raw) : { count: 0, letters: null, firstLetter: null };
   }catch(e){
     return { count: 0, letters: null, firstLetter: null };
   }
 }
 function saveHintInfo(tier, L, info){
-  localStorage.setItem(`letterladder:${dateKey}:${tier}:hintInfo:${L}`, JSON.stringify(info));
+  localStorage.setItem(`letterladder:${accountScope}:${dateKey}:${tier}:hintInfo:${L}`, JSON.stringify(info));
 }
 
 function getLastHintedLength(tier){
-  const raw = localStorage.getItem(`letterladder:${dateKey}:${tier}:lastHintedLength`);
+  const raw = localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:lastHintedLength`);
   return raw !== null ? Number(raw) : null;
 }
 function setLastHintedLength(tier, L){
-  const key = `letterladder:${dateKey}:${tier}:lastHintedLength`;
+  const key = `letterladder:${accountScope}:${dateKey}:${tier}:lastHintedLength`;
   if(L === null){
     localStorage.removeItem(key);
   } else {
@@ -1540,7 +1546,7 @@ function buildHintDisplayHtml(tier, L){
 
 function markStartedIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never count toward stats or analytics
-  const flagKey = `letterladder:${dateKey}:${tier}:startedCounted`;
+  const flagKey = `letterladder:${accountScope}:${dateKey}:${tier}:startedCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
 
@@ -1670,8 +1676,7 @@ function showAccountForm(mode){
       return;
     }
     localStorage.setItem('letterladder:accountUsername', result.username);
-    close();
-    renderAccountWidget();
+    window.location.reload();
   });
 }
 
@@ -1711,6 +1716,7 @@ function showForgotPasswordForm(){
     card.innerHTML = `
       <div class="leaderboard-prompt-title">Check your email</div>
       <div class="leaderboard-form-hint" style="text-align:center;">A password reset link has been sent. Click Cancel or close this to return to the game.</div>
+      <div class="leaderboard-form-hint" style="text-align:center;">Please check your spam folder if you don't see the password reset email in your inbox.</div>
       <div class="leaderboard-prompt-actions">
         <button type="button" class="btn-ghost" id="fp-done-btn">Close</button>
       </div>
@@ -1732,12 +1738,11 @@ function showLeaderboardPromptIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never touch the leaderboard
   if(!window.LetterLadderAuth) return; // Firebase's module script hasn't finished loading yet - skip gracefully rather than error
   if(localStorage.getItem(LEADERBOARD_PROMPT_DISMISSED_KEY)) return;
-  const currentUser = window.LetterLadderAuth.getCurrentUser();
-  if(currentUser && !currentUser.isAnonymous){
+  const savedUsername = localStorage.getItem('letterladder:accountUsername');
+  if(hasRealAccount()){
     // Already has a real account - silently submit under their existing
     // username every time, exactly as spec'd, with no popup at all.
-    const savedUsername = localStorage.getItem('letterladder:accountUsername');
-    if(savedUsername) submitCurrentScore(tier, savedUsername);
+    submitCurrentScore(tier, savedUsername);
     return;
   }
 
@@ -1805,14 +1810,14 @@ function showLeaderboardPromptIfNeeded(tier){
       }
       localStorage.setItem('letterladder:accountUsername', result.username);
       await submitCurrentScore(tier, result.username);
-      close();
+      window.location.reload();
     });
   });
 }
 
 function markSolvedIfNeeded(tier, guesses){
   if(isArchiveMode) return; // archive plays never count toward stats or analytics
-  const flagKey = `letterladder:${dateKey}:${tier}:solvedCounted`;
+  const flagKey = `letterladder:${accountScope}:${dateKey}:${tier}:solvedCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
 
@@ -1875,15 +1880,6 @@ function markSolvedIfNeeded(tier, guesses){
     stats.total.solved += 1;
     bumpStreak(stat, dateKey);
 
-    // Score: reward the length of every word the person actually had to
-    // guess (the start/final words are given to you, so they don't count),
-    // minus a small penalty for each hint used on this specific puzzle.
-    const guessedWords = Object.values(guesses);
-    const basePoints = guessedWords.reduce((sum, w) => sum + w.length, 0);
-    const penalty = getHintsUsed(tier) * HINT_PENALTY_PER_USE;
-    stat.score += Math.max(0, basePoints - penalty);
-    stats.total.score = stats.easy.score + stats.medium.score + stats.hard.score;
-
     // If this solve completes all three tiers for today, the "total" streak
     // (a separate concept from the per-tier ones - it tracks consecutive
     // days you completed EVERY puzzle, tying into the summit celebration)
@@ -1924,7 +1920,7 @@ function handleViewSolutionClick(){
     window.location.href = `solutions.html?date=${dateKey}&tier=${activeTier}`;
     return;
   }
-  const alreadyFinishedToday = !!(localStorage.getItem(`letterladder:${dateKey}:${activeTier}:solvedCounted`) || localStorage.getItem(`letterladder:${dateKey}:${activeTier}:lossCounted`));
+  const alreadyFinishedToday = !!(localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${activeTier}:solvedCounted`) || localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${activeTier}:lossCounted`));
   if(alreadyFinishedToday){
     // The stats/streak consequence already happened once today (a genuine
     // win or an earlier reveal) - warning about it again after a clear or
@@ -2122,7 +2118,7 @@ function isTierGenuinelyWon(tier){
   // anywhere that specifically needs to exclude revealed solutions (the
   // ladder-climb celebration, and the share text's win/not-played line).
   if(!isTierComplete(tier)) return false;
-  return !localStorage.getItem(`letterladder:${dateKey}:${tier}:solutionRevealedAsLoss`);
+  return !localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:solutionRevealedAsLoss`);
 }
 
 function puzzleDayNumber(){
@@ -2372,7 +2368,7 @@ function triggerLadderClimbCelebration(finalWord){
 
 function checkAndCelebrateIfAllComplete(finalWord){
   if(!TIERS.every(isTierGenuinelyWon)) return;
-  const flagKey = `letterladder:${dateKey}:summitShown`;
+  const flagKey = `letterladder:${accountScope}:${dateKey}:summitShown`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
   // Deferred: this render() call is still mid-flight and about to
@@ -2418,7 +2414,7 @@ function render(focusInput = false, pendingErrors = null){
   let feedbackClass = '';
   let details = [];
 
-  const revealedLossKey = `letterladder:${dateKey}:${activeTier}:solutionRevealedAsLoss`;
+  const revealedLossKey = `letterladder:${accountScope}:${dateKey}:${activeTier}:solutionRevealedAsLoss`;
   const isRevealedLoss = !!localStorage.getItem(revealedLossKey);
 
   if(isRevealedLoss){
@@ -2830,9 +2826,12 @@ function render(focusInput = false, pendingErrors = null){
 
       const hintInfo = getHintInfo(activeTier, targetLength);
       const isSecondHint = hintInfo.count === 1;
-      const confirmMsg = isSecondHint
+      let confirmMsg = isSecondHint
         ? "Are you sure you'd like to use a second hint? This one reveals the first letter."
         : "Are you sure you'd like to use a hint?";
+      if(getTimerChoice() === 'timed'){
+        confirmMsg += `<div class="confirm-submessage">(Each hint adds 3 minutes to the timer.)</div>`;
+      }
 
       showConfirmModal(confirmMsg, ()=>{
         const updatedInfo = { ...hintInfo };
