@@ -39,14 +39,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .profile-label{ font-size:0.72rem; color: var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
   .profile-value{ font-family:'Fraunces',serif; font-weight:700; font-size:1.15rem; }
 
-  .password-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; margin-bottom:14px; }
+  .password-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; margin-bottom:10px; }
   .form-field{
     display:block; width:100%; box-sizing:border-box; margin-bottom:10px;
     padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(245,239,224,0.15);
     background: rgba(245,239,224,0.06); color: var(--ink); font-size: 0.95rem;
   }
-  .form-error{ color: #E27272; font-size: 0.82rem; margin-bottom: 10px; min-height: 1.1em; }
-  .form-success{ color: #6FBF8B; font-size: 0.82rem; margin-bottom: 10px; min-height: 1.1em; }
+  .form-message{ font-size: 0.82rem; margin-bottom: 10px; min-height: 1.1em; }
+  .form-message.is-error{ color: #E27272; }
+  .form-message.is-success{ color: #6FBF8B; }
+  .form-hint{ color: var(--ink-dim); font-size: 0.76rem; margin: -6px 0 12px 0; }
   .btn-primary{
     border:none; border-radius:10px; padding:10px 18px; cursor:pointer;
     font-family:'Inter',sans-serif; font-weight:600; font-size:0.9rem;
@@ -75,8 +77,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, updatePassword, updateEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -105,10 +107,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     const username = localStorage.getItem('letterladder:accountUsername') || '(unknown)';
     let joinDateText = '—';
+    let existingEmail = '';
     try{
       const snap = await getDoc(doc(db, 'players', user.uid));
-      if(snap.exists() && snap.data().createdAt){
-        joinDateText = formatJoinDate(snap.data().createdAt);
+      if(snap.exists()){
+        if(snap.data().createdAt) joinDateText = formatJoinDate(snap.data().createdAt);
+        if(snap.data().recoveryEmail) existingEmail = snap.data().recoveryEmail;
       }
     }catch(e){}
 
@@ -125,10 +129,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <div class="profile-card">
         <div class="password-title">Change password</div>
-        <div class="form-error" id="pw-error"></div>
-        <div class="form-success" id="pw-success"></div>
+        <div class="form-message" id="pw-message"></div>
         <input type="password" class="form-field" id="new-password-field" placeholder="New password" autocomplete="new-password">
-        <button type="button" class="btn-primary" id="change-password-btn">Update password</button>
+        <input type="email" class="form-field" id="recovery-email-field" placeholder="Email (optional)" autocomplete="email" value="${existingEmail}">
+        <div class="form-hint">Your email will only be used for password recovery purposes.</div>
+        <button type="button" class="btn-primary" id="update-account-btn">Update</button>
       </div>
       <div class="profile-card">
         <button type="button" class="btn-ghost" id="logout-btn" style="width:100%;">Log out</button>
@@ -141,22 +146,46 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       window.location.href = 'index.html';
     });
 
-    document.getElementById('change-password-btn').addEventListener('click', async () => {
-      const errorEl = document.getElementById('pw-error');
-      const successEl = document.getElementById('pw-success');
+    document.getElementById('update-account-btn').addEventListener('click', async () => {
+      const messageEl = document.getElementById('pw-message');
       const newPassword = document.getElementById('new-password-field').value;
-      errorEl.textContent = '';
-      successEl.textContent = '';
-      if(!newPassword || newPassword.length < 6){
-        errorEl.textContent = 'Password should be at least 6 characters.';
+      const newEmail = document.getElementById('recovery-email-field').value.trim();
+      messageEl.textContent = '';
+      messageEl.className = 'form-message';
+
+      if(!newPassword && newEmail === existingEmail){
+        messageEl.classList.add('is-error');
+        messageEl.textContent = 'Nothing to update yet.';
         return;
       }
+      if(newPassword && newPassword.length < 6){
+        messageEl.classList.add('is-error');
+        messageEl.textContent = 'Password should be at least 6 characters.';
+        return;
+      }
+
+      const updates = [];
       try{
-        await updatePassword(user, newPassword);
-        successEl.textContent = 'Password updated.';
+        if(newPassword){
+          await updatePassword(user, newPassword);
+          updates.push('password');
+        }
+        if(newEmail && newEmail !== existingEmail){
+          // Actually re-registers the real Firebase account under this
+          // email (not just a stored label) - this is what's required
+          // for a future password-reset email to have a real inbox to
+          // reach, matching how account creation itself handles email.
+          await updateEmail(user, newEmail);
+          await setDoc(doc(db, 'players', user.uid), { recoveryEmail: newEmail }, { merge: true });
+          existingEmail = newEmail;
+          updates.push('email');
+        }
+        messageEl.classList.add('is-success');
+        messageEl.textContent = updates.length ? `Updated: ${updates.join(' and ')}.` : '';
         document.getElementById('new-password-field').value = '';
       }catch(err){
-        errorEl.textContent = 'Please log out and back in, then try again right after logging in.';
+        messageEl.classList.add('is-error');
+        messageEl.textContent = 'Please log out and back in, then try again right after logging in.';
       }
     });
   });
