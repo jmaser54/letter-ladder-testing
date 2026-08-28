@@ -3697,6 +3697,13 @@ async function pullStatsFromCloudIfNeeded(){
       const restored = await pullDailyProgressFromCloudIfNeeded();
       if(restored){
         rebaselineProgressComparison();
+        // activeLength may have been computed during an earlier, empty
+        // pre-restore render (pointing at whichever rung looked
+        // incomplete at that moment) and, being a persistent variable,
+        // would otherwise stay stuck there across this render even
+        // though the underlying data just changed - forcing a fresh
+        // recalculation against the now-correct, restored guesses.
+        activeLength = null;
         render(false);
         renderTimerWidget();
       }
