@@ -1952,11 +1952,29 @@ function showAccountForm(mode){
     // someone who always plays timed doesn't stay stuck on whatever was
     // locally set as a guest on this particular device.
     try{
+      let usualTimerChoice = null;
       const statsSnap = await window.LetterLadderAuth.getDoc(
         window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', result.uid)
       );
       if(statsSnap.exists() && statsSnap.data().timerChoice){
-        localStorage.setItem(TIMER_CHOICE_KEY, statsSnap.data().timerChoice);
+        usualTimerChoice = statsSnap.data().timerChoice;
+      } else {
+        // No explicit preference recorded yet (e.g. this account was
+        // last active before that sync existed). Score documents are
+        // only ever written for genuinely timed completions, so having
+        // even one is a reliable, already-existing signal this person
+        // usually plays timed - without depending on any newer field
+        // ever having had a chance to be backfilled first.
+        const scoresQuery = window.LetterLadderAuth.query(
+          window.LetterLadderAuth.collection(window.LetterLadderAuth.db, 'scores'),
+          window.LetterLadderAuth.where('uid', '==', result.uid),
+          window.LetterLadderAuth.limit(1)
+        );
+        const scoresSnap = await window.LetterLadderAuth.getDocs(scoresQuery);
+        if(!scoresSnap.empty) usualTimerChoice = 'timed';
+      }
+      if(usualTimerChoice){
+        localStorage.setItem(TIMER_CHOICE_KEY, usualTimerChoice);
         localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
       }
     }catch(e){}
