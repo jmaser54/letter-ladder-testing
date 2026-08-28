@@ -210,19 +210,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(newEmail && newEmail !== existingEmail){
           // verifyBeforeUpdateEmail sends a confirmation link to the new
           // address rather than changing it immediately - Firebase's own
-          // account email doesn't actually update until that link is
-          // clicked. The site's own recovery-email record (used for this
-          // site's password-reset flow, independent of Firebase's own
-          // verification status) is still saved right away.
+          // account doesn't actually switch over until that link is
+          // clicked. recoveryEmail is what login() signs in with, so it's
+          // deliberately left untouched here rather than being updated
+          // early - otherwise login would start trying the new,
+          // not-yet-active email and fail until the link was clicked.
+          // The new address is tracked separately as "pending" instead,
+          // and only promoted to recoveryEmail once it's genuinely
+          // confirmed (checked elsewhere, on login).
           await verifyBeforeUpdateEmail(user, newEmail);
-          await setDoc(doc(db, 'players', user.uid), { recoveryEmail: newEmail }, { merge: true });
-          existingEmail = newEmail;
+          await setDoc(doc(db, 'players', user.uid), { pendingEmail: newEmail }, { merge: true });
           emailVerificationSent = true;
         }
         messageEl.classList.add('is-success');
         const messageParts = [];
         if(updates.length) messageParts.push(`Updated: ${updates.join(' and ')}.`);
-        if(emailVerificationSent) messageParts.push(`Check ${newEmail} for a link to confirm your new email.`);
+        if(emailVerificationSent) messageParts.push(`Check ${newEmail} for a link to confirm your new email. You can keep logging in and playing normally in the meantime - this just updates which email you'd use for password resets.`);
         messageEl.textContent = messageParts.join(' ');
         document.getElementById('new-password-field').value = '';
       }catch(err){

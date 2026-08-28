@@ -3751,6 +3751,33 @@ async function pullStatsFromCloudIfNeeded(){
   if(window.LetterLadderAuth){
     window.LetterLadderAuth.onAuthReady(async () => {
       renderAccountWidget();
+
+      // If there's a pending email change, check whether it's actually
+      // been confirmed yet (the verification link clicked) - Firebase's
+      // real account email only updates once that happens, and nothing
+      // proactively tells the app when it does. Reloading the user
+      // object first ensures this checks the genuinely current email,
+      // not a stale cached value from before the link was clicked.
+      try{
+        const player = window.LetterLadderAuth.getCurrentUser();
+        if(player && !player.isAnonymous){
+          await player.reload();
+          const playerDocSnap = await window.LetterLadderAuth.getDoc(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', player.uid)
+          );
+          if(playerDocSnap.exists()){
+            const data = playerDocSnap.data();
+            if(data.pendingEmail && player.email === data.pendingEmail){
+              await window.LetterLadderAuth.setDoc(
+                window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', player.uid),
+                { recoveryEmail: data.pendingEmail, pendingEmail: null },
+                { merge: true }
+              );
+            }
+          }
+        }
+      }catch(e){}
+
       pullStatsFromCloudIfNeeded();
       // Backfills the account's cloud timer-choice record from this
       // device's existing local choice, if one was genuinely already
