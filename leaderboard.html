@@ -109,7 +109,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   function prettyShortDate(key){
     const [y, m, d] = key.split('-').map(Number);
-    return `${m}/${String(d).padStart(2,'0')}`;
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
   document.getElementById('leaderboard-title').textContent = `Leaderboard - ${prettyShortDate(todayKey())}`;
 
