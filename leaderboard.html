@@ -30,7 +30,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .wrap{ max-width: 560px; margin:0 auto; position: relative; }
   h1{ font-family:'Fraunces',serif; font-weight:700; font-size:2rem; margin-bottom:4px; padding-right: 130px; }
   a{ color: var(--amber); }
-  .back{ display:inline-block; margin-bottom: 22px; color: var(--ink-dim); text-decoration:none; touch-action: manipulation; }
+  .top-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom: 22px; }
+  .back{ display:inline-block; color: var(--ink-dim); text-decoration:none; touch-action: manipulation; }
   .back:hover{ color: var(--amber); }
   .intro{ color: var(--ink-dim); margin-bottom: 24px; }
 
@@ -57,7 +58,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .score-time{ font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums; }
   .empty-tier{ color: var(--ink-dim); font-size: 0.9rem; }
 
-  .past-leaderboards-link{ display:block; text-align:center; margin-top: 8px; font-weight:600; }
+  .past-leaderboards-link{
+    font-size: 0.8rem; color: var(--ink-dim); text-decoration:none;
+    border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation;
+  }
+  .past-leaderboards-link:hover{ color: var(--amber); border-color: var(--amber); }
   .empty-state{ text-align:center; color: var(--ink-dim); padding: 40px 20px; background: var(--bg-panel); border-radius:18px; }
 </style>
 </head>
@@ -67,14 +72,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="wrap">
-  <a class="back" href="index.html">← Back to game</a>
+  <div class="top-row">
+    <a class="back" href="index.html">← Back to game</a>
+    <a class="past-leaderboards-link" href="past-leaderboards.html">Past Leaderboards</a>
+  </div>
   <a class="create-account-link" href="index.html?showsignup=1" id="create-account-link" style="display:none;">Create account</a>
-  <h1>Leaderboard</h1>
+  <h1 id="leaderboard-title">Leaderboard</h1>
   <div class="intro">Each hint used adds 3 minutes to the timer.</div>
   <div id="leaderboard-content">
     <div class="empty-state">Loading…</div>
   </div>
-  <a class="past-leaderboards-link" href="past-leaderboards.html">Past Leaderboards →</a>
 </div>
 
 <script type="module">
@@ -102,11 +109,26 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     return `${y}-${m}-${day}`;
   }
 
+  function prettyShortDate(key){
+    const [y, m, d] = key.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+  document.getElementById('leaderboard-title').textContent = `Leaderboard - ${prettyShortDate(todayKey())}`;
+
+  // The exact time-formatting logic used by index.html's Share Results
+  // button, duplicated verbatim here since this is a separate static
+  // HTML file with no shared JS module system to import it from directly.
   function formatTime(ms){
-    const totalSeconds = Math.floor(ms / 1000);
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-    return `${m}:${String(s).padStart(2,'0')}`;
+    const totalSeconds = ms / 1000;
+    if(totalSeconds < 60){
+      return `${totalSeconds.toFixed(1)}s`;
+    } else if(totalSeconds < 3600){
+      return `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
+    } else {
+      const totalMinutes = Math.floor(totalSeconds / 60);
+      return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m ${Math.round(totalSeconds % 60)}s`;
+    }
   }
 
   onAuthStateChanged(auth, (user) => {

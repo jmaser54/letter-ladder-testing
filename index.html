@@ -320,7 +320,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .clear-hint-text{
     color: var(--ink-dim);
-    font-size: 0.82rem;
+    font-size: 0.88rem;
     line-height: 1.3;
   }
   .bank-primary-btn{
@@ -2495,6 +2495,23 @@ function puzzleDayNumber(){
   return diffDays + 1;
 }
 
+// The exact time-formatting logic used by the Share Results button -
+// extracted into its own named function so it's the single, reusable
+// source of truth. Other pages (leaderboard, stats) duplicate this exact
+// same logic verbatim, since they're separate static HTML files with no
+// shared JS module system to actually import a function across.
+function formatDurationForShare(ms){
+  const totalSeconds = ms / 1000;
+  if(totalSeconds < 60){
+    return `${totalSeconds.toFixed(1)}s`;
+  } else if(totalSeconds < 3600){
+    return `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
+  } else {
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m ${Math.round(totalSeconds % 60)}s`;
+  }
+}
+
 function buildShareText(){
   const tierLabels = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
   const lines = [];
@@ -2508,15 +2525,7 @@ function buildShareText(){
       if(timerChoice === 'timed'){
         const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
         if(frozenElapsed !== null){
-          const totalSeconds = Number(frozenElapsed) / 1000;
-          if(totalSeconds < 60){
-            timeSuffix = `${totalSeconds.toFixed(1)}s`;
-          } else if(totalSeconds < 3600){
-            timeSuffix = `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
-          } else {
-            const totalMinutes = Math.floor(totalSeconds / 60);
-            timeSuffix = `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m ${Math.round(totalSeconds % 60)}s`;
-          }
+          timeSuffix = formatDurationForShare(Number(frozenElapsed));
         }
       }
       let line;

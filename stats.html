@@ -216,12 +216,20 @@ renderStatsPage(loadStats());
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  // The exact time-formatting logic used by index.html's Share Results
+  // button, duplicated verbatim here since this is a separate static
+  // HTML file with no shared JS module system to import it from directly.
   function formatTime(ms){
     if(ms === null) return '—';
-    const totalSeconds = Math.round(ms / 1000);
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-    return `${m}:${String(s).padStart(2,'0')}`;
+    const totalSeconds = ms / 1000;
+    if(totalSeconds < 60){
+      return `${totalSeconds.toFixed(1)}s`;
+    } else if(totalSeconds < 3600){
+      return `${Math.floor(totalSeconds / 60)}m ${Math.round(totalSeconds % 60)}s`;
+    } else {
+      const totalMinutes = Math.floor(totalSeconds / 60);
+      return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m ${Math.round(totalSeconds % 60)}s`;
+    }
   }
 
   // Sums three possibly-null values, staying null if any one of them is
