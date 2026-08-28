@@ -3706,6 +3706,18 @@ async function pullStatsFromCloudIfNeeded(){
         activeLength = null;
         render(false);
         renderTimerWidget();
+
+        // The play popup's own check ran earlier, against empty local
+        // data, before this restore completed - if it's still showing
+        // now that the real, restored data reveals the puzzle was
+        // already started or solved, dismiss it exactly as if "Play"
+        // had been tapped, rather than leaving a stale prompt on screen
+        // for a puzzle that's actually already done.
+        const playOverlay = document.querySelector('.play-overlay');
+        if(playOverlay && hasEverStartedTimer(activeTier)){
+          playOverlay.remove();
+          startTimerIfNeeded(activeTier);
+        }
       }
     });
   } else if(attemptsLeft > 0){
