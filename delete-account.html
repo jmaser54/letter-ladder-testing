@@ -123,7 +123,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }catch(err){
         renderInitial(user);
         document.getElementById('delete-message').classList.add('is-error');
-        document.getElementById('delete-message').textContent = 'Please log out and back in, then try again right after logging in.';
+        document.getElementById('delete-message').textContent = err && err.code === 'auth/requires-recent-login'
+          ? 'For security, please log out and back in, then try again right after logging in.'
+          : 'Something went wrong. Please try again.';
       }
     });
   }

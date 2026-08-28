@@ -99,6 +99,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
 
+  function friendlyUpdateError(error){
+    const code = error && error.code;
+    // Firebase's own security check: sensitive changes like email/
+    // password require a recently-established session, not just a
+    // currently-valid one - if you've been logged in for a while, this
+    // is the one case that genuinely needs a fresh login to clear.
+    if(code === 'auth/requires-recent-login') return 'For security, please log out and back in, then try again right after logging in.';
+    if(code === 'auth/email-already-in-use') return 'That email is already in use on another account.';
+    if(code === 'auth/invalid-email') return 'That email address doesn\'t look valid.';
+    if(code === 'auth/weak-password') return 'Password should be at least 6 characters.';
+    if(code === 'auth/too-many-requests') return 'Too many attempts - please wait a moment and try again.';
+    return 'Something went wrong. Please try again.';
+  }
+
   const contentEl = document.getElementById('profile-content');
 
   onAuthStateChanged(auth, async (user) => {
@@ -207,7 +221,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         document.getElementById('new-password-field').value = '';
       }catch(err){
         messageEl.classList.add('is-error');
-        messageEl.textContent = 'Please log out and back in, then try again right after logging in.';
+        messageEl.textContent = friendlyUpdateError(err);
       }
     });
   });

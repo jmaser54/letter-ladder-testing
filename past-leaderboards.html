@@ -41,11 +41,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .day-date{ font-family:'Fraunces',serif; font-weight:700; font-size:1.2rem; margin-bottom:14px; }
   .tier-row{ margin-bottom: 14px; }
   .tier-row:last-child{ margin-bottom: 0; }
-  .tier-label{ font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color: var(--amber); font-weight:700; margin-bottom:6px; }
-  .score-row{ display:flex; align-items:center; gap:10px; padding: 3px 0; font-size:0.92rem; }
+  .tier-label{ font-size:0.83rem; text-transform:uppercase; letter-spacing:0.1em; color: var(--amber); font-weight:700; margin-bottom:6px; }
+  .score-row{ display:flex; align-items:center; gap:10px; padding: 3px 0; font-size:1.06rem; }
   .score-rank{ font-family:'Fraunces',serif; font-weight:700; color: var(--amber); width: 1.2em; flex-shrink:0; }
   .score-name{ flex:1; font-weight:600; word-break: break-word; }
-  .score-hints{ font-size: 0.8rem; }
+  .score-hints{ font-size: 0.92rem; }
   .score-time{ font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums; }
 
   .empty-state{ text-align:center; color: var(--ink-dim); padding: 40px 20px; background: var(--bg-panel); border-radius:18px; }
@@ -160,7 +160,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             `;
           }).join('');
         return `
-          <div class="day-card">
+          <div class="day-card" id="day-${dateKey}">
             <div class="day-date">${prettyDate(dateKey)}</div>
             ${tierSections}
           </div>

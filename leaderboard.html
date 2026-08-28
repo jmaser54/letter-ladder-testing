@@ -42,19 +42,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .create-account-link:hover{ text-decoration: underline; }
 
-  .tier-card{
+  .day-card{
     background: var(--bg-panel); border-radius:18px; padding: 20px 22px; margin-bottom:18px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.35);
   }
-  .tier-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.2rem; margin-bottom:14px; }
-  .score-row{
-    display:flex; align-items:center; gap:12px; padding: 8px 0;
-    border-bottom: 1px solid rgba(245,239,224,0.08);
-  }
-  .score-row:last-child{ border-bottom: none; }
-  .score-rank{ font-family:'Fraunces',serif; font-weight:700; color: var(--amber); width: 1.4em; flex-shrink:0; }
+  .tier-row{ margin-bottom: 14px; }
+  .tier-row:last-child{ margin-bottom: 0; }
+  .tier-label{ font-size:0.83rem; text-transform:uppercase; letter-spacing:0.1em; color: var(--amber); font-weight:700; margin-bottom:6px; }
+  .score-row{ display:flex; align-items:center; gap:10px; padding: 3px 0; font-size:1.06rem; }
+  .score-rank{ font-family:'Fraunces',serif; font-weight:700; color: var(--amber); width: 1.2em; flex-shrink:0; }
   .score-name{ flex:1; font-weight:600; word-break: break-word; }
-  .score-hints{ font-size: 0.85rem; }
+  .score-hints{ font-size: 0.92rem; }
   .score-time{ font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums; }
   .empty-tier{ color: var(--ink-dim); font-size: 0.9rem; }
 
@@ -111,8 +109,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   function prettyShortDate(key){
     const [y, m, d] = key.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    return dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return `${m}/${String(d).padStart(2,'0')}`;
   }
   document.getElementById('leaderboard-title').textContent = `Leaderboard - ${prettyShortDate(todayKey())}`;
 
@@ -166,13 +163,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               </div>
             `).join('');
         return `
-          <div class="tier-card">
-            <div class="tier-title">${tierNames[tier]}</div>
+          <div class="tier-row">
+            <div class="tier-label">${tierNames[tier]}</div>
             ${rowsHtml}
           </div>
         `;
       }));
-      contentEl.innerHTML = tierSections.join('');
+      contentEl.innerHTML = `<div class="day-card">${tierSections.join('')}</div>`;
     }catch(e){
       console.error('Leaderboard failed to load:', e);
       contentEl.innerHTML = `<div class="empty-state">Couldn't load the leaderboard right now - try refreshing.</div>`;

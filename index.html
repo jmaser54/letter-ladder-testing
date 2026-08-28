@@ -841,7 +841,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="about.html">How to play</a>
       <a href="index.html" id="todays-puzzles-link" style="display:none;">Today's puzzles</a>
       <a href="past-puzzles.html">Past puzzles</a>
-      <a href="leaderboard.html">Leaderboard</a>
+      <a href="leaderboard.html" id="leaderboard-nav-link">Leaderboard</a>
     </div>
   </header>
 
@@ -1356,12 +1356,33 @@ const accountScope = localStorage.getItem('letterladder:accountUsername') || 'gu
 if(isArchiveMode){
   const todaysPuzzlesLink = document.getElementById('todays-puzzles-link');
   if(todaysPuzzlesLink) todaysPuzzlesLink.style.display = '';
+
+  const leaderboardNavLink = document.getElementById('leaderboard-nav-link');
+  if(leaderboardNavLink) leaderboardNavLink.href = `past-leaderboards.html#day-${dateKey}`;
 }
 
 // ---------- optional per-puzzle timer ----------
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
 function getTimerChoice(){ return localStorage.getItem(TIMER_CHOICE_KEY) || 'untimed'; }
-function setTimerChoice(choice){ localStorage.setItem(TIMER_CHOICE_KEY, choice); }
+function setTimerChoice(choice){
+  localStorage.setItem(TIMER_CHOICE_KEY, choice);
+  // Remembers this as the account's usual preference in the cloud, so
+  // logging in on a different or unfamiliar device later correctly
+  // recalls it - rather than leaving someone who always plays timed
+  // stuck on whatever was locally set as a guest on that device.
+  if(window.LetterLadderAuth){
+    const user = window.LetterLadderAuth.getCurrentUser();
+    if(user && !user.isAnonymous){
+      try{
+        window.LetterLadderAuth.setDoc(
+          window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', user.uid),
+          { timerChoice: choice },
+          { merge: true }
+        ).catch(()=>{});
+      }catch(e){}
+    }
+  }
+}
 function timerStartKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}:timerStartedAt`; }
 function timerElapsedKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}:timerElapsedMs`; }
 function timerAccumulatedKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}:timerAccumulatedMs`; }
@@ -1926,6 +1947,20 @@ function showAccountForm(mode){
     }
     localStorage.setItem('letterladder:accountUsername', result.username);
     localStorage.setItem('letterladder:activeTier', 'easy');
+
+    // Pull this account's usual timer preference from the cloud, so
+    // someone who always plays timed doesn't stay stuck on whatever was
+    // locally set as a guest on this particular device.
+    try{
+      const statsSnap = await window.LetterLadderAuth.getDoc(
+        window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', result.uid)
+      );
+      if(statsSnap.exists() && statsSnap.data().timerChoice){
+        localStorage.setItem(TIMER_CHOICE_KEY, statsSnap.data().timerChoice);
+        localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
+      }
+    }catch(e){}
+
     window.location.reload();
   });
 }
