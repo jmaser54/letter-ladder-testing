@@ -1925,6 +1925,7 @@ function showAccountForm(mode){
       return;
     }
     localStorage.setItem('letterladder:accountUsername', result.username);
+    localStorage.setItem('letterladder:activeTier', 'easy');
     window.location.reload();
   });
 }
@@ -2169,8 +2170,8 @@ const panel = document.getElementById('panel');
 function specialDayLabelSuffix(key){
   const [y, m, d] = key.split('-').map(Number);
   const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0 = Sunday, 4 = Thursday, 5 = Friday
-  if(dayOfWeek === 4) return ' - Thinking Thursday';
-  if(dayOfWeek === 5) return ' - Freaky Friday';
+  if(dayOfWeek === 4) return ' - HARD';
+  if(dayOfWeek === 5) return ' - HARD';
   return '';
 }
 document.getElementById('date-row').textContent = prettyDate(dateKey) + specialDayLabelSuffix(dateKey);
