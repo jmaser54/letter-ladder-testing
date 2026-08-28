@@ -1518,7 +1518,46 @@ function saveStats(stats){
 // remains the fast, synchronous source of truth for everything currently
 // on this page - this just mirrors it outward in the background.
 let dailyProgressSyncTimeout = null;
+let lastKnownProgressSnapshotJSON = null;
+
+// Excludes lastModifiedAt itself from the comparison snapshot - comparing
+// a snapshot against itself including its own timestamp key would be
+// circular, since that key changes every time it's bumped regardless of
+// whether anything else did.
+function getComparableProgressSnapshot(){
+  const snapshot = getTodaysProgressSnapshot();
+  delete snapshot[`letterladder:${accountScope}:${dateKey}:lastModifiedAt`];
+  return snapshot;
+}
+
+// Silently re-establishes the comparison baseline to match whatever was
+// just restored from the cloud, without treating that restoration itself
+// as a "genuine new change" that would spuriously bump the timestamp
+// right back to now - which would defeat the point of having preserved
+// the cloud's original, meaningful timestamp in the first place.
+function rebaselineProgressComparison(){
+  lastKnownProgressSnapshotJSON = JSON.stringify(getComparableProgressSnapshot());
+}
+
 function scheduleDailyProgressSync(){
+  // Only bumps the timestamp when the underlying progress data has
+  // genuinely changed since it was last seen - not simply whenever
+  // render() happens to fire, which includes plain page loads and
+  // passive re-displays with zero new progress. Without this check, a
+  // browser could always look artificially "more recent" than the cloud
+  // just from being opened, even while holding stale, pre-fix puzzle
+  // data - which is exactly what let it keep losing the comparison and
+  // never actually pulling the real, current state.
+  if(window.LetterLadderAuth && !isArchiveMode){
+    const user = window.LetterLadderAuth.getCurrentUser();
+    if(user && !user.isAnonymous){
+      const currentJSON = JSON.stringify(getComparableProgressSnapshot());
+      if(lastKnownProgressSnapshotJSON !== null && currentJSON !== lastKnownProgressSnapshotJSON){
+        localStorage.setItem(`letterladder:${accountScope}:${dateKey}:lastModifiedAt`, String(Date.now()));
+      }
+      lastKnownProgressSnapshotJSON = currentJSON;
+    }
+  }
   clearTimeout(dailyProgressSyncTimeout);
   dailyProgressSyncTimeout = setTimeout(syncDailyProgressToCloud, 2000);
 }
@@ -1538,7 +1577,9 @@ function syncStatsToCloud(stats){
 // Captures every localStorage key under today's account+date prefix as
 // one bundle - guesses, timer state, hints, completion flags, all of it
 // - rather than listing each specific key type individually, which would
-// risk silently missing something as the game's state model grows.
+// risk silently missing something as the game's state model grows. This
+// naturally includes lastModifiedAt too, since it lives under the same
+// prefix, so it correctly travels along with the rest of the snapshot.
 function getTodaysProgressSnapshot(){
   const prefix = `letterladder:${accountScope}:${dateKey}:`;
   const snapshot = {};
@@ -1557,9 +1598,16 @@ function applyProgressSnapshot(snapshot){
   }
 }
 
+function getLocalLastModifiedAt(){
+  return Number(localStorage.getItem(`letterladder:${accountScope}:${dateKey}:lastModifiedAt`) || 0);
+}
+
 // Same fire-and-forget pattern as stats: keeps a durable, cloud-backed
 // copy of today's actual puzzle progress in sync, so a genuinely fresh
 // browser or device can restore it rather than starting from scratch.
+// The lastModifiedAt timestamp travels alongside the snapshot, since
+// it's what a later session needs to correctly resolve a conflict
+// against its own local state.
 function syncDailyProgressToCloud(){
   if(!window.LetterLadderAuth) return;
   if(isArchiveMode) return; // archive plays never sync progress
@@ -1569,28 +1617,31 @@ function syncDailyProgressToCloud(){
     const snapshot = getTodaysProgressSnapshot();
     window.LetterLadderAuth.setDoc(
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`),
-      { snapshot }
+      { snapshot, lastModifiedAt: getLocalLastModifiedAt() }
     ).catch(()=>{});
   }catch(e){}
 }
 
-// Only pulls when today's local progress looks genuinely empty (no
-// snapshot keys found at all), matching the same "never clobber newer
-// local changes" rule the stats sync already uses.
+// Compares the local and cloud timestamps directly and lets whichever
+// side was genuinely touched more recently win - rather than a blunt
+// "only pull if local is completely empty" check, which would leave two
+// sessions with any pre-existing local data permanently unable to ever
+// reconcile with each other, even when one is meaningfully more current.
 async function pullDailyProgressFromCloudIfNeeded(){
   if(!window.LetterLadderAuth) return false;
   if(isArchiveMode) return false;
   const user = window.LetterLadderAuth.getCurrentUser();
   if(!user || user.isAnonymous) return false;
-  if(Object.keys(getTodaysProgressSnapshot()).length > 0) return false;
   try{
     const snap = await window.LetterLadderAuth.getDoc(
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`)
     );
-    if(snap.exists() && snap.data().snapshot){
-      applyProgressSnapshot(snap.data().snapshot);
-      return true;
-    }
+    if(!snap.exists() || !snap.data().snapshot) return false;
+    const cloudModifiedAt = Number(snap.data().lastModifiedAt || 0);
+    const localModifiedAt = getLocalLastModifiedAt();
+    if(cloudModifiedAt <= localModifiedAt) return false; // local is at least as current - nothing to restore
+    applyProgressSnapshot(snap.data().snapshot);
+    return true;
   }catch(e){}
   return false;
 }
@@ -3638,6 +3689,7 @@ async function pullStatsFromCloudIfNeeded(){
       pullStatsFromCloudIfNeeded();
       const restored = await pullDailyProgressFromCloudIfNeeded();
       if(restored){
+        rebaselineProgressComparison();
         render(false);
         renderTimerWidget();
       }
