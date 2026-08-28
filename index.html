@@ -2158,6 +2158,10 @@ function markSolvedIfNeeded(tier, guesses){
   if(getTimerChoice() === 'timed'){
     showLeaderboardPromptIfNeeded(tier);
   }
+
+  scheduleDailyProgressSync(); // updates the timestamp if this genuinely changed anything
+  clearTimeout(dailyProgressSyncTimeout);
+  syncDailyProgressToCloud(); // then sync immediately rather than waiting on the debounce
 }
 
 // ---------- rendering ----------
@@ -3644,6 +3648,8 @@ document.getElementById('tabs').addEventListener('click', (e)=>{
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
     pauseTimer(activeTier);
+    clearTimeout(dailyProgressSyncTimeout);
+    syncDailyProgressToCloud();
   } else {
     startTimerIfNeeded(activeTier);
     renderTimerWidget();

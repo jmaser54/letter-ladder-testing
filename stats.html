@@ -234,11 +234,9 @@ renderStatsPage(loadStats());
 
   async function fetchTierTimeStats(uid, tier){
     const myQ = query(collection(db, 'scores'), where('uid', '==', uid), where('tier', '==', tier));
-    const mySnap = await getDocs(myQ);
-    const myTimes = mySnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');
-
     const globalQ = query(collection(db, 'scores'), where('tier', '==', tier));
-    const globalSnap = await getDocs(globalQ);
+    const [mySnap, globalSnap] = await Promise.all([getDocs(myQ), getDocs(globalQ)]);
+    const myTimes = mySnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');
     const globalTimes = globalSnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');
 
     return {
