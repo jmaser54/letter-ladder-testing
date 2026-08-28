@@ -225,7 +225,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         messageEl.classList.add('is-success');
         const messageParts = [];
         if(updates.length) messageParts.push(`Updated: ${updates.join(' and ')}.`);
-        if(emailVerificationSent) messageParts.push(`Check ${newEmail} for a link to confirm your new email. You can keep logging in and playing normally in the meantime - this just updates which email you'd use for password resets.`);
+        if(emailVerificationSent) messageParts.push(`Check ${newEmail} for a link to confirm your new email.`);
         messageEl.textContent = messageParts.join(' ');
         document.getElementById('new-password-field').value = '';
       }catch(err){
