@@ -296,8 +296,11 @@ renderStatsPage(loadStats());
             </tbody>
           </table>
         </div>`;
+
+      return easyStats.best !== null || mediumStats.best !== null || hardStats.best !== null;
     }catch(e){
       console.error('Time summary failed to load:', e);
+      return false;
     }
   }
 
@@ -318,7 +321,22 @@ renderStatsPage(loadStats());
       }catch(e){}
     }
 
-    renderTimeSummaryTable(user);
+    const hasRealScoreData = await renderTimeSummaryTable(user);
+    // If the summary table just proved (from real score documents) that
+    // this account has genuinely played before, the detailed section
+    // below it should never keep showing a flatly contradictory "no
+    // puzzles played" message - even if this account's separate,
+    // synced aggregate stats record is itself empty or missing (e.g. an
+    // older account whose play history predates that sync ever
+    // succeeding). There's no reliable played/solved/streak breakdown
+    // to show instead here, so this just removes the false claim rather
+    // than fabricating numbers.
+    if(hasRealScoreData){
+      const listContainer = document.getElementById('stats-list');
+      if(listContainer.innerHTML.includes('No puzzles played yet')){
+        listContainer.innerHTML = '';
+      }
+    }
   });
 </script>
 </body>
