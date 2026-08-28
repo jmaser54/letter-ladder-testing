@@ -3738,6 +3738,14 @@ async function pullStatsFromCloudIfNeeded(){
     window.LetterLadderAuth.onAuthReady(async () => {
       renderAccountWidget();
       pullStatsFromCloudIfNeeded();
+      // Backfills the account's cloud timer-choice record from this
+      // device's existing local choice, if one was genuinely already
+      // made - covers a preference set before this sync feature
+      // existed, or a device that's simply never touched the toggle
+      // since, so the cloud record naturally catches up over time.
+      if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
+        setTimerChoice(getTimerChoice());
+      }
       const restored = await pullDailyProgressFromCloudIfNeeded();
       if(restored){
         rebaselineProgressComparison();

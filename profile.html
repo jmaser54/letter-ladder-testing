@@ -79,7 +79,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAuth, onAuthStateChanged, updatePassword, updateEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -206,20 +206,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           await updatePassword(user, newPassword);
           updates.push('password');
         }
+        let emailVerificationSent = false;
         if(newEmail && newEmail !== existingEmail){
-          // Actually re-registers the real Firebase account under this
-          // email (not just a stored label) - this is what's required
-          // for a future password-reset email to have a real inbox to
-          // reach, matching how account creation itself handles email.
-          await updateEmail(user, newEmail);
+          // verifyBeforeUpdateEmail sends a confirmation link to the new
+          // address rather than changing it immediately - Firebase's own
+          // account email doesn't actually update until that link is
+          // clicked. The site's own recovery-email record (used for this
+          // site's password-reset flow, independent of Firebase's own
+          // verification status) is still saved right away.
+          await verifyBeforeUpdateEmail(user, newEmail);
           await setDoc(doc(db, 'players', user.uid), { recoveryEmail: newEmail }, { merge: true });
           existingEmail = newEmail;
-          updates.push('email');
+          emailVerificationSent = true;
         }
         messageEl.classList.add('is-success');
-        messageEl.textContent = updates.length ? `Updated: ${updates.join(' and ')}.` : '';
+        const messageParts = [];
+        if(updates.length) messageParts.push(`Updated: ${updates.join(' and ')}.`);
+        if(emailVerificationSent) messageParts.push(`Check ${newEmail} for a link to confirm your new email.`);
+        messageEl.textContent = messageParts.join(' ');
         document.getElementById('new-password-field').value = '';
       }catch(err){
+        console.error('Profile update failed:', err && err.code, err && err.message);
         messageEl.classList.add('is-error');
         messageEl.textContent = friendlyUpdateError(err);
       }

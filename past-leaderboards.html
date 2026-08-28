@@ -166,6 +166,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         `;
       }).join('');
+
+      // The browser's native URL-fragment scroll only fires once, at
+      // initial page load - long before this async content exists in
+      // the DOM. It doesn't retry once a matching element does show up,
+      // so this scroll has to be done manually here instead.
+      if(window.location.hash){
+        const target = document.getElementById(window.location.hash.slice(1));
+        if(target) target.scrollIntoView({ block: 'start' });
+      }
     }catch(e){
       console.error('Past leaderboards failed to load:', e);
       container.innerHTML = `<div class="empty-state">Couldn't load past leaderboards right now - try refreshing.</div>`;
