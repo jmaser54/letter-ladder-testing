@@ -10,6 +10,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 
 <meta charset="UTF-8">
+<meta name="description" content="A daily word puzzle - add one letter at a time to climb from a short word to a long one.">
 <meta property="og:title" content="Letter Ladder">
 <meta property="og:description" content="A daily word puzzle - add one letter at a time to climb from a short word to a long one.">
 <meta property="og:image" content="https://letterladder.io/og-image.png">
@@ -1956,7 +1957,6 @@ function showAccountForm(mode){
       const statsSnap = await window.LetterLadderAuth.getDoc(
         window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', result.uid)
       );
-      console.log('DEBUG timer-pref: statsSnap.exists()=', statsSnap.exists(), 'data=', statsSnap.exists() ? JSON.stringify(statsSnap.data()) : null);
       if(statsSnap.exists() && statsSnap.data().timerChoice){
         usualTimerChoice = statsSnap.data().timerChoice;
       } else {
@@ -1966,17 +1966,14 @@ function showAccountForm(mode){
           window.LetterLadderAuth.limit(1)
         );
         const scoresSnap = await window.LetterLadderAuth.getDocs(scoresQuery);
-        console.log('DEBUG timer-pref: scoresSnap.empty=', scoresSnap.empty, 'size=', scoresSnap.docs.length);
         if(!scoresSnap.empty) usualTimerChoice = 'timed';
       }
-      console.log('DEBUG timer-pref: usualTimerChoice resolved to', usualTimerChoice);
       if(usualTimerChoice){
         localStorage.setItem(TIMER_CHOICE_KEY, usualTimerChoice);
         localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
-        console.log('DEBUG timer-pref: wrote to localStorage, now', localStorage.getItem(TIMER_CHOICE_KEY));
       }
     }catch(e){
-      console.error('DEBUG timer-pref: threw an error:', e);
+      console.error('Failed to pull timer preference on login:', e);
     }
 
     window.location.reload();
