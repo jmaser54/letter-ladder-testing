@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /stats.html
+Disallow: /profile.html
+Disallow: /delete-account.html
+Disallow: /solutions.html
+Disallow: /migrate.html
+Disallow: /contact-sent.html
+
+Sitemap: https://letterladder.io/sitemap.xml
