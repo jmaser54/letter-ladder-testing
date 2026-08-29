@@ -401,7 +401,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .leaderboard-prompt-dismiss{
     position: absolute; top: 12px; right: 14px;
-    font-size: 0.68rem; color: var(--ink-dim); cursor: pointer;
+    font-size: 0.748rem; color: var(--ink-dim); cursor: pointer;
     text-decoration: none;
     touch-action: manipulation;
   }
@@ -2056,7 +2056,7 @@ function showLeaderboardPromptIfNeeded(tier){
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card">
       <a href="#" class="leaderboard-prompt-dismiss" id="lb-dismiss-link">Do not show this message again</a>
-      <div class="leaderboard-prompt-title" id="lb-prompt-title">Create account or play as guest?</div>
+      <div class="leaderboard-prompt-title" id="lb-prompt-title" style="font-weight:bold; padding-right:0;">Create account or play as guest?</div>
       <div id="lb-prompt-body">
         <div class="leaderboard-prompt-actions">
           <button type="button" class="btn-primary" id="lb-create-account-btn">Create account</button>
@@ -2989,7 +2989,7 @@ function render(focusInput = false, pendingErrors = null){
       // a guess in it when it was opened (i.e. you clicked in to replace
       // or remove an existing entry) - not for a box you're filling in
       // for the first time.
-      const deleteBtn = g ? `<button type="button" class="delete-guess-btn" data-length="${L}" aria-label="Delete this guess">×</button>` : '';
+      const deleteBtn = g ? `<button type="button" class="delete-guess-btn" data-length="${L}" aria-label="Delete this guess"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>` : '';
       const inputValue = preservedLiveValue !== null ? preservedLiveValue : (g ? g : '');
       rungsHtml.push(`<div class="rung-row"><div class="rung-count">${L}</div><input type="text" class="rung rung-input" id="rung-input-${L}" data-length="${L}" maxlength="${L}" size="${maxWordLen}" value="${inputValue}" style="${rungBoxStyle(L)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" inputmode="${keyboardEnabled ? 'text' : 'none'}" ${keyboardEnabled ? '' : 'readonly'}>${deleteBtn}</div>`);
     } else {
