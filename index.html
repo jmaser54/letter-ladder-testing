@@ -1670,6 +1670,63 @@ function migrateGuestProgressToAccount(newUsername){
   }
 }
 
+// Guests never get personal stats tracked (markPlayedIfNeeded/
+// markSolvedIfNeeded both skip entirely without a real account), and
+// their leaderboard scores get submitted under 'Guest', not any
+// specific account. So completing puzzles as a guest and then creating
+// an account partway through today left those earlier completions
+// stranded - correctly migrated as raw progress data (guesses, timer),
+// but never counted toward played/solved/streak, and never
+// re-attributed on the leaderboard. This backfills both, for every
+// tier genuinely won today (excluding revealed solutions) that stats
+// don't yet reflect. Safe to call unconditionally: re-submitting an
+// already-attributed score is a harmless overwrite given deterministic,
+// per-account document IDs, and the lastSolvedDate check below is what
+// actually prevents double-counting stats.
+function backfillGuestStatsAndScores(newUsername){
+  // loadStats()/saveStats() both read and write the module-level
+  // STATS_KEY constant, which is fixed to the OLD 'guest' scope at this
+  // point in execution (accountScope only re-evaluates on the page's
+  // next reload) - using them here would silently write these backfilled
+  // stats to the wrong, orphaned key. Read/write the new account's key
+  // explicitly instead, mirroring loadStats' exact parsing/defaulting.
+  const newStatsKey = `letterladder:${newUsername}:stats`;
+  let stats;
+  try{
+    const raw = localStorage.getItem(newStatsKey);
+    const parsed = raw ? JSON.parse(raw) : {};
+    stats = {
+      easy: Object.assign(blankStat(), parsed.easy || {}),
+      medium: Object.assign(blankStat(), parsed.medium || {}),
+      hard: Object.assign(blankStat(), parsed.hard || {}),
+      total: Object.assign(blankStat(), parsed.total || {}),
+    };
+  }catch(e){
+    stats = { easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() };
+  }
+
+  let anyBackfilled = false;
+  for(const tier of TIERS){
+    if(isTierGenuinelyWon(tier) && stats[tier].lastSolvedDate !== dateKey){
+      stats[tier].played += 1;
+      stats[tier].solved += 1;
+      bumpStreak(stats[tier], dateKey);
+      stats.total.played += 1;
+      stats.total.solved += 1;
+      anyBackfilled = true;
+      submitCurrentScore(tier, newUsername);
+    }
+  }
+  if(TIERS.every(isTierGenuinelyWon) && stats.total.lastSolvedDate !== dateKey){
+    bumpStreak(stats.total, dateKey);
+    anyBackfilled = true;
+  }
+  if(anyBackfilled){
+    try{ localStorage.setItem(newStatsKey, JSON.stringify(stats)); }catch(e){}
+    syncStatsToCloud(stats);
+  }
+}
+
 // Same fire-and-forget pattern as stats: keeps a durable, cloud-backed
 // copy of today's actual puzzle progress in sync, so a genuinely fresh
 // browser or device can restore it rather than starting from scratch.
@@ -1994,7 +2051,10 @@ function showAccountForm(mode){
     }
     localStorage.setItem('letterladder:accountUsername', result.username);
     localStorage.setItem('letterladder:activeTier', 'easy');
-    if(!isLogin) migrateGuestProgressToAccount(result.username);
+    if(!isLogin){
+      migrateGuestProgressToAccount(result.username);
+      backfillGuestStatsAndScores(result.username);
+    }
 
     // Pull this account's usual timer preference from the cloud, so
     // someone who always plays timed doesn't stay stuck on whatever was
@@ -2172,6 +2232,7 @@ function showLeaderboardPromptIfNeeded(tier){
       }
       localStorage.setItem('letterladder:accountUsername', result.username);
       migrateGuestProgressToAccount(result.username);
+      backfillGuestStatsAndScores(result.username);
       await submitCurrentScore(tier, result.username);
       window.location.reload();
     });
@@ -3791,6 +3852,7 @@ document.addEventListener('visibilitychange', ()=>{
     pauseTimer(activeTier);
     clearTimeout(dailyProgressSyncTimeout);
     syncDailyProgressToCloud();
+    syncStatsToCloud(loadStats());
   } else {
     startTimerIfNeeded(activeTier);
     renderTimerWidget();
@@ -3800,6 +3862,7 @@ window.addEventListener('pagehide', ()=>{
   pauseTimer(activeTier);
   clearTimeout(dailyProgressSyncTimeout);
   syncDailyProgressToCloud();
+  syncStatsToCloud(loadStats());
 });
 
 render(!isTouchDevice);
