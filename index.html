@@ -3817,6 +3817,25 @@ async function pullStatsFromCloudIfNeeded(){
   if(attemptsLeft === undefined) attemptsLeft = 100; // ~5 seconds total at 50ms intervals
   if(window.LetterLadderAuth){
     window.LetterLadderAuth.onAuthReady(async () => {
+      try{
+        const player = window.LetterLadderAuth.getCurrentUser();
+        if(player && !player.isAnonymous && accountScope !== 'guest'){
+          const ownerKey = `letterladder:${accountScope}:ownerUid`;
+          const storedOwnerUid = localStorage.getItem(ownerKey);
+          if(storedOwnerUid && storedOwnerUid !== player.uid){
+            const prefix = `letterladder:${accountScope}:`;
+            const keysToRemove = [];
+            for(let i = 0; i < localStorage.length; i++){
+              const key = localStorage.key(i);
+              if(key && key.startsWith(prefix)) keysToRemove.push(key);
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            activeLength = null;
+          }
+          localStorage.setItem(ownerKey, player.uid);
+        }
+      }catch(e){}
+
       renderAccountWidget();
 
       // If there's a pending email change, check whether it's actually

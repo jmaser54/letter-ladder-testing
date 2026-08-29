@@ -311,6 +311,23 @@ renderStatsPage(loadStats());
   onAuthStateChanged(auth, async (user) => {
     if(!user || user.isAnonymous) return;
 
+    if(accountScope !== 'guest'){
+      try{
+        const ownerKey = `letterladder:${accountScope}:ownerUid`;
+        const storedOwnerUid = localStorage.getItem(ownerKey);
+        if(storedOwnerUid && storedOwnerUid !== user.uid){
+          const prefix = `letterladder:${accountScope}:`;
+          const keysToRemove = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const key = localStorage.key(i);
+            if(key && key.startsWith(prefix)) keysToRemove.push(key);
+          }
+          keysToRemove.forEach(k => localStorage.removeItem(k));
+        }
+        localStorage.setItem(ownerKey, user.uid);
+      }catch(e){}
+    }
+
     if(!localStorage.getItem(STATS_KEY)){
       try{
         const snap = await getDoc(doc(db, 'playerStats', user.uid));
