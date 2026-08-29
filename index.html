@@ -1369,7 +1369,7 @@ if(localStorage.getItem(LAST_VIEWED_DATE_KEY) !== dateKey){
 // matching how things worked before accounts existed - guests don't get
 // personal stats tracked anyway, so this only matters for the day's
 // in-progress guesses/hints, which is fine to share among guest sessions.
-const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
+const accountScope = (localStorage.getItem('letterladder:accountUsername') || 'guest').toLowerCase();
 if(isArchiveMode){
   const todaysPuzzlesLink = document.getElementById('todays-puzzles-link');
   if(todaysPuzzlesLink) todaysPuzzlesLink.style.display = '';
