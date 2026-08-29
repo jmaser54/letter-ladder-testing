@@ -1743,9 +1743,14 @@ function syncDailyProgressToCloud(){
   if(!user || user.isAnonymous) return;
   try{
     const snapshot = getTodaysProgressSnapshot();
+    let modifiedAt = getLocalLastModifiedAt();
+    if(modifiedAt === 0){
+      modifiedAt = Date.now();
+      localStorage.setItem(`letterladder:${accountScope}:${dateKey}:lastModifiedAt`, String(modifiedAt));
+    }
     window.LetterLadderAuth.setDoc(
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`),
-      { snapshot, lastModifiedAt: getLocalLastModifiedAt() }
+      { snapshot, lastModifiedAt: modifiedAt }
     ).then(() => {
       console.log('DIAG dailyProgress sync: succeeded for', `${user.uid}_${dateKey}`);
     }).catch((e) => {
@@ -1776,8 +1781,9 @@ async function pullDailyProgressFromCloudIfNeeded(){
     }
     const cloudModifiedAt = Number(snap.data().lastModifiedAt || 0);
     const localModifiedAt = getLocalLastModifiedAt();
-    console.log('DIAG dailyProgress pull: cloudModifiedAt=', cloudModifiedAt, 'localModifiedAt=', localModifiedAt);
-    if(cloudModifiedAt <= localModifiedAt){
+    const localIsGenuinelyEmpty = Object.keys(getTodaysProgressSnapshot()).length === 0;
+    console.log('DIAG dailyProgress pull: cloudModifiedAt=', cloudModifiedAt, 'localModifiedAt=', localModifiedAt, 'localIsGenuinelyEmpty=', localIsGenuinelyEmpty);
+    if(cloudModifiedAt <= localModifiedAt && !localIsGenuinelyEmpty){
       console.log('DIAG dailyProgress pull: skipped - local considered at least as current');
       return false;
     }
