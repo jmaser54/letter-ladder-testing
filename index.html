@@ -2085,7 +2085,15 @@ async function submitCurrentScore(tier, displayName){
 function showLeaderboardPromptIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never touch the leaderboard
   if(!window.LetterLadderAuth) return; // Firebase's module script hasn't finished loading yet - skip gracefully rather than error
-  if(localStorage.getItem(LEADERBOARD_PROMPT_DISMISSED_KEY)) return;
+  if(localStorage.getItem(LEADERBOARD_PROMPT_DISMISSED_KEY)){
+    // The dismissed flag only means "stop showing me the popup" - it was
+    // never meant to also silently stop submitting scores, but returning
+    // here unconditionally did exactly that for every subsequent win.
+    // Submit silently as a guest instead, same as the hasRealAccount()
+    // branch below does for account holders.
+    window.LetterLadderAuth.playAsGuest().then(() => submitCurrentScore(tier, 'Guest'));
+    return;
+  }
   const savedUsername = localStorage.getItem('letterladder:accountUsername');
   if(hasRealAccount()){
     // Already has a real account - silently submit under their existing
