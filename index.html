@@ -717,7 +717,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     return 'Something went wrong. Please try again.';
   }
 
+  const BANNED_USERNAME_SUBSTRINGS = [
+    'fuck', 'bitch', 'bastard', 'cunt', 'kike', 'nigger', 'nigga', 'asshole', 'faggot',
+  ];
+
   async function createAccount(username, password, recoveryEmail){
+    const trimmedUsername = username.trim();
+    if(trimmedUsername.length > 20){
+      return { success: false, error: 'Username must be 20 characters or fewer.' };
+    }
+    const lowerUsername = trimmedUsername.toLowerCase();
+    if(BANNED_USERNAME_SUBSTRINGS.some(word => lowerUsername.includes(word))){
+      return { success: false, error: 'Please choose a different username.' };
+    }
     try{
       const trimmedEmail = recoveryEmail && recoveryEmail.trim();
       // If a real email was provided, register the actual Firebase account
