@@ -1659,12 +1659,32 @@ function migrateGuestProgressToAccount(newUsername){
   const guestSnapshot = getTodaysProgressSnapshot();
   const oldPrefix = `letterladder:guest:`;
   const newPrefix = `letterladder:${newUsername}:`;
+  const migratedSnapshot = {};
   for(const key of Object.keys(guestSnapshot)){
     if(key.startsWith(oldPrefix)){
       const newKey = newPrefix + key.slice(oldPrefix.length);
       localStorage.setItem(newKey, guestSnapshot[key]);
+      migratedSnapshot[newKey] = guestSnapshot[key];
     }
   }
+  // Push this migrated data to the cloud immediately, under the new
+  // account's real uid - without this, the migration only ever existed
+  // on this one device, and a fresh session anywhere else (a different
+  // browser, incognito, another device) would find nothing to restore
+  // and show every puzzle as unstarted, despite it genuinely already
+  // being solved.
+  try{
+    const user = window.LetterLadderAuth && window.LetterLadderAuth.getCurrentUser();
+    if(user && !user.isAnonymous && Object.keys(migratedSnapshot).length > 0){
+      const modifiedAt = Date.now();
+      migratedSnapshot[`letterladder:${newUsername}:${dateKey}:lastModifiedAt`] = String(modifiedAt);
+      localStorage.setItem(`letterladder:${newUsername}:${dateKey}:lastModifiedAt`, String(modifiedAt));
+      window.LetterLadderAuth.setDoc(
+        window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`),
+        { snapshot: migratedSnapshot, lastModifiedAt: modifiedAt }
+      ).catch(()=>{});
+    }
+  }catch(e){}
 }
 
 // Guests never get personal stats tracked (markPlayedIfNeeded/
