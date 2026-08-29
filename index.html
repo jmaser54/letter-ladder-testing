@@ -1714,6 +1714,12 @@ function backfillGuestStatsAndScores(newUsername){
       stats.total.played += 1;
       stats.total.solved += 1;
       anyBackfilled = true;
+      // markPlayedIfNeeded checks for a real account before it ever sets
+      // its own "already counted" flag, so that flag never got set
+      // during guest play - without setting it here too, the normal
+      // play-tracking code would see no flag on a later visit and
+      // increment "played" a second time.
+      localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:playedCounted`, '1');
       submitCurrentScore(tier, newUsername);
     }
   }
