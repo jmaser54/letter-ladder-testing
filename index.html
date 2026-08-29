@@ -400,7 +400,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     position: relative;
   }
   .leaderboard-prompt-dismiss{
-    position: absolute; top: 12px; right: 14px;
+    position: absolute; top: 9px; right: 14px;
     font-size: 0.748rem; color: var(--ink-dim); cursor: pointer;
     text-decoration: none;
     touch-action: manipulation;
@@ -2056,7 +2056,7 @@ function showLeaderboardPromptIfNeeded(tier){
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card">
       <a href="#" class="leaderboard-prompt-dismiss" id="lb-dismiss-link">Do not show this message again</a>
-      <div class="leaderboard-prompt-title" id="lb-prompt-title" style="font-weight:bold; padding-right:0;">Create account or play as guest?</div>
+      <div class="leaderboard-prompt-title" id="lb-prompt-title" style="font-weight:bold; padding-right:0; margin-top:12px;">Create account or play as guest?</div>
       <div id="lb-prompt-body">
         <div class="leaderboard-prompt-actions">
           <button type="button" class="btn-primary" id="lb-create-account-btn">Create account</button>
