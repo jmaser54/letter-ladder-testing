@@ -3516,7 +3516,17 @@ function render(focusInput = false, pendingErrors = null){
       // reasoned about and tested against Safari's behavior - other
       // mobile browsers may not need (or may not respond well to) the
       // same explicit-blur workaround.
-      const nextIncomplete = [...steps].reverse().find(len => !newGuesses[len]);
+      // Advances to the nearest still-unfilled step above the one just
+      // filled, if one exists - accounts for players who work bottom-up,
+      // continuing to prompt them in that same direction rather than
+      // always redirecting to the overall highest unfilled box. Falls
+      // back to the original "highest unfilled overall" search when
+      // there's nothing left above (e.g. filling top-down, which
+      // produces identical results to the prior behavior in that case).
+      const unfilledAboveL = steps.filter(len => len > L && !newGuesses[len]);
+      const nextIncomplete = unfilledAboveL.length > 0
+        ? Math.min(...unfilledAboveL)
+        : [...steps].reverse().find(len => !newGuesses[len]);
       if(isIOS && activeInput) activeInput.blur();
       activeLength = nextIncomplete !== undefined ? nextIncomplete : null;
       render(nextIncomplete !== undefined);
