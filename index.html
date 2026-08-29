@@ -222,17 +222,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .btn-ghost{ background: rgba(245,239,224,0.08); color: var(--ink); }
   #hint-btn{ display:inline-flex; align-items:center; justify-content:center; padding: 10px 14px; }
 
-  .feedback{ margin-top:12px; text-align:center; font-weight:600; min-height: 24px; flex-shrink:0; }
+  .feedback{ margin-top:16px; text-align:center; font-weight:600; min-height: 24px; flex-shrink:0; }
   .feedback.win, .feedback.ok{ text-align:center; }
   .error-list{ list-style:none; margin: 12px 0 0; padding:0; text-align:left; display:inline-block; }
   .error-list li{ position:relative; padding-left:18px; margin-bottom:6px; font-weight:600; color: var(--red); font-size:0.9rem; }
   .error-list li::before{ content:"●"; color: var(--red); position:absolute; left:0; font-size:0.6rem; top:5px; }
   .error-list-wrap{ display:flex; justify-content:center; }
   .feedback.win{ color: var(--amber); font-weight: 700; }
-  .next-puzzle-link{
-    display:block; color: var(--amber); font-weight:700; text-decoration:underline;
-    margin-top: 4px; touch-action: manipulation;
-  }
   .feedback.error{ color: var(--red); }
   .feedback.ok{ color: var(--ink-dim); font-weight:500; }
   .details{ margin-top:4px; text-align:center; font-size:0.8rem; color: var(--red); font-style:italic; }
@@ -320,8 +316,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; gap: 14px;
     align-items: center;
     max-width: 100%;
-    margin-top: 18px;
-    margin-bottom: 18px;
+    margin-top: 16px;
+    margin-bottom: 16px;
   }
   .clear-hint-text{
     color: var(--ink-dim);
@@ -342,7 +338,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .bank-primary-btn:active{ transform: scale(0.96); }
   .bank-primary-btn.bank-submit-btn{ background: var(--amber); color: #1B2A41; }
 
-  .actions-row{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px; margin-top:10px; flex-shrink:0; }
+  .actions-row{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:16px; margin-top:16px; flex-shrink:0; }
+  #next-puzzle-btn, #share-btn{ width:100%; }
   .hint-display{
     text-align:center; margin-top:10px; margin-bottom:18px; font-size:0.85rem; color: var(--ink-dim);
     font-style:italic; flex-shrink:0; min-height: 0;
@@ -351,7 +348,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .share-status{ text-align:center; margin-top:8px; font-size:0.8rem; color: var(--blue); font-weight:600; flex-shrink:0; }
 
   .view-solution-link{
-    display:table; margin: 8px auto 14px auto;
+    display:table; margin: 16px auto 16px auto;
     font-size:0.88rem; color: var(--ink-dim); text-decoration:none;
     border-bottom: 1px dotted var(--ink-dim);
     touch-action: manipulation;
@@ -2927,6 +2924,7 @@ function checkAndCelebrateIfAllComplete(finalWord){
 }
 
 function render(focusInput = false, pendingErrors = null){
+  let nextTierForButton = null;
   document.querySelectorAll('.tab').forEach(t=>{
     t.classList.toggle('active', t.dataset.tier === activeTier);
   });
@@ -3007,7 +3005,7 @@ function render(focusInput = false, pendingErrors = null){
       }
       const nextTierForLink = { easy: 'medium', medium: 'hard' }[activeTier];
       if(nextTierForLink){
-        winMessage += `<a href="#" id="next-puzzle-link" class="next-puzzle-link">Next puzzle</a>`;
+        nextTierForButton = nextTierForLink;
       }
       feedback = winMessage;
       feedbackClass = 'win';
@@ -3211,6 +3209,7 @@ function render(focusInput = false, pendingErrors = null){
     ${bankHtml}
     ${primaryActionsHtml}
     <div class="actions-row">
+      ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button">Next puzzle</button>` : ''}
       ${anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
       ${!isWon && activeLength != null ? kbToggleHtml : ''}
     </div>
@@ -3282,10 +3281,9 @@ function render(focusInput = false, pendingErrors = null){
     });
   }
 
-  const nextPuzzleLink = document.getElementById('next-puzzle-link');
-  if(nextPuzzleLink){
-    nextPuzzleLink.addEventListener('click', (e) => {
-      e.preventDefault();
+  const nextPuzzleBtn = document.getElementById('next-puzzle-btn');
+  if(nextPuzzleBtn){
+    bindTapAction(nextPuzzleBtn, ()=>{
       switchToTier({ easy: 'medium', medium: 'hard' }[activeTier]);
     });
   }
