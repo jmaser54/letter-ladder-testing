@@ -1746,8 +1746,14 @@ function syncDailyProgressToCloud(){
     window.LetterLadderAuth.setDoc(
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`),
       { snapshot, lastModifiedAt: getLocalLastModifiedAt() }
-    ).catch(()=>{});
-  }catch(e){}
+    ).then(() => {
+      console.log('DIAG dailyProgress sync: succeeded for', `${user.uid}_${dateKey}`);
+    }).catch((e) => {
+      console.error('DIAG dailyProgress sync: FAILED -', e.code || e.message || e);
+    });
+  }catch(e){
+    console.error('DIAG dailyProgress sync: threw synchronously -', e.message || e);
+  }
 }
 
 // Compares the local and cloud timestamps directly and lets whichever
@@ -1764,13 +1770,23 @@ async function pullDailyProgressFromCloudIfNeeded(){
     const snap = await window.LetterLadderAuth.getDoc(
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`)
     );
-    if(!snap.exists() || !snap.data().snapshot) return false;
+    if(!snap.exists() || !snap.data().snapshot){
+      console.log('DIAG dailyProgress pull: no cloud doc found for', `${user.uid}_${dateKey}`, '- exists:', snap.exists());
+      return false;
+    }
     const cloudModifiedAt = Number(snap.data().lastModifiedAt || 0);
     const localModifiedAt = getLocalLastModifiedAt();
-    if(cloudModifiedAt <= localModifiedAt) return false; // local is at least as current - nothing to restore
+    console.log('DIAG dailyProgress pull: cloudModifiedAt=', cloudModifiedAt, 'localModifiedAt=', localModifiedAt);
+    if(cloudModifiedAt <= localModifiedAt){
+      console.log('DIAG dailyProgress pull: skipped - local considered at least as current');
+      return false;
+    }
     applyProgressSnapshot(snap.data().snapshot);
+    console.log('DIAG dailyProgress pull: restored', Object.keys(snap.data().snapshot).length, 'keys');
     return true;
-  }catch(e){}
+  }catch(e){
+    console.error('DIAG dailyProgress pull: threw an error -', e.code || e.message || e);
+  }
   return false;
 }
 

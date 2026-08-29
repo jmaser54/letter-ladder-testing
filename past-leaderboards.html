@@ -121,6 +121,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       // than padding the page out with empty placeholders.
       const q = query(collection(db, 'scores'), orderBy('date', 'desc'), limit(1000));
       const snap = await getDocs(q);
+      console.log('DIAG past-leaderboards: scores collection returned', snap.docs.length, 'total documents');
+      snap.docs.forEach(d => console.log('DIAG score doc:', d.id, JSON.stringify(d.data())));
 
       const byDate = {};
       snap.docs.forEach(docSnap => {
