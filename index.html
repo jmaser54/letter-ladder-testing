@@ -1628,6 +1628,29 @@ function getLocalLastModifiedAt(){
   return Number(localStorage.getItem(`letterladder:${accountScope}:${dateKey}:lastModifiedAt`) || 0);
 }
 
+// When someone creates an account mid-session after already genuinely
+// playing (and possibly solving) today's puzzles as a guest, that
+// progress lives under the 'guest' scope and would otherwise be
+// silently orphaned - the new account's own scope starts out completely
+// empty, making an already-solved puzzle look unstarted after the
+// reload. This re-keys today's guest-scoped progress under the new
+// account's scope instead, before the reload happens, so nothing gets
+// lost. Only runs when genuinely coming from guest play - a normal
+// login/account-creation from a fresh, guest-free session has nothing
+// to migrate and this correctly no-ops.
+function migrateGuestProgressToAccount(newUsername){
+  if(accountScope !== 'guest') return;
+  const guestSnapshot = getTodaysProgressSnapshot();
+  const oldPrefix = `letterladder:guest:`;
+  const newPrefix = `letterladder:${newUsername}:`;
+  for(const key of Object.keys(guestSnapshot)){
+    if(key.startsWith(oldPrefix)){
+      const newKey = newPrefix + key.slice(oldPrefix.length);
+      localStorage.setItem(newKey, guestSnapshot[key]);
+    }
+  }
+}
+
 // Same fire-and-forget pattern as stats: keeps a durable, cloud-backed
 // copy of today's actual puzzle progress in sync, so a genuinely fresh
 // browser or device can restore it rather than starting from scratch.
@@ -1952,6 +1975,7 @@ function showAccountForm(mode){
     }
     localStorage.setItem('letterladder:accountUsername', result.username);
     localStorage.setItem('letterladder:activeTier', 'easy');
+    if(!isLogin) migrateGuestProgressToAccount(result.username);
 
     // Pull this account's usual timer preference from the cloud, so
     // someone who always plays timed doesn't stay stuck on whatever was
@@ -2120,6 +2144,7 @@ function showLeaderboardPromptIfNeeded(tier){
         return;
       }
       localStorage.setItem('letterladder:accountUsername', result.username);
+      migrateGuestProgressToAccount(result.username);
       await submitCurrentScore(tier, result.username);
       window.location.reload();
     });
