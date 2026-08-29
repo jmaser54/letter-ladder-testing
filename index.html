@@ -229,6 +229,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .error-list li::before{ content:"●"; color: var(--red); position:absolute; left:0; font-size:0.6rem; top:5px; }
   .error-list-wrap{ display:flex; justify-content:center; }
   .feedback.win{ color: var(--amber); font-weight: 700; }
+  .next-puzzle-link{
+    display:block; color: var(--amber); font-weight:700; text-decoration:underline;
+    margin-top: 4px; touch-action: manipulation;
+  }
   .feedback.error{ color: var(--red); }
   .feedback.ok{ color: var(--ink-dim); font-weight:500; }
   .details{ margin-top:4px; text-align:center; font-size:0.8rem; color: var(--red); font-style:italic; }
@@ -2278,7 +2282,7 @@ function computeInitialUsedIndices(order, typedValue){
 function setupBankTileDragging(){
   const bankTiles = document.getElementById('bank-tiles');
   if(!bankTiles) return;
-  const HOLD_DELAY_MS = 300; // long enough to not trigger on a normal tap, short enough to feel responsive
+  const HOLD_DELAY_MS = 180; // long enough to not trigger on a normal tap, short enough to feel responsive
   const MOVE_CANCEL_THRESHOLD = 10; // px of movement before the hold timer fires that cancels the drag-intent (lets a quick swipe/scroll pass through untouched)
 
   bankTiles.querySelectorAll('.bank-tile').forEach(tile => {
@@ -2882,6 +2886,10 @@ function render(focusInput = false, pendingErrors = null){
           }
         }
       }
+      const nextTierForLink = { easy: 'medium', medium: 'hard' }[activeTier];
+      if(nextTierForLink){
+        winMessage += `<a href="#" id="next-puzzle-link" class="next-puzzle-link">Next puzzle</a>`;
+      }
       feedback = winMessage;
       feedbackClass = 'win';
       markSolvedIfNeeded(activeTier, guesses);
@@ -3152,6 +3160,14 @@ function render(focusInput = false, pendingErrors = null){
     solutionLink.addEventListener('click', (e) => {
       e.preventDefault();
       handleViewSolutionClick();
+    });
+  }
+
+  const nextPuzzleLink = document.getElementById('next-puzzle-link');
+  if(nextPuzzleLink){
+    nextPuzzleLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      switchToTier({ easy: 'medium', medium: 'hard' }[activeTier]);
     });
   }
 
@@ -3691,17 +3707,21 @@ function render(focusInput = false, pendingErrors = null){
   scheduleDailyProgressSync();
 }
 
-document.getElementById('tabs').addEventListener('click', (e)=>{
-  const tab = e.target.closest('.tab');
-  if(!tab) return;
+function switchToTier(newTier){
   const previousTier = activeTier;
-  activeTier = tab.dataset.tier;
+  activeTier = newTier;
   if(previousTier !== activeTier) pauseTimer(previousTier);
   localStorage.setItem('letterladder:activeTier', activeTier);
   activeLength = null;
   document.querySelectorAll('.confetti-piece').forEach(piece => piece.remove());
   render(!isTouchDevice);
   showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
+}
+
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  const tab = e.target.closest('.tab');
+  if(!tab) return;
+  switchToTier(tab.dataset.tier);
 });
 
 document.addEventListener('visibilitychange', ()=>{
