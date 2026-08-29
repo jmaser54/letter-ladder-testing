@@ -101,7 +101,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 // Matches index.html's exact scoping scheme - the same synchronous,
 // immediately-available flag is used here too, since this page has no
 // Firebase connection of its own and doesn't need one for this.
-const accountScope = (localStorage.getItem('letterladder:accountUsername') || 'guest').toLowerCase();
+const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
 const STATS_KEY = `letterladder:${accountScope}:stats`;
 
 function blankStat(){
@@ -308,10 +308,12 @@ renderStatsPage(loadStats());
   // empty" rule, so a fresh device correctly pulls real stats down from
   // the cloud without ever risking overwriting newer local changes on a
   // device that already has some.
+  let ownerCheckDone = false;
   onAuthStateChanged(auth, async (user) => {
     if(!user || user.isAnonymous) return;
 
-    if(accountScope !== 'guest'){
+    if(!ownerCheckDone && accountScope !== 'guest'){
+      ownerCheckDone = true;
       try{
         const ownerKey = `letterladder:${accountScope}:ownerUid`;
         const storedOwnerUid = localStorage.getItem(ownerKey);

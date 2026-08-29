@@ -1369,7 +1369,7 @@ if(localStorage.getItem(LAST_VIEWED_DATE_KEY) !== dateKey){
 // matching how things worked before accounts existed - guests don't get
 // personal stats tracked anyway, so this only matters for the day's
 // in-progress guesses/hints, which is fine to share among guest sessions.
-const accountScope = (localStorage.getItem('letterladder:accountUsername') || 'guest').toLowerCase();
+const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
 if(isArchiveMode){
   const todaysPuzzlesLink = document.getElementById('todays-puzzles-link');
   if(todaysPuzzlesLink) todaysPuzzlesLink.style.display = '';
@@ -3820,28 +3820,32 @@ async function pullStatsFromCloudIfNeeded(){
   }catch(e){}
 }
 
+let ownerCheckDone = false;
 (function waitForLetterLadderAuth(attemptsLeft){
   if(attemptsLeft === undefined) attemptsLeft = 100; // ~5 seconds total at 50ms intervals
   if(window.LetterLadderAuth){
     window.LetterLadderAuth.onAuthReady(async () => {
-      try{
-        const player = window.LetterLadderAuth.getCurrentUser();
-        if(player && !player.isAnonymous && accountScope !== 'guest'){
-          const ownerKey = `letterladder:${accountScope}:ownerUid`;
-          const storedOwnerUid = localStorage.getItem(ownerKey);
-          if(storedOwnerUid && storedOwnerUid !== player.uid){
-            const prefix = `letterladder:${accountScope}:`;
-            const keysToRemove = [];
-            for(let i = 0; i < localStorage.length; i++){
-              const key = localStorage.key(i);
-              if(key && key.startsWith(prefix)) keysToRemove.push(key);
+      if(!ownerCheckDone){
+        ownerCheckDone = true;
+        try{
+          const player = window.LetterLadderAuth.getCurrentUser();
+          if(player && !player.isAnonymous && accountScope !== 'guest'){
+            const ownerKey = `letterladder:${accountScope}:ownerUid`;
+            const storedOwnerUid = localStorage.getItem(ownerKey);
+            if(storedOwnerUid && storedOwnerUid !== player.uid){
+              const prefix = `letterladder:${accountScope}:`;
+              const keysToRemove = [];
+              for(let i = 0; i < localStorage.length; i++){
+                const key = localStorage.key(i);
+                if(key && key.startsWith(prefix)) keysToRemove.push(key);
+              }
+              keysToRemove.forEach(k => localStorage.removeItem(k));
+              activeLength = null;
             }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
-            activeLength = null;
+            localStorage.setItem(ownerKey, player.uid);
           }
-          localStorage.setItem(ownerKey, player.uid);
-        }
-      }catch(e){}
+        }catch(e){}
+      }
 
       renderAccountWidget();
 
