@@ -1604,11 +1604,18 @@ function syncStatsToCloud(stats){
   if(!window.LetterLadderAuth) return;
   const user = window.LetterLadderAuth.getCurrentUser();
   if(!user || user.isAnonymous) return;
+  const attempt = () => window.LetterLadderAuth.setDoc(
+    window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', user.uid),
+    stats,
+    { merge: true }
+  );
   try{
-    window.LetterLadderAuth.setDoc(
-      window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', user.uid),
-      stats
-    ).catch(()=>{});
+    attempt().catch(() => {
+      // One retry after a short delay - covers the common case of a
+      // brief network hiccup or the write racing a page navigation,
+      // without adding unbounded retry complexity right before launch.
+      setTimeout(() => { attempt().catch(()=>{}); }, 1500);
+    });
   }catch(e){}
 }
 
