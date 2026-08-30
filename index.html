@@ -3261,12 +3261,15 @@ function render(focusInput = false, pendingErrors = null){
     <div class="hint-display" id="hint-display"></div>
     <div class="actions-row">
       ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button">Next puzzle</button>` : ''}
-      ${anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
+      ${isWon && anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
     </div>
     <a href="#" id="solution-link" class="view-solution-link">View solution</a>
     ${bankHtml}
     ${primaryActionsHtml}
-    ${!isWon && activeLength != null ? `<div class="actions-row">${kbToggleHtml}</div>` : ''}
+    ${!isWon ? `<div class="actions-row">
+      ${anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
+      ${activeLength != null ? kbToggleHtml : ''}
+    </div>` : ''}
     <div class="share-status" id="share-status"></div>
   `;
   suppressBlurCommit = false;
