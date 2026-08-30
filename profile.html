@@ -128,7 +128,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const snap = await getDoc(doc(db, 'players', user.uid));
       if(snap.exists()){
         if(snap.data().createdAt) joinDateText = formatJoinDate(snap.data().createdAt);
-        if(snap.data().recoveryEmail) existingEmail = snap.data().recoveryEmail;
+      }
+      const recoverySnap = await getDoc(doc(db, 'playerRecovery', user.uid));
+      if(recoverySnap.exists() && recoverySnap.data().recoveryEmail){
+        existingEmail = recoverySnap.data().recoveryEmail;
       }
     }catch(e){}
 
@@ -219,7 +222,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           // and only promoted to recoveryEmail once it's genuinely
           // confirmed (checked elsewhere, on login).
           await verifyBeforeUpdateEmail(user, newEmail);
-          await setDoc(doc(db, 'players', user.uid), { pendingEmail: newEmail }, { merge: true });
+          await setDoc(doc(db, 'playerRecovery', user.uid), { pendingEmail: newEmail }, { merge: true });
           emailVerificationSent = true;
         }
         messageEl.classList.add('is-success');

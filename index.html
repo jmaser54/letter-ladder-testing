@@ -744,13 +744,26 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       // synthetic-email path got this for free by always lowercasing;
       // this keeps that same behavior now that login may need to look
       // this record up directly instead of just computing an email).
+      // authEmail is the address the account actually signs in with -
+      // safe to keep on the publicly-readable players doc, since login
+      // needs it pre-auth and it's just an opaque login identifier. The
+      // player's personal recoveryEmail is deliberately NOT stored here -
+      // it goes in the separate, locked-down playerRecovery collection
+      // below, so the public players doc never exposes personal emails.
       const playerDoc = {
         username: username.trim(),
         usernameLower: normalizeUsername(username),
         createdAt: Date.now(),
+        authEmail: registeredEmail,
       };
-      if(trimmedEmail) playerDoc.recoveryEmail = trimmedEmail;
       await setDoc(doc(db, 'players', cred.user.uid), playerDoc);
+      if(trimmedEmail){
+        // Personal recovery email lives in its own collection, readable
+        // only as a single-document get (never enumerable), so it can
+        // still be fetched pre-auth for password reset but can't be
+        // harvested across all accounts.
+        await setDoc(doc(db, 'playerRecovery', cred.user.uid), { recoveryEmail: trimmedEmail });
+      }
       return { success: true, uid: cred.user.uid, username: username.trim() };
     }catch(error){
       return { success: false, error: friendlyAuthError(error) };
@@ -765,7 +778,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       // username, or a known one that never provided an email) fall back
       // to the deterministic synthetic formula, which correctly covers
       // both those cases the same way account creation would have.
-      const registeredEmail = (player && player.recoveryEmail) || usernameToSyntheticEmail(username);
+      // authEmail is the safe, public login identifier - the personal
+      // recoveryEmail is no longer stored on this doc.
+      const registeredEmail = (player && player.authEmail) || usernameToSyntheticEmail(username);
       const cred = await signInWithEmailAndPassword(auth, registeredEmail, password);
       return { success: true, uid: cred.user.uid, username: (player && player.username) || username.trim() };
     }catch(error){
@@ -776,10 +791,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   async function requestPasswordReset(username){
     try{
       const player = await findPlayerByUsername(username);
-      if(!player || !player.recoveryEmail){
+      if(!player){
         return { success: false, error: 'No recovery email is on file for that username.' };
       }
-      await sendPasswordResetEmail(auth, player.recoveryEmail);
+      // The personal recovery email now lives in the locked-down
+      // playerRecovery collection, fetched here as a single get by the
+      // uid we just resolved from the username - never enumerable.
+      let recoveryEmail = null;
+      try{
+        const recoverySnap = await getDoc(doc(db, 'playerRecovery', player.uid));
+        if(recoverySnap.exists()) recoveryEmail = recoverySnap.data().recoveryEmail;
+      }catch(e){}
+      if(!recoveryEmail){
+        return { success: false, error: 'No recovery email is on file for that username.' };
+      }
+      await sendPasswordResetEmail(auth, recoveryEmail);
       return { success: true };
     }catch(error){
       return { success: false, error: 'Something went wrong. Please try again.' };
@@ -4110,14 +4136,14 @@ let ownerCheckDone = false;
         const player = window.LetterLadderAuth.getCurrentUser();
         if(player && !player.isAnonymous){
           await player.reload();
-          const playerDocSnap = await window.LetterLadderAuth.getDoc(
-            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', player.uid)
+          const recoverySnap = await window.LetterLadderAuth.getDoc(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerRecovery', player.uid)
           );
-          if(playerDocSnap.exists()){
-            const data = playerDocSnap.data();
+          if(recoverySnap.exists()){
+            const data = recoverySnap.data();
             if(data.pendingEmail && player.email === data.pendingEmail){
               await window.LetterLadderAuth.setDoc(
-                window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', player.uid),
+                window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerRecovery', player.uid),
                 { recoveryEmail: data.pendingEmail, pendingEmail: null },
                 { merge: true }
               );
