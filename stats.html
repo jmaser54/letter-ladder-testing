@@ -330,15 +330,34 @@ renderStatsPage(loadStats());
       }catch(e){}
     }
 
-    if(!localStorage.getItem(STATS_KEY)){
-      try{
-        const snap = await getDoc(doc(db, 'playerStats', user.uid));
-        if(snap.exists()){
-          localStorage.setItem(STATS_KEY, JSON.stringify(snap.data()));
-          renderStatsPage(loadStats());
+    try{
+      const snap = await getDoc(doc(db, 'playerStats', user.uid));
+      if(snap.exists()){
+        const cloudStats = snap.data();
+        let localStats;
+        try{ localStats = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); }catch(e){ localStats = null; }
+        if(!localStats){
+          localStorage.setItem(STATS_KEY, JSON.stringify(cloudStats));
+        } else {
+          const merged = {};
+          for(const tier of ['easy', 'medium', 'hard', 'total']){
+            const localTier = localStats[tier] || {};
+            const cloudTier = cloudStats[tier] || {};
+            const cloudIsNewer = (cloudTier.lastSolvedDate || '') > (localTier.lastSolvedDate || '');
+            const winner = cloudIsNewer ? cloudTier : localTier;
+            merged[tier] = {
+              played: winner.played || 0,
+              solved: winner.solved || 0,
+              currentStreak: winner.currentStreak || 0,
+              lastSolvedDate: winner.lastSolvedDate || null,
+              maxStreak: Math.max(localTier.maxStreak || 0, cloudTier.maxStreak || 0),
+            };
+          }
+          localStorage.setItem(STATS_KEY, JSON.stringify(merged));
         }
-      }catch(e){}
-    }
+        renderStatsPage(loadStats());
+      }
+    }catch(e){}
 
     const hasRealScoreData = await renderTimeSummaryTable(user);
     // If the summary table just proved (from real score documents) that
@@ -353,7 +372,7 @@ renderStatsPage(loadStats());
     if(hasRealScoreData){
       const listContainer = document.getElementById('stats-list');
       if(listContainer.innerHTML.includes('No puzzles played yet')){
-        listContainer.innerHTML = `<div class="empty-state">Your times above are accurate, but your played/streak breakdown isn't available yet on this device - it'll appear once your stats finish syncing.</div>`;
+        listContainer.innerHTML = `<div class="empty-state">Your streak data will appear once your stats finish syncing across devices.</div>`;
       }
     }
   });
