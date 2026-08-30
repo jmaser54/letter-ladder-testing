@@ -1895,10 +1895,17 @@ function markPlayedIfNeeded(tier){
   const flagKey = `letterladder:${accountScope}:${dateKey}:${tier}:playedCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
-  const stats = loadStats();
-  stats[tier].played += 1;
-  stats.total.played += 1;
-  saveStats(stats);
+  function updatePlayedCount(){
+    const stats = loadStats();
+    stats[tier].played += 1;
+    stats.total.played += 1;
+    saveStats(stats);
+  }
+  if(statsPullPromise){
+    statsPullPromise.then(updatePlayedCount).catch(updatePlayedCount);
+  } else {
+    updatePlayedCount();
+  }
 }
 
 const HINT_TIME_PENALTY_MS = 3 * 60 * 1000;
@@ -2212,20 +2219,27 @@ async function submitCurrentScore(tier, displayName){
 function showLeaderboardPromptIfNeeded(tier){
   if(isArchiveMode) return; // archive plays never touch the leaderboard
   if(!window.LetterLadderAuth) return; // Firebase's module script hasn't finished loading yet - skip gracefully rather than error
+  const savedUsername = localStorage.getItem('letterladder:accountUsername');
+  if(hasRealAccount()){
+    // Already has a real account - silently submit under their existing
+    // username every time, exactly as spec'd, with no popup at all. This
+    // must be checked before the dismissed-flag branch below: that flag
+    // is global, not tied to any specific account, so a logged-in user
+    // who had ever dismissed the popup (even much earlier, or under a
+    // different account) would otherwise hit the guest branch on every
+    // subsequent win - which calls playAsGuest() and genuinely signs
+    // them out of their real account into an anonymous guest session.
+    submitCurrentScore(tier, savedUsername);
+    return;
+  }
   if(localStorage.getItem(LEADERBOARD_PROMPT_DISMISSED_KEY)){
     // The dismissed flag only means "stop showing me the popup" - it was
     // never meant to also silently stop submitting scores, but returning
     // here unconditionally did exactly that for every subsequent win.
     // Submit silently as a guest instead, same as the hasRealAccount()
-    // branch below does for account holders.
+    // branch above does for account holders. Only reached here for
+    // genuine guests now, since real accounts return above first.
     window.LetterLadderAuth.playAsGuest().then(() => submitCurrentScore(tier, 'Guest'));
-    return;
-  }
-  const savedUsername = localStorage.getItem('letterladder:accountUsername');
-  if(hasRealAccount()){
-    // Already has a real account - silently submit under their existing
-    // username every time, exactly as spec'd, with no popup at all.
-    submitCurrentScore(tier, savedUsername);
     return;
   }
 
@@ -2364,22 +2378,29 @@ function markSolvedIfNeeded(tier, guesses){
     }
   }
 
-  if(hasRealAccount()){
-    const stats = loadStats();
-    const stat = stats[tier];
-    stat.solved += 1;
-    stats.total.solved += 1;
-    bumpStreak(stat, dateKey);
+  function updateStatsForSolve(){
+    if(hasRealAccount()){
+      const stats = loadStats();
+      const stat = stats[tier];
+      stat.solved += 1;
+      stats.total.solved += 1;
+      bumpStreak(stat, dateKey);
 
-    // If this solve completes all three tiers for today, the "total" streak
-    // (a separate concept from the per-tier ones - it tracks consecutive
-    // days you completed EVERY puzzle, tying into the summit celebration)
-    // gets its own bump.
-    if(TIERS.every(isTierComplete)){
-      bumpStreak(stats.total, dateKey);
+      // If this solve completes all three tiers for today, the "total" streak
+      // (a separate concept from the per-tier ones - it tracks consecutive
+      // days you completed EVERY puzzle, tying into the summit celebration)
+      // gets its own bump.
+      if(TIERS.every(isTierComplete)){
+        bumpStreak(stats.total, dateKey);
+      }
+
+      saveStats(stats);
     }
-
-    saveStats(stats);
+  }
+  if(statsPullPromise){
+    statsPullPromise.then(updateStatsForSolve).catch(updateStatsForSolve);
+  } else {
+    updateStatsForSolve();
   }
 
   // Confetti for the 1st and 2nd puzzle completed today, whichever tiers
@@ -3913,6 +3934,7 @@ showMigrationLinkBannerIfNeeded();
 // far more common case of just reloading the same device. Still solves
 // the actual cross-device need: signing into a real account on a new
 // device correctly pulls its real stats down from the cloud.
+let statsPullPromise = null;
 async function pullStatsFromCloudIfNeeded(){
   if(!window.LetterLadderAuth) return;
   const user = window.LetterLadderAuth.getCurrentUser();
@@ -4007,7 +4029,8 @@ let ownerCheckDone = false;
         }
       }catch(e){}
 
-      pullStatsFromCloudIfNeeded();
+      statsPullPromise = pullStatsFromCloudIfNeeded();
+      await statsPullPromise;
       // Backfills the account's cloud timer-choice record from this
       // device's existing local choice, if one was genuinely already
       // made - covers a preference set before this sync feature
