@@ -1028,7 +1028,7 @@ function showConfirmModal(message, onConfirm){
 const HOWTO_SEEN_KEY = 'letterladder:howToPlaySeen';
 function showHowToPlayPopupIfNeeded(){
   if(localStorage.getItem(HOWTO_SEEN_KEY)){
-    showTimerChoicePopupIfNeeded();
+    showAccountOrGuestPopupIfNeeded();
     return;
   }
 
@@ -1052,10 +1052,99 @@ function showHowToPlayPopupIfNeeded(){
   function close(){
     localStorage.setItem(HOWTO_SEEN_KEY, '1');
     overlay.remove();
-    showTimerChoicePopupIfNeeded();
+    showAccountOrGuestPopupIfNeeded();
   }
   bindTapAction(overlay.querySelector('.howto-close'), close);
   overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+}
+
+const ACCOUNT_OR_GUEST_CHOICE_MADE_KEY = 'letterladder:accountOrGuestChoiceMade';
+function showAccountOrGuestPopupIfNeeded(){
+  // Already has a real account, or already made this choice on a prior
+  // visit - either way, this step is done, move straight on to the
+  // timer choice.
+  if(hasRealAccount() || localStorage.getItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY)){
+    showTimerChoicePopupIfNeeded();
+    return;
+  }
+  if(!window.LetterLadderAuth){
+    // Firebase's module script hasn't finished loading yet - skip
+    // gracefully rather than error, same as the post-win version of
+    // this popup does.
+    showTimerChoicePopupIfNeeded();
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="leaderboard-prompt-card">
+      <div class="leaderboard-prompt-title" id="onboard-prompt-title" style="font-weight:bold; padding-right:0; margin-top:12px;">Create account or play as guest?</div>
+      <div id="onboard-prompt-body">
+        <div class="leaderboard-prompt-actions">
+          <button type="button" class="btn-primary" id="onboard-create-account-btn">Create account</button>
+          <button type="button" class="btn-ghost" id="onboard-play-guest-btn">Play as guest</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  function close(){
+    localStorage.setItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY, '1');
+    overlay.remove();
+    showTimerChoicePopupIfNeeded();
+  }
+
+  bindTapAction(overlay.querySelector('#onboard-play-guest-btn'), close);
+
+  bindTapAction(overlay.querySelector('#onboard-create-account-btn'), ()=>{
+    const titleEl = overlay.querySelector('#onboard-prompt-title');
+    const bodyEl = overlay.querySelector('#onboard-prompt-body');
+    titleEl.className = 'leaderboard-form-title';
+    titleEl.textContent = 'Create account';
+    bodyEl.innerHTML = `
+      <div class="leaderboard-form-error" id="onboard-form-error"></div>
+      <input type="text" class="leaderboard-form-field" id="onboard-username-field" placeholder="Username" autocomplete="username">
+      <input type="password" class="leaderboard-form-field" id="onboard-password-field" placeholder="Password" autocomplete="new-password">
+      <input type="email" class="leaderboard-form-field" id="onboard-email-field" placeholder="Email (optional)" autocomplete="email">
+      <div class="leaderboard-form-hint">Your email will only be used for password recovery purposes.</div>
+      <div class="leaderboard-prompt-actions">
+        <button type="button" class="btn-primary" id="onboard-submit-account-btn">Create account</button>
+      </div>
+    `;
+    const errorEl = bodyEl.querySelector('#onboard-form-error');
+    const submitBtn = bodyEl.querySelector('#onboard-submit-account-btn');
+    bindEnterToSubmit([
+      bodyEl.querySelector('#onboard-username-field'),
+      bodyEl.querySelector('#onboard-password-field'),
+      bodyEl.querySelector('#onboard-email-field'),
+    ], submitBtn);
+    bindTapAction(submitBtn, async ()=>{
+      const username = bodyEl.querySelector('#onboard-username-field').value.trim();
+      const password = bodyEl.querySelector('#onboard-password-field').value;
+      if(!username || !password){
+        errorEl.textContent = 'Please fill in both fields.';
+        return;
+      }
+      errorEl.textContent = '';
+      const email = bodyEl.querySelector('#onboard-email-field').value;
+      const result = await window.LetterLadderAuth.createAccount(username, password, email);
+      if(!result.success){
+        errorEl.textContent = result.error;
+        return;
+      }
+      localStorage.setItem('letterladder:accountUsername', result.username);
+      localStorage.setItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY, '1');
+      // Reload rather than continuing onboarding in-place, matching the
+      // established pattern used everywhere else on the site for
+      // account creation - ensures Firebase's auth state is freshly,
+      // correctly established rather than risking any stale-state
+      // issues, given how many of tonight's bugs traced back to exactly
+      // that kind of timing problem.
+      window.location.reload();
+    });
+  });
 }
 
 const TIMER_CHOICE_MADE_KEY = 'letterladder:timerChoiceMade';
