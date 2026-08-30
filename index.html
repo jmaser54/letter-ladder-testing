@@ -316,7 +316,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; gap: 14px;
     align-items: center;
     max-width: 100%;
-    margin-top: 8px;
+    margin-top: 0;
     margin-bottom: 8px;
   }
   .clear-hint-text{
@@ -339,7 +339,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .bank-primary-btn.bank-submit-btn{ background: var(--amber); color: #1B2A41; }
 
   .actions-row{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:10px; margin-top:8px; flex-shrink:0; }
-  #next-puzzle-btn, #share-btn{ font-size: 0.48rem; padding: 6px 9px; }
+  #next-puzzle-btn, #share-btn{ font-size: 0.72rem; padding: 9px 13px; }
   .hint-display{
     text-align:center; margin-top:10px; margin-bottom:18px; font-size:0.85rem; color: var(--ink-dim);
     font-style:italic; flex-shrink:0; min-height: 0;
@@ -1756,6 +1756,9 @@ function backfillGuestStatsAndScores(newUsername){
       // play-tracking code would see no flag on a later visit and
       // increment "played" a second time.
       localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:playedCounted`, '1');
+      // Same protection for "solved" - explicitly set here rather than
+      // relying solely on migration to have already copied it over.
+      localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:solvedCounted`, '1');
       submitCurrentScore(tier, newUsername);
     }
   }
@@ -3238,11 +3241,11 @@ function render(focusInput = false, pendingErrors = null){
     <div class="actions-row">
       ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button">Next puzzle</button>` : ''}
       ${anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
-      ${!isWon && activeLength != null ? kbToggleHtml : ''}
     </div>
     <a href="#" id="solution-link" class="view-solution-link">View solution</a>
     ${bankHtml}
     ${primaryActionsHtml}
+    ${!isWon && activeLength != null ? `<div class="actions-row">${kbToggleHtml}</div>` : ''}
     <div class="share-status" id="share-status"></div>
   `;
   suppressBlurCommit = false;
