@@ -1601,6 +1601,19 @@ function syncStatsToCloud(stats){
   if(!window.LetterLadderAuth) return;
   const user = window.LetterLadderAuth.getCurrentUser();
   if(!user || user.isAnonymous) return;
+  // Never sync a completely blank stats object up to the cloud - since
+  // merge:true replaces each tier's object wholesale rather than deep-
+  // merging its individual fields, writing an all-zero state here would
+  // silently destroy any real, existing progress already in the cloud.
+  // The only time every tier is genuinely 0/0 is either a brand-new
+  // account (cloud is presumably also blank, so skipping is harmless) or
+  // local data that's been lost/wiped, which should never be allowed to
+  // propagate and overwrite real cloud data.
+  const isEntirelyBlank = [...TIERS, 'total'].every(tier => {
+    const t = stats[tier] || {};
+    return !t.played && !t.solved;
+  });
+  if(isEntirelyBlank) return;
   const attempt = () => window.LetterLadderAuth.setDoc(
     window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', user.uid),
     stats,
