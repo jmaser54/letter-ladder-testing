@@ -1543,6 +1543,10 @@ function showPlayPopupIfNeeded(tier, onPlay){
   bindTapAction(overlay.querySelector('#play-btn-big'), ()=>{
     overlay.remove();
     onPlay();
+    if(!isTouchDevice && activeLength != null){
+      const inputEl = document.getElementById(`rung-input-${activeLength}`);
+      if(inputEl) inputEl.focus({ preventScroll: true });
+    }
   });
 }
 
