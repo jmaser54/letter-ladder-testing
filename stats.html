@@ -326,13 +326,17 @@ renderStatsPage(loadStats());
   // device that already has some.
   let ownerCheckDone = false;
   onAuthStateChanged(auth, async (user) => {
+    console.log('DIAG stats.html: onAuthStateChanged fired, user=', user ? user.uid : null, 'isAnonymous=', user && user.isAnonymous);
     if(!user || user.isAnonymous) return;
+
+    console.log('DIAG stats.html: accountScope=', accountScope, 'STATS_KEY=', STATS_KEY);
 
     if(!ownerCheckDone && accountScope !== 'guest'){
       ownerCheckDone = true;
       try{
         const ownerKey = `letterladder:${accountScope}:ownerUid`;
         const storedOwnerUid = localStorage.getItem(ownerKey);
+        console.log('DIAG stats.html: ownership check - storedOwnerUid=', storedOwnerUid, 'current uid=', user.uid);
         if(storedOwnerUid && storedOwnerUid !== user.uid){
           const prefix = `letterladder:${accountScope}:`;
           const keysToRemove = [];
@@ -341,19 +345,26 @@ renderStatsPage(loadStats());
             if(key && key.startsWith(prefix)) keysToRemove.push(key);
           }
           keysToRemove.forEach(k => localStorage.removeItem(k));
+          console.log('DIAG stats.html: ownership mismatch - wiped', keysToRemove.length, 'stale keys');
         }
         localStorage.setItem(ownerKey, user.uid);
-      }catch(e){}
+      }catch(e){
+        console.error('DIAG stats.html: ownership check threw -', e.message || e);
+      }
     }
 
     try{
       const snap = await getDoc(doc(db, 'playerStats', user.uid));
+      console.log('DIAG stats.html: playerStats doc exists=', snap.exists());
       if(snap.exists()){
         const cloudStats = snap.data();
+        console.log('DIAG stats.html: cloud data=', JSON.stringify(cloudStats));
         let localStats;
         try{ localStats = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); }catch(e){ localStats = null; }
+        console.log('DIAG stats.html: local data before merge=', JSON.stringify(localStats));
         if(!localStats){
           localStorage.setItem(STATS_KEY, JSON.stringify(cloudStats));
+          console.log('DIAG stats.html: local was empty, wrote cloud data directly');
         } else {
           const merged = {};
           for(const tier of ['easy', 'medium', 'hard', 'total']){
@@ -370,10 +381,14 @@ renderStatsPage(loadStats());
             };
           }
           localStorage.setItem(STATS_KEY, JSON.stringify(merged));
+          console.log('DIAG stats.html: merged result=', JSON.stringify(merged));
         }
         renderStatsPage(loadStats());
+        console.log('DIAG stats.html: renderStatsPage called with final data=', JSON.stringify(loadStats()));
       }
-    }catch(e){}
+    }catch(e){
+      console.error('DIAG stats.html: playerStats pull/merge threw -', e.code || e.message || e);
+    }
 
     const hasRealScoreData = await renderTimeSummaryTable(user);
     // If the summary table just proved (from real score documents) that
