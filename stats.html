@@ -128,6 +128,16 @@ function loadStats(){
   }catch(e){}
   return { easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() };
 }
+// The <script type="module"> block later in this file has a completely
+// separate top-level scope from this classic script - it can never see
+// a bare const/let declared here, no matter how it's referenced. This
+// module script needs accountScope, STATS_KEY, blankStat, and loadStats
+// directly, so they're explicitly attached to window here to bridge
+// the two script contexts.
+window.accountScope = accountScope;
+window.STATS_KEY = STATS_KEY;
+window.blankStat = blankStat;
+window.loadStats = loadStats;
 
 </script>
 <script>
@@ -203,6 +213,12 @@ renderStatsPage(loadStats());
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // This module script has a fully separate top-level scope from the
+  // classic <script> blocks earlier in this file - accountScope,
+  // STATS_KEY, blankStat, and loadStats are all genuinely defined there,
+  // not here, so they're pulled in from window explicitly.
+  const { accountScope, STATS_KEY, blankStat, loadStats } = window;
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
