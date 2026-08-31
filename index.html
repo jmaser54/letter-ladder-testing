@@ -1560,12 +1560,16 @@ function showPlayPopupIfNeeded(tier, onPlay){
   const overlay = document.createElement('div');
   overlay.className = 'play-overlay';
   overlay.innerHTML = `
-    <div class="play-card">
+    <div class="play-card" style="position:relative;">
+      <a href="#" class="play-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back to game</a>
       <div class="play-prompt-text">Ready to begin?</div>
       <button type="button" class="play-btn-big" id="play-btn-big">Play</button>
     </div>
   `;
   document.body.appendChild(overlay);
+  bindTapAction(overlay.querySelector('.play-back-link'), ()=>{
+    overlay.remove();
+  });
   bindTapAction(overlay.querySelector('#play-btn-big'), ()=>{
     overlay.remove();
     onPlay();
