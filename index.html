@@ -3655,7 +3655,7 @@ function render(focusInput = false, pendingErrors = null){
       let confirmMsg = isSecondHint
         ? "Are you sure you'd like to use a second hint? This one reveals the first letter."
         : "Are you sure you'd like to use a hint?";
-      if(getTimerChoice() === 'timed'){
+      if(getTimerChoice() === 'timed' && !isArchiveMode){
         confirmMsg += `<div class="confirm-submessage">(Each hint adds 3 minutes to the timer)</div>`;
       }
 
