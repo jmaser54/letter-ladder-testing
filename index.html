@@ -1089,24 +1089,23 @@ const ACCOUNT_OR_GUEST_CHOICE_MADE_KEY = 'letterladder:accountOrGuestChoiceMade'
 function showAccountOrGuestPopupIfNeeded(){
   // Already has a real account, or already made this choice on a prior
   // visit - either way, this step is done, move straight on to the
-  // timer choice.
+  // timer choice. Since they're logged in, Back from timer goes to
+  // How to Play (skipping account/guest, which they'll never see again).
   if(hasRealAccount() || localStorage.getItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY)){
-    showTimerChoicePopupIfNeeded();
+    showTimerChoicePopupIfNeeded(hasRealAccount() ? ()=>showHowToPlayPopupIfNeeded() : null);
     return;
   }
   if(!window.LetterLadderAuth){
-    // Firebase's module script hasn't finished loading yet - skip
-    // gracefully rather than error, same as the post-win version of
-    // this popup does.
-    showTimerChoicePopupIfNeeded();
+    showTimerChoicePopupIfNeeded(null);
     return;
   }
 
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
   overlay.innerHTML = `
-    <div class="leaderboard-prompt-card">
-      <div class="leaderboard-prompt-title" id="onboard-prompt-title" style="font-weight:bold; padding-right:0; margin-top:12px;">Create account or play as guest?</div>
+    <div class="leaderboard-prompt-card" style="position:relative;">
+      <a href="#" class="onboard-back-link" style="position:absolute; top:14px; left:16px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back to instructions</a>
+      <div class="leaderboard-prompt-title" id="onboard-prompt-title" style="font-weight:bold; padding-right:0; margin-top:28px;">Create account or play as guest?</div>
       <div id="onboard-prompt-body">
         <div class="leaderboard-prompt-actions">
           <button type="button" class="btn-primary" id="onboard-create-account-btn">Create account</button>
@@ -1117,17 +1116,58 @@ function showAccountOrGuestPopupIfNeeded(){
   `;
   document.body.appendChild(overlay);
 
-  function close(){
+  // Back to instructions from the account/guest popup
+  bindTapAction(overlay.querySelector('.onboard-back-link'), ()=>{
+    localStorage.removeItem(HOWTO_SEEN_KEY);
+    overlay.remove();
+    showHowToPlayPopupIfNeeded();
+  });
+
+  function goToTimerAsGuest(){
     localStorage.setItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY, '1');
     overlay.remove();
-    showTimerChoicePopupIfNeeded();
+    // Guest: Back from timer returns to this account/guest popup
+    showTimerChoicePopupIfNeeded(()=>{
+      localStorage.removeItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY);
+      showAccountOrGuestPopupIfNeeded();
+    });
   }
 
-  bindTapAction(overlay.querySelector('#onboard-play-guest-btn'), close);
+  bindTapAction(overlay.querySelector('#onboard-play-guest-btn'), goToTimerAsGuest);
 
   bindTapAction(overlay.querySelector('#onboard-create-account-btn'), ()=>{
     const titleEl = overlay.querySelector('#onboard-prompt-title');
     const bodyEl = overlay.querySelector('#onboard-prompt-body');
+    const backLink = overlay.querySelector('.onboard-back-link');
+
+    // Swap back link to "← Back" that returns to the account/guest popup
+    backLink.textContent = '← Back';
+    // Remove and re-bind since bindTapAction can't be re-bound on the same element
+    const freshBackLink = backLink.cloneNode(true);
+    backLink.parentNode.replaceChild(freshBackLink, backLink);
+    bindTapAction(freshBackLink, ()=>{
+      // Restore the account/guest popup view in place
+      freshBackLink.textContent = '← Back to instructions';
+      const freshBackLink2 = freshBackLink.cloneNode(true);
+      freshBackLink.parentNode.replaceChild(freshBackLink2, freshBackLink);
+      bindTapAction(freshBackLink2, ()=>{
+        localStorage.removeItem(HOWTO_SEEN_KEY);
+        overlay.remove();
+        showHowToPlayPopupIfNeeded();
+      });
+      titleEl.className = 'leaderboard-prompt-title';
+      titleEl.style = 'font-weight:bold; padding-right:0; margin-top:28px;';
+      titleEl.textContent = 'Create account or play as guest?';
+      bodyEl.innerHTML = `
+        <div class="leaderboard-prompt-actions">
+          <button type="button" class="btn-primary" id="onboard-create-account-btn2">Create account</button>
+          <button type="button" class="btn-ghost" id="onboard-play-guest-btn2">Play as guest</button>
+        </div>
+      `;
+      bindTapAction(overlay.querySelector('#onboard-play-guest-btn2'), goToTimerAsGuest);
+      bindTapAction(overlay.querySelector('#onboard-create-account-btn2'), ()=>overlay.querySelector('#onboard-create-account-btn2').click());
+    });
+
     titleEl.className = 'leaderboard-form-title';
     titleEl.textContent = 'Create account';
     bodyEl.innerHTML = `
@@ -1163,19 +1203,13 @@ function showAccountOrGuestPopupIfNeeded(){
       }
       localStorage.setItem('letterladder:accountUsername', result.username);
       localStorage.setItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY, '1');
-      // Reload rather than continuing onboarding in-place, matching the
-      // established pattern used everywhere else on the site for
-      // account creation - ensures Firebase's auth state is freshly,
-      // correctly established rather than risking any stale-state
-      // issues, given how many of tonight's bugs traced back to exactly
-      // that kind of timing problem.
       window.location.reload();
     });
   });
 }
 
 const TIMER_CHOICE_MADE_KEY = 'letterladder:timerChoiceMade';
-function showTimerChoicePopupIfNeeded(){
+function showTimerChoicePopupIfNeeded(onBack){
   if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
     render(!isTouchDevice);
     showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
@@ -1184,8 +1218,10 @@ function showTimerChoicePopupIfNeeded(){
 
   const overlay = document.createElement('div');
   overlay.className = 'timer-overlay';
+  const backLabel = onBack ? (hasRealAccount() ? '← Back to instructions' : '← Back') : '';
   overlay.innerHTML = `
-    <div class="timer-card">
+    <div class="timer-card" style="position:relative;">
+      ${backLabel ? `<a href="#" class="timer-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">${backLabel}</a>` : ''}
       <h2>Timed or untimed?</h2>
       <p>Use a running clock, or play at your own pace - you can toggle the timer on/off at any time.</p>
       <div class="timer-choice-actions">
@@ -1197,12 +1233,23 @@ function showTimerChoicePopupIfNeeded(){
   `;
   document.body.appendChild(overlay);
 
+  if(backLabel){
+    bindTapAction(overlay.querySelector('.timer-back-link'), ()=>{
+      overlay.remove();
+      onBack();
+    });
+  }
+
   function choose(choice){
     setTimerChoice(choice);
     localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
     overlay.remove();
     render(!isTouchDevice);
-    showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
+    showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier), ()=>{
+      // Back from Ready to begin -> Timed or untimed
+      localStorage.removeItem(TIMER_CHOICE_MADE_KEY);
+      showTimerChoicePopupIfNeeded(onBack);
+    });
   }
   bindTapAction(overlay.querySelector('.timer-choice-timed'), ()=>choose('timed'));
   bindTapAction(overlay.querySelector('.timer-choice-untimed'), ()=>choose('untimed'));
@@ -1551,7 +1598,7 @@ function hasEverStartedTimer(tier){
     || localStorage.getItem(timerStartKey(tier)) !== null;
 }
 
-function showPlayPopupIfNeeded(tier, onPlay){
+function showPlayPopupIfNeeded(tier, onPlay, onBack){
   const hasScheduledPuzzle = PUZZLE_SCHEDULE[dateKey] && PUZZLE_SCHEDULE[dateKey][tier];
   if(isArchiveMode || !hasScheduledPuzzle || hasEverStartedTimer(tier)){
     onPlay();
@@ -1561,7 +1608,7 @@ function showPlayPopupIfNeeded(tier, onPlay){
   overlay.className = 'play-overlay';
   overlay.innerHTML = `
     <div class="play-card" style="position:relative;">
-      <a href="#" class="play-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back to game</a>
+      <a href="#" class="play-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back</a>
       <div class="play-prompt-text">Ready to begin?</div>
       <button type="button" class="play-btn-big" id="play-btn-big">Play</button>
     </div>
@@ -1569,6 +1616,7 @@ function showPlayPopupIfNeeded(tier, onPlay){
   document.body.appendChild(overlay);
   bindTapAction(overlay.querySelector('.play-back-link'), ()=>{
     overlay.remove();
+    if(onBack) onBack();
   });
   bindTapAction(overlay.querySelector('#play-btn-big'), ()=>{
     overlay.remove();
@@ -4023,7 +4071,7 @@ function switchToTier(newTier){
   activeLength = null;
   document.querySelectorAll('.confetti-piece').forEach(piece => piece.remove());
   render(!isTouchDevice);
-  showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
+  showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier), previousTier !== activeTier ? ()=>switchToTier(previousTier) : null);
 }
 
 document.getElementById('tabs').addEventListener('click', (e)=>{
