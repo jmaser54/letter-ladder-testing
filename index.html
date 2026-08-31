@@ -1092,7 +1092,11 @@ function showAccountOrGuestPopupIfNeeded(){
   // timer choice. Since they're logged in, Back from timer goes to
   // How to Play (skipping account/guest, which they'll never see again).
   if(hasRealAccount() || localStorage.getItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY)){
-    showTimerChoicePopupIfNeeded(hasRealAccount() ? ()=>showHowToPlayPopupIfNeeded() : null);
+    const backToHowTo = ()=>{
+      localStorage.removeItem(HOWTO_SEEN_KEY);
+      showHowToPlayPopupIfNeeded();
+    };
+    showTimerChoicePopupIfNeeded(hasRealAccount() ? backToHowTo : null);
     return;
   }
   if(!window.LetterLadderAuth){
@@ -1105,7 +1109,7 @@ function showAccountOrGuestPopupIfNeeded(){
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card" style="position:relative;">
       <a href="#" class="onboard-back-link" style="position:absolute; top:14px; left:16px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back to instructions</a>
-      <div class="leaderboard-prompt-title" id="onboard-prompt-title" style="font-weight:bold; padding-right:0; margin-top:28px;">Create account or play as guest?</div>
+      <div class="leaderboard-prompt-title" id="onboard-prompt-title" style="font-weight:bold; padding-right:0; margin-top:20px;">Create account or play as guest?</div>
       <div id="onboard-prompt-body">
         <div class="leaderboard-prompt-actions">
           <button type="button" class="btn-primary" id="onboard-create-account-btn">Create account</button>
@@ -1220,7 +1224,7 @@ function showTimerChoicePopupIfNeeded(onBack){
   overlay.className = 'timer-overlay';
   const backLabel = onBack ? (hasRealAccount() ? '← Back to instructions' : '← Back') : '';
   overlay.innerHTML = `
-    <div class="timer-card" style="position:relative;">
+    <div class="timer-card" style="position:relative; ${backLabel ? 'padding-top:44px;' : ''}">
       ${backLabel ? `<a href="#" class="timer-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">${backLabel}</a>` : ''}
       <h2>Timed or untimed?</h2>
       <p>Use a running clock, or play at your own pace - you can toggle the timer on/off at any time.</p>
@@ -1228,7 +1232,7 @@ function showTimerChoicePopupIfNeeded(onBack){
         <button type="button" class="timer-choice-timed">Timed</button>
         <button type="button" class="timer-choice-untimed">Untimed</button>
       </div>
-      <p style="font-size:0.8rem; margin-top:14px; margin-bottom:0;">Top times are posted on the leaderboard.</p>
+      <p style="font-size:0.8rem; margin-top:14px; margin-bottom:0;">Top times are posted on the leaderboard</p>
     </div>
   `;
   document.body.appendChild(overlay);
