@@ -4238,6 +4238,24 @@ let ownerCheckDone = false;
 
       renderAccountWidget();
 
+      // Set the Firebase UID as the GA4 user_id for this session.
+      // This links analytics events to a specific account without sending
+      // any personally identifiable information (usernames, emails) to
+      // Google. For real accounts the UID is stable across devices and
+      // sessions. For anonymous (guest) users it persists per browser
+      // profile but resets on each private/incognito session - that's
+      // the correct behavior given the privacy guarantees those modes
+      // provide. Guarded against ad blockers the same way all other
+      // analytics calls in this file are.
+      try{
+        const analyticsUser = window.LetterLadderAuth.getCurrentUser();
+        if(analyticsUser && typeof gtag !== 'undefined'){
+          gtag('config', 'GTM-K8X9ZNZP', {
+            user_id: analyticsUser.uid,
+          });
+        }
+      }catch(e){}
+
       // If there's a pending email change, check whether it's actually
       // been confirmed yet (the verification link clicked) - Firebase's
       // real account email only updates once that happens, and nothing
