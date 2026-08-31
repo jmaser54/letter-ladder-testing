@@ -1646,11 +1646,7 @@ function renderTimerWidget(){
   if(!widget) return;
 
   if(isArchiveMode){
-    if(isTierComplete(activeTier)){
-      widget.innerHTML = `<span class="timer-display" style="font-size:0.85rem; color:var(--ink-dim); font-weight:600; letter-spacing:0.03em;">Completed</span>`;
-    } else {
-      widget.innerHTML = '';
-    }
+    widget.innerHTML = '';
     return;
   }
 
@@ -4107,6 +4103,42 @@ document.getElementById('tabs').addEventListener('click', (e)=>{
   if(!tab) return;
   switchToTier(tab.dataset.tier);
 });
+
+// Pause the timer whenever any blocking overlay is covering the puzzle,
+// and resume as soon as all of them are gone. This handles every popup
+// in one place - no individual overlay's open/close code needs touching,
+// so there's no risk of a call site being accidentally missed.
+// Only acts when the timer is actually running (daily mode, not archive).
+const BLOCKING_OVERLAY_CLASSES = new Set([
+  'confirm-overlay', 'howto-overlay', 'timer-overlay', 'play-overlay'
+]);
+function hasBlockingOverlay(){
+  return !!document.querySelector(
+    '.confirm-overlay, .howto-overlay, .timer-overlay, .play-overlay'
+  );
+}
+new MutationObserver((mutations)=>{
+  if(isArchiveMode) return;
+  for(const mutation of mutations){
+    for(const node of mutation.addedNodes){
+      if(node.nodeType === 1 && BLOCKING_OVERLAY_CLASSES.has(node.className)){
+        pauseTimer(activeTier);
+        return;
+      }
+    }
+    for(const node of mutation.removedNodes){
+      if(node.nodeType === 1 && BLOCKING_OVERLAY_CLASSES.has(node.className)){
+        // Only restart if no other blocking overlay is still present
+        // (e.g. one popup replacing another - Create Account replacing Account/Guest)
+        if(!hasBlockingOverlay()){
+          startTimerIfNeeded(activeTier);
+          renderTimerWidget();
+        }
+        return;
+      }
+    }
+  }
+}).observe(document.body, { childList: true });
 
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
