@@ -1646,7 +1646,11 @@ function renderTimerWidget(){
   if(!widget) return;
 
   if(isArchiveMode){
-    widget.innerHTML = '';
+    if(isTierComplete(activeTier)){
+      widget.innerHTML = `<span class="timer-display" style="font-size:0.85rem; color:var(--ink-dim); font-weight:600; letter-spacing:0.03em;">Completed</span>`;
+    } else {
+      widget.innerHTML = '';
+    }
     return;
   }
 
@@ -3241,6 +3245,26 @@ function render(focusInput = false, pendingErrors = null){
       feedbackClass = 'win';
       markSolvedIfNeeded(activeTier, guesses);
       checkAndCelebrateIfAllComplete(finalWord);
+
+      // Archive-mode celebrations - confetti for 1st and 2nd puzzle won,
+      // ladder climb when all 3 are genuinely won (same rules as daily).
+      // Each gated by a one-time flag so they fire exactly once per tier
+      // per archive date, not on every subsequent re-render.
+      if(isArchiveMode){
+        const archiveConfettiKey = `letterladder:${accountScope}:${dateKey}:${activeTier}:archiveConfettiShown`;
+        if(!localStorage.getItem(archiveConfettiKey)){
+          localStorage.setItem(archiveConfettiKey, '1');
+          if(!TIERS.every(isTierComplete)){
+            triggerTierWinConfetti();
+          } else if(TIERS.every(isTierGenuinelyWon)){
+            const archiveSummitKey = `letterladder:${accountScope}:${dateKey}:summitShown`;
+            if(!localStorage.getItem(archiveSummitKey)){
+              localStorage.setItem(archiveSummitKey, '1');
+              setTimeout(() => triggerLadderClimbCelebration(finalWord), 0);
+            }
+          }
+        }
+      }
     } else {
       feedback = "❌ Guesses aren't a valid progression.";
       feedbackClass = 'error';
