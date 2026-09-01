@@ -35,13 +35,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .back:hover{ color: var(--amber); }
   .intro{ color: var(--ink-dim); margin-bottom: 24px; }
 
-  .create-account-link{
-    display:block; text-align:right; margin-bottom: 14px;
-    font-weight:600; font-size:0.85rem; text-decoration:none;
-    touch-action: manipulation;
-  }
-  .create-account-link:hover{ text-decoration: underline; }
-
   .day-card{
     background: var(--bg-panel); border-radius:18px; padding: 20px 22px; margin-bottom:18px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.35);
@@ -74,7 +67,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a class="back" href="index.html">← Back to game</a>
     <a class="past-leaderboards-link" href="past-leaderboards.html">Past leaderboards</a>
   </div>
-  <a class="create-account-link" href="index.html?showsignup=1" id="create-account-link" style="display:none;">Create account</a>
   <h1 id="leaderboard-title">Leaderboard</h1>
   <div class="intro">Each hint used adds 3 minutes to the timer</div>
   <div id="leaderboard-content">
@@ -128,13 +120,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       return `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m ${Math.round(totalSeconds % 60)}s`;
     }
   }
-
-  onAuthStateChanged(auth, (user) => {
-    const link = document.getElementById('create-account-link');
-    if(!user || user.isAnonymous){
-      link.style.display = '';
-    }
-  });
 
   const tierNames = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 

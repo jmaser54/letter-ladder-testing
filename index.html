@@ -1515,6 +1515,7 @@ function showMigrationLinkBannerIfNeeded(){
 }
 
 const { key: dateKey, isArchive: isArchiveMode } = resolveDateKey();
+console.log('DIAG resolveDateKey: dateKey=', dateKey, 'isArchiveMode=', isArchiveMode, 'search=', window.location.search);
 
 // The selected tier should never carry over between different puzzle
 // days - only within the same day's session. Whenever the viewed date
