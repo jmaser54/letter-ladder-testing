@@ -1515,7 +1515,6 @@ function showMigrationLinkBannerIfNeeded(){
 }
 
 const { key: dateKey, isArchive: isArchiveMode } = resolveDateKey();
-console.log('DIAG resolveDateKey: dateKey=', dateKey, 'isArchiveMode=', isArchiveMode, 'search=', window.location.search);
 
 // The selected tier should never carry over between different puzzle
 // days - only within the same day's session. Whenever the viewed date
@@ -1971,12 +1970,9 @@ function syncDailyProgressToCloud(){
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`),
       { snapshot, lastModifiedAt: modifiedAt }
     ).then(() => {
-      console.log('DIAG dailyProgress sync: succeeded for', `${user.uid}_${dateKey}`);
     }).catch((e) => {
-      console.error('DIAG dailyProgress sync: FAILED -', e.code || e.message || e);
     });
   }catch(e){
-    console.error('DIAG dailyProgress sync: threw synchronously -', e.message || e);
   }
 }
 
@@ -1995,22 +1991,17 @@ async function pullDailyProgressFromCloudIfNeeded(){
       window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'dailyProgress', `${user.uid}_${dateKey}`)
     );
     if(!snap.exists() || !snap.data().snapshot){
-      console.log('DIAG dailyProgress pull: no cloud doc found for', `${user.uid}_${dateKey}`, '- exists:', snap.exists());
       return false;
     }
     const cloudModifiedAt = Number(snap.data().lastModifiedAt || 0);
     const localModifiedAt = getLocalLastModifiedAt();
     const localIsGenuinelyEmpty = Object.keys(getTodaysProgressSnapshot()).length === 0;
-    console.log('DIAG dailyProgress pull: cloudModifiedAt=', cloudModifiedAt, 'localModifiedAt=', localModifiedAt, 'localIsGenuinelyEmpty=', localIsGenuinelyEmpty);
     if(cloudModifiedAt <= localModifiedAt && !localIsGenuinelyEmpty){
-      console.log('DIAG dailyProgress pull: skipped - local considered at least as current');
       return false;
     }
     applyProgressSnapshot(snap.data().snapshot);
-    console.log('DIAG dailyProgress pull: restored', Object.keys(snap.data().snapshot).length, 'keys');
     return true;
   }catch(e){
-    console.error('DIAG dailyProgress pull: threw an error -', e.code || e.message || e);
   }
   return false;
 }
@@ -2115,10 +2106,12 @@ function recordHintUsed(tier){
   // reflects the penalty - regardless of whether the timer is currently
   // running or paused at this exact moment.
   const accumulatedKey = timerAccumulatedKey(tier);
-  const currentAccumulated = Number(localStorage.getItem(accumulatedKey) || 0);
-  localStorage.setItem(accumulatedKey, String(currentAccumulated + HINT_TIME_PENALTY_MS));
+  if(!isArchiveMode){
+    const currentAccumulated = Number(localStorage.getItem(accumulatedKey) || 0);
+    localStorage.setItem(accumulatedKey, String(currentAccumulated + HINT_TIME_PENALTY_MS));
+  }
 
-  if(getTimerChoice() === 'timed'){
+  if(getTimerChoice() === 'timed' && !isArchiveMode){
     showHintTimePenaltyIndicator();
   }
 }
