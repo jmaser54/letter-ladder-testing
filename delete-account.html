@@ -60,7 +60,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="wrap">
-  <a class="back" href="index.html">← Back to game</a>
+  <a class="back" href="game.html">← Back to game</a>
   <h1>Delete Account</h1>
   <div id="delete-content">
     <div class="empty-state">Loading…</div>
@@ -119,7 +119,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         await deleteDoc(doc(db, 'players', user.uid));
         await deleteUser(user);
         localStorage.removeItem('letterladder:accountUsername');
-        window.location.href = 'index.html';
+        window.location.href = 'game.html';
       }catch(err){
         renderInitial(user);
         document.getElementById('delete-message').classList.add('is-error');

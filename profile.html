@@ -70,7 +70,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
 <div class="wrap">
-  <a class="back" href="index.html">← Back to game</a>
+  <a class="back" href="game.html">← Back to game</a>
   <h1>Profile</h1>
   <div id="profile-content">
     <div class="empty-state">Loading…</div>
@@ -117,7 +117,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   onAuthStateChanged(auth, async (user) => {
     if(!user || user.isAnonymous){
-      contentEl.innerHTML = `<div class="empty-state">You're not signed into an account yet. <a href="index.html">Go back and create one</a> to see your profile.</div>`;
+      contentEl.innerHTML = `<div class="empty-state">You're not signed into an account yet. <a href="game.html">Go back and create one</a> to see your profile.</div>`;
       return;
     }
 
@@ -154,36 +154,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="form-hint">Your email will only be used for password recovery purposes.</div>
         <button type="button" class="btn-primary" id="update-account-btn">Update</button>
       </div>
-      <div class="profile-card">
-        <button type="button" class="btn-ghost" id="logout-btn" style="width:100%;">Log out</button>
-      </div>
       <div class="page-footer">
         <a href="delete-account.html">Delete Account</a>
       </div>
     `;
-
-    document.getElementById('logout-btn').addEventListener('click', async () => {
-      await signOut(auth);
-      localStorage.removeItem('letterladder:accountUsername');
-
-      // Reset everything that gates the first-visit experience, so
-      // logging out genuinely feels like a brand-new visit - not just a
-      // return to whatever guest state already existed on this device.
-      localStorage.removeItem('letterladder:howToPlaySeen');
-      localStorage.removeItem('letterladder:timerChoiceMade');
-      localStorage.removeItem('letterladder:timerChoice');
-      localStorage.removeItem('letterladder:activeTier');
-      localStorage.removeItem('letterladder:lastViewedDateKey');
-      const guestPrefix = 'letterladder:guest:';
-      const guestKeysToRemove = [];
-      for(let i = 0; i < localStorage.length; i++){
-        const key = localStorage.key(i);
-        if(key && key.startsWith(guestPrefix)) guestKeysToRemove.push(key);
-      }
-      guestKeysToRemove.forEach(key => localStorage.removeItem(key));
-
-      window.location.href = 'index.html';
-    });
 
     document.getElementById('update-account-btn').addEventListener('click', async () => {
       const messageEl = document.getElementById('pw-message');
