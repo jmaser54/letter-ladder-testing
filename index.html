@@ -47,14 +47,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     padding: 20px 16px 12px;
   }
 
-  header{ position: relative; text-align:center; margin-bottom: 0; flex-shrink:0; padding-bottom: 20px; }
+  header{ position: relative; text-align:center; flex-shrink:0; padding-bottom: 0; margin-bottom: 0; }
   .brand-row{
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    font-size: 2.875rem; /* ~46px — prominent but not oversized */
+    font-size: 3.125rem; /* ~50px — prominent, with room for icons */
   }
   .brand-title-row{
     position: relative;
@@ -62,7 +58,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-height: 44px; /* ensures icons have something to align against */
+    min-height: 44px;
+    padding: 0 48px; /* keeps title text clear of the 32px icons + ~16px gap each side */
   }
   .brand{
     font-family:'Fraunces', serif;
@@ -71,12 +68,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     letter-spacing: -0.01em;
     margin: 0;
     line-height: 1.1;
-  }
-  .brand-logo{
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    flex-shrink: 0;
   }
   .brand .rung-i{ color: var(--ink); }
   .account-widget{
@@ -133,23 +124,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 60px 0 40px; /* 60px from header to first button — spec's ~50-70px */
+    padding: 80px 0 40px; /* ~80px from header to logo — the title-to-logo breathing room */
+  }
+  .brand-logo{
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: block;
+    margin-bottom: 48px; /* logo to first button — less space than title-to-logo */
   }
   .play-buttons{
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px; /* spec: 20-25px between buttons */
+    gap: 20px;
     width: 100%;
     max-width: 280px;
   }
   .play-date{
     color: var(--ink-dim);
-    font-size: 0.82rem; /* spec: ~18-20px equivalent, supporting info not primary */
+    font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.02em;
     text-align: center;
-    margin-top: 22px; /* spec: ~20-25px below last button */
+    margin-top: 22px;
   }
 
   button{
@@ -224,9 +223,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   @media(max-width:400px){
-    .brand-row{ font-size: 2.4rem; }
+    .brand-row{ font-size: 2.6rem; }
     .brand-logo{ width: 64px; height: 64px; }
-    .landing-body{ padding-top: 44px; }
+    .landing-body{ padding-top: 60px; }
   }
 </style>
 </head>
@@ -244,11 +243,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <h1 class="brand">Letter Ladder</h1>
         <button type="button" class="howto-icon-btn" id="howto-btn" aria-label="How to play">?</button>
       </div>
-      <img src="og-image.png" alt="" class="brand-logo">
     </div>
   </header>
 
   <main class="landing-body">
+    <img src="og-image.png" alt="" class="brand-logo">
     <div class="play-buttons" id="play-buttons">
       <!-- filled by JS based on auth state -->
     </div>
