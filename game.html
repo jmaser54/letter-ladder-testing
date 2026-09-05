@@ -393,27 +393,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; align-items:center; justify-content:center;
     z-index: 1000; padding: 20px;
   }
-  .play-overlay{
-    position: fixed; inset: 0; background: rgba(10,16,26,0.75);
-    display: flex; align-items:center; justify-content:center;
-    z-index: 1000; padding: 20px;
-  }
-  .play-card{
-    background: var(--bg-panel); border-radius: 20px; padding: 36px;
-    width: min(90vw, 580px); height: min(78vh, 480px);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    display: flex; flex-direction: column; align-items:center; justify-content:center; gap: 28px;
-  }
-  .play-prompt-text{
-    font-family:'Fraunces',serif; font-weight:700; color: var(--ink);
-    font-size: 2.04rem; text-align: center; line-height: 1.1;
-  }
-  .play-btn-big{
-    font-family:'Fraunces',serif; font-weight:700; font-size: 1.36rem;
-    background: var(--amber); color: #1B2A41; border: none; border-radius: 10px;
-    padding: 15px 40px; cursor: pointer; touch-action: manipulation;
-  }
-  .play-btn-big:hover{ filter: brightness(1.05); }
   .confirm-card{
     background: var(--bg-panel); border-radius: 16px; padding: 24px 22px;
     max-width: 340px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
@@ -472,27 +451,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     padding: 2px 8px; border-radius:6px; font-weight:600; text-transform: uppercase;
     display: inline-block; margin: 3px 0; line-height: 1.4;
   }
-
-  .timer-overlay{
-    position: fixed; inset: 0; background: rgba(10,16,26,0.6);
-    display: flex; align-items:center; justify-content:center;
-    z-index: 1000; padding: 20px;
-  }
-  .timer-card{
-    background: var(--bg-panel); border-radius: 18px; padding: 26px 24px;
-    max-width: 340px; width: 100%; text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
-  .timer-card h2{ font-family:'Fraunces',serif; margin-top:0; margin-bottom: 10px; }
-  .timer-card p{ color: var(--ink-dim); font-size: 0.9rem; margin-bottom: 20px; }
-  .timer-choice-actions{ display:flex; gap:10px; }
-  .timer-choice-actions button{
-    flex:1; border:none; border-radius:10px; padding:12px 10px; cursor:pointer;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:0.9rem;
-    background: rgba(245,239,224,0.1); color: var(--ink);
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  .timer-choice-actions button:hover{ background: var(--amber); color: #1B2A41; }
 
   .timer-widget{
     position: relative;
@@ -1084,211 +1042,20 @@ function showConfirmModal(message, onConfirm){
 }
 
 const HOWTO_SEEN_KEY = 'letterladder:howToPlaySeen';
-function showHowToPlayPopupIfNeeded(){
-  if(localStorage.getItem(HOWTO_SEEN_KEY)){
-    showAccountOrGuestPopupIfNeeded();
-    return;
-  }
+// showHowToPlayPopupIfNeeded removed — the landing page handles all
+// onboarding. The HOWTO_SEEN_KEY constant is kept because the landing
+// page's Back navigation still reads/writes it.
 
-  const overlay = document.createElement('div');
-  overlay.className = 'howto-overlay';
-  overlay.innerHTML = `
-    <div class="howto-card">
-      <button type="button" class="howto-close" aria-label="Close">&times;</button>
-      <h2>How to Play</h2>
-      <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
-      <ul>
-        <li>Words can be guessed in any order</li>
-        <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
-        <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
-        <li>Every word must be a real English word</li>
-      </ul>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+// ACCOUNT_OR_GUEST_CHOICE_MADE_KEY and showAccountOrGuestPopupIfNeeded removed —
+// users are no longer prompted to choose between account and guest.
+// They simply play; account creation is available through the menu.
 
-  function close(){
-    localStorage.setItem(HOWTO_SEEN_KEY, '1');
-    overlay.remove();
-    showAccountOrGuestPopupIfNeeded();
-  }
-  bindTapAction(overlay.querySelector('.howto-close'), close);
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
-}
+// showTimerChoicePopupIfNeeded removed — the landing page sets the timer
+// choice before navigating here, so no in-game timer popup is needed.
 
-const ACCOUNT_OR_GUEST_CHOICE_MADE_KEY = 'letterladder:accountOrGuestChoiceMade';
-function showAccountOrGuestPopupIfNeeded(){
-  // Already has a real account, or already made this choice on a prior
-  // visit - either way, this step is done, move straight on to the
-  // timer choice. Since they're logged in, Back from timer goes to
-  // How to Play (skipping account/guest, which they'll never see again).
-  if(hasRealAccount() || localStorage.getItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY)){
-    const backToHowTo = ()=>{
-      localStorage.removeItem(HOWTO_SEEN_KEY);
-      showHowToPlayPopupIfNeeded();
-    };
-    showTimerChoicePopupIfNeeded(hasRealAccount() ? backToHowTo : null);
-    return;
-  }
-  if(!window.LetterLadderAuth){
-    showTimerChoicePopupIfNeeded(null);
-    return;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.className = 'confirm-overlay';
-  overlay.innerHTML = `
-    <div class="leaderboard-prompt-card" style="position:relative;">
-      <a href="#" class="onboard-back-link" style="position:absolute; top:14px; left:16px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back to instructions</a>
-      <div class="leaderboard-prompt-title" id="onboard-prompt-title" style="font-weight:bold; padding-right:0; margin-top:20px;">Create account or play as guest?</div>
-      <div id="onboard-prompt-body">
-        <div class="leaderboard-prompt-actions">
-          <button type="button" class="btn-primary" id="onboard-create-account-btn">Create account</button>
-          <button type="button" class="btn-ghost" id="onboard-play-guest-btn">Play as guest</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  // Back to instructions from the account/guest popup
-  bindTapAction(overlay.querySelector('.onboard-back-link'), ()=>{
-    localStorage.removeItem(HOWTO_SEEN_KEY);
-    overlay.remove();
-    showHowToPlayPopupIfNeeded();
-  });
-
-  function goToTimerAsGuest(){
-    localStorage.setItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY, '1');
-    overlay.remove();
-    // Guest: Back from timer returns to this account/guest popup
-    showTimerChoicePopupIfNeeded(()=>{
-      localStorage.removeItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY);
-      showAccountOrGuestPopupIfNeeded();
-    });
-  }
-
-  bindTapAction(overlay.querySelector('#onboard-play-guest-btn'), goToTimerAsGuest);
-
-  bindTapAction(overlay.querySelector('#onboard-create-account-btn'), ()=>{
-    const titleEl = overlay.querySelector('#onboard-prompt-title');
-    const bodyEl = overlay.querySelector('#onboard-prompt-body');
-    const backLink = overlay.querySelector('.onboard-back-link');
-
-    // Swap back link to "← Back" that returns to the account/guest popup
-    backLink.textContent = '← Back';
-    // Remove and re-bind since bindTapAction can't be re-bound on the same element
-    const freshBackLink = backLink.cloneNode(true);
-    backLink.parentNode.replaceChild(freshBackLink, backLink);
-    bindTapAction(freshBackLink, ()=>{
-      // Restore the account/guest popup view in place
-      freshBackLink.textContent = '← Back to instructions';
-      const freshBackLink2 = freshBackLink.cloneNode(true);
-      freshBackLink.parentNode.replaceChild(freshBackLink2, freshBackLink);
-      bindTapAction(freshBackLink2, ()=>{
-        localStorage.removeItem(HOWTO_SEEN_KEY);
-        overlay.remove();
-        showHowToPlayPopupIfNeeded();
-      });
-      titleEl.className = 'leaderboard-prompt-title';
-      titleEl.style = 'font-weight:bold; padding-right:0; margin-top:28px;';
-      titleEl.textContent = 'Create account or play as guest?';
-      bodyEl.innerHTML = `
-        <div class="leaderboard-prompt-actions">
-          <button type="button" class="btn-primary" id="onboard-create-account-btn2">Create account</button>
-          <button type="button" class="btn-ghost" id="onboard-play-guest-btn2">Play as guest</button>
-        </div>
-      `;
-      bindTapAction(overlay.querySelector('#onboard-play-guest-btn2'), goToTimerAsGuest);
-      bindTapAction(overlay.querySelector('#onboard-create-account-btn2'), ()=>overlay.querySelector('#onboard-create-account-btn2').click());
-    });
-
-    titleEl.className = 'leaderboard-form-title';
-    titleEl.textContent = 'Create account';
-    bodyEl.innerHTML = `
-      <div class="leaderboard-form-error" id="onboard-form-error"></div>
-      <input type="text" class="leaderboard-form-field" id="onboard-username-field" placeholder="Username" autocomplete="username">
-      <input type="password" class="leaderboard-form-field" id="onboard-password-field" placeholder="Password" autocomplete="new-password">
-      <input type="email" class="leaderboard-form-field" id="onboard-email-field" placeholder="Email (optional)" autocomplete="email">
-      <div class="leaderboard-form-hint">Your email will only be used for password recovery purposes.</div>
-      <div class="leaderboard-prompt-actions">
-        <button type="button" class="btn-primary" id="onboard-submit-account-btn">Create account</button>
-      </div>
-    `;
-    const errorEl = bodyEl.querySelector('#onboard-form-error');
-    const submitBtn = bodyEl.querySelector('#onboard-submit-account-btn');
-    bindEnterToSubmit([
-      bodyEl.querySelector('#onboard-username-field'),
-      bodyEl.querySelector('#onboard-password-field'),
-      bodyEl.querySelector('#onboard-email-field'),
-    ], submitBtn);
-    bindTapAction(submitBtn, async ()=>{
-      const username = bodyEl.querySelector('#onboard-username-field').value.trim();
-      const password = bodyEl.querySelector('#onboard-password-field').value;
-      if(!username || !password){
-        errorEl.textContent = 'Please fill in both fields.';
-        return;
-      }
-      errorEl.textContent = '';
-      const email = bodyEl.querySelector('#onboard-email-field').value;
-      const result = await window.LetterLadderAuth.createAccount(username, password, email);
-      if(!result.success){
-        errorEl.textContent = result.error;
-        return;
-      }
-      localStorage.setItem('letterladder:accountUsername', result.username);
-      localStorage.setItem(ACCOUNT_OR_GUEST_CHOICE_MADE_KEY, '1');
-      window.location.reload();
-    });
-  });
-}
-
+// TIMER_CHOICE_MADE_KEY is kept — still used in the login flow (restoring
+// the account's saved timer preference) and in cloud backfill logic.
 const TIMER_CHOICE_MADE_KEY = 'letterladder:timerChoiceMade';
-function showTimerChoicePopupIfNeeded(onBack){
-  if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
-    render(!isTouchDevice);
-    showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier));
-    return;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.className = 'timer-overlay';
-  const backLabel = onBack ? (hasRealAccount() ? '← Back to instructions' : '← Back') : '';
-  overlay.innerHTML = `
-    <div class="timer-card" style="position:relative; ${backLabel ? 'padding-top:44px;' : ''}">
-      ${backLabel ? `<a href="#" class="timer-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">${backLabel}</a>` : ''}
-      <h2>Timed or untimed?</h2>
-      <p>Use a running clock, or play at your own pace - you can toggle the timer on/off at any time.</p>
-      <div class="timer-choice-actions">
-        <button type="button" class="timer-choice-timed">Timed</button>
-        <button type="button" class="timer-choice-untimed">Untimed</button>
-      </div>
-      <p style="font-size:0.8rem; margin-top:14px; margin-bottom:0;">Top times are posted on the leaderboard</p>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  if(backLabel){
-    bindTapAction(overlay.querySelector('.timer-back-link'), ()=>{
-      overlay.remove();
-      onBack();
-    });
-  }
-
-  function choose(choice){
-    setTimerChoice(choice);
-    localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
-    overlay.remove();
-    render(!isTouchDevice);
-    showPlayPopupIfNeeded(activeTier, ()=>startTimerIfNeeded(activeTier), ()=>{
-      // Back from Ready to begin -> Timed or untimed
-      localStorage.removeItem(TIMER_CHOICE_MADE_KEY);
-      showTimerChoicePopupIfNeeded(onBack);
-    });
-  }
-  bindTapAction(overlay.querySelector('.timer-choice-timed'), ()=>choose('timed'));
-  bindTapAction(overlay.querySelector('.timer-choice-untimed'), ()=>choose('untimed'));
-}
 
 function joinAnd(items){
   if(items.length === 1) return items[0];
@@ -4121,11 +3888,11 @@ document.getElementById('tabs').addEventListener('click', (e)=>{
 // so there's no risk of a call site being accidentally missed.
 // Only acts when the timer is actually running (daily mode, not archive).
 const BLOCKING_OVERLAY_CLASSES = new Set([
-  'confirm-overlay', 'howto-overlay', 'timer-overlay'
+  'confirm-overlay', 'howto-overlay'
 ]);
 function hasBlockingOverlay(){
   return !!document.querySelector(
-    '.confirm-overlay, .howto-overlay, .timer-overlay'
+    '.confirm-overlay, .howto-overlay'
   );
 }
 new MutationObserver((mutations)=>{
