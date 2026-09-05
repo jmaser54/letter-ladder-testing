@@ -2171,107 +2171,16 @@ async function submitCurrentScore(tier, displayName){
 }
 
 function showLeaderboardPromptIfNeeded(tier){
-  if(isArchiveMode) return; // archive plays never touch the leaderboard
-  if(!window.LetterLadderAuth) return; // Firebase's module script hasn't finished loading yet - skip gracefully rather than error
+  if(isArchiveMode) return;
+  if(!window.LetterLadderAuth) return;
   const savedUsername = localStorage.getItem('letterladder:accountUsername');
   if(hasRealAccount()){
-    // Already has a real account - silently submit under their existing
-    // username every time, exactly as spec'd, with no popup at all. This
-    // must be checked before the dismissed-flag branch below: that flag
-    // is global, not tied to any specific account, so a logged-in user
-    // who had ever dismissed the popup (even much earlier, or under a
-    // different account) would otherwise hit the guest branch on every
-    // subsequent win - which calls playAsGuest() and genuinely signs
-    // them out of their real account into an anonymous guest session.
     submitCurrentScore(tier, savedUsername);
     return;
   }
-  if(localStorage.getItem(LEADERBOARD_PROMPT_DISMISSED_KEY)){
-    // The dismissed flag only means "stop showing me the popup" - it was
-    // never meant to also silently stop submitting scores, but returning
-    // here unconditionally did exactly that for every subsequent win.
-    // Submit silently as a guest instead, same as the hasRealAccount()
-    // branch above does for account holders. Only reached here for
-    // genuine guests now, since real accounts return above first.
-    window.LetterLadderAuth.playAsGuest().then(() => submitCurrentScore(tier, 'Guest'));
-    return;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.className = 'confirm-overlay';
-  overlay.innerHTML = `
-    <div class="leaderboard-prompt-card">
-      <a href="#" class="leaderboard-prompt-dismiss" id="lb-dismiss-link">Do not show this message again</a>
-      <div class="leaderboard-prompt-title" id="lb-prompt-title" style="font-weight:bold; padding-right:0; margin-top:12px;">Create account or play as guest?</div>
-      <div id="lb-prompt-body">
-        <div class="leaderboard-prompt-actions">
-          <button type="button" class="btn-primary" id="lb-create-account-btn">Create account</button>
-          <button type="button" class="btn-ghost" id="lb-play-guest-btn">Play as guest</button>
-        </div>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  function close(){ overlay.remove(); }
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
-
-  bindTapAction(overlay.querySelector('#lb-dismiss-link'), async ()=>{
-    localStorage.setItem(LEADERBOARD_PROMPT_DISMISSED_KEY, '1');
-    await window.LetterLadderAuth.playAsGuest();
-    await submitCurrentScore(tier, 'Guest');
-    close();
-  });
-
-  bindTapAction(overlay.querySelector('#lb-play-guest-btn'), async ()=>{
-    await window.LetterLadderAuth.playAsGuest();
-    await submitCurrentScore(tier, 'Guest');
-    close();
-  });
-
-  bindTapAction(overlay.querySelector('#lb-create-account-btn'), ()=>{
-    const titleEl = overlay.querySelector('#lb-prompt-title');
-    const bodyEl = overlay.querySelector('#lb-prompt-body');
-    titleEl.className = 'leaderboard-form-title';
-    titleEl.textContent = 'Create account';
-    bodyEl.innerHTML = `
-      <div class="leaderboard-form-error" id="lb-form-error"></div>
-      <input type="text" class="leaderboard-form-field" id="lb-username-field" placeholder="Username" autocomplete="username">
-      <input type="password" class="leaderboard-form-field" id="lb-password-field" placeholder="Password" autocomplete="new-password">
-      <input type="email" class="leaderboard-form-field" id="lb-email-field" placeholder="Email (optional)" autocomplete="email">
-      <div class="leaderboard-form-hint">Your email will only be used for password recovery purposes.</div>
-      <div class="leaderboard-prompt-actions">
-        <button type="button" class="btn-primary" id="lb-submit-account-btn">Create account</button>
-      </div>
-    `;
-    const errorEl = bodyEl.querySelector('#lb-form-error');
-    const lbSubmitBtn = bodyEl.querySelector('#lb-submit-account-btn');
-    bindEnterToSubmit([
-      bodyEl.querySelector('#lb-username-field'),
-      bodyEl.querySelector('#lb-password-field'),
-      bodyEl.querySelector('#lb-email-field'),
-    ], lbSubmitBtn);
-    bindTapAction(lbSubmitBtn, async ()=>{
-      const username = bodyEl.querySelector('#lb-username-field').value.trim();
-      const password = bodyEl.querySelector('#lb-password-field').value;
-      if(!username || !password){
-        errorEl.textContent = 'Please fill in both fields.';
-        return;
-      }
-      errorEl.textContent = '';
-      const email = bodyEl.querySelector('#lb-email-field').value;
-      const result = await window.LetterLadderAuth.createAccount(username, password, email);
-      if(!result.success){
-        errorEl.textContent = result.error;
-        return;
-      }
-      localStorage.setItem('letterladder:accountUsername', result.username);
-      migrateGuestProgressToAccount(result.username);
-      backfillGuestStatsAndScores(result.username);
-      await submitCurrentScore(tier, result.username);
-      window.location.reload();
-    });
-  });
+  // Guests automatically play as guest and submit — no popup.
+  // Account creation is available from the menu whenever they want it.
+  window.LetterLadderAuth.playAsGuest().then(() => submitCurrentScore(tier, 'Guest'));
 }
 
 function markSolvedIfNeeded(tier, guesses){
