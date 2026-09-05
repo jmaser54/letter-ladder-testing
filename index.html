@@ -56,6 +56,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     gap: 8px;
     font-size: 2rem;
   }
+  .brand-title-row{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
   .brand{
     font-family:'Fraunces', serif;
     font-weight:700;
@@ -71,10 +78,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .brand .rung-i{ color: var(--ink); }
   .account-widget{
-    position: absolute; bottom: 0; left: 0;
+    position: absolute; left: 0;
+    display: flex; align-items: center;
   }
   .howto-icon-btn{
-    position: absolute; bottom: 0; right: 0;
+    position: absolute; right: 0;
     width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
     background: none; color: var(--ink-dim); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -228,10 +236,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="wrap">
   <header>
     <div class="brand-row">
-      <h1 class="brand">Letter Ladder</h1>
+      <div class="brand-title-row">
+        <div class="account-widget" id="account-widget"></div>
+        <h1 class="brand">Letter Ladder</h1>
+        <button type="button" class="howto-icon-btn" id="howto-btn" aria-label="How to play">?</button>
+      </div>
       <img src="og-image.png" alt="" class="brand-logo">
-      <div class="account-widget" id="account-widget"></div>
-      <button type="button" class="howto-icon-btn" id="howto-btn" aria-label="How to play">?</button>
     </div>
   </header>
 
