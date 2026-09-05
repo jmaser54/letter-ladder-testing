@@ -97,6 +97,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     flex-shrink: 0;
     display: block;
   }
+  /* Logo row: logo centered, timer right-aligned on the same row */
+  .brand-logo-row{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    padding-bottom: 18px; /* breathing room below for hint-time-penalty-indicator */
+  }
   .brand .rung-i{ color: var(--amber); }
   /* ? how-to-play icon — top right, matching landing page exactly */
   .howto-icon-btn{
@@ -109,15 +118,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
   }
   .howto-icon-btn:hover{ color: var(--amber); border-color: var(--amber); }
-  /* Timer row — sits below the header, right-aligned, with enough top
-     margin so it's clearly separated from the ? icon above it */
-  .timer-widget-row{
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 4px;
-    min-height: 28px;
-    flex-shrink: 0;
-  }
   .top-links{
     display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px; margin-top:6px; font-size: 0.8rem;
   }
@@ -270,6 +270,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     flex-direction: column;
     align-items: center;
     gap: 12px;
+    user-select: none; -webkit-user-select: none;
   }
   .bank-tiles{
     display: flex;
@@ -277,6 +278,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     justify-content: center;
     gap: 10px;
     max-width: 100%;
+    user-select: none; -webkit-user-select: none;
   }
   .bank-tile{
     width: 48px; height: 48px;
@@ -357,7 +359,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .bank-primary-btn{
     flex: 1;
-    height: 39px;
+    height: 46px; /* match bank-ctrl-btn height so the row is visually aligned */
     border: none; border-radius: 12px;
     background: rgba(245,239,224,0.08);
     color: var(--ink);
@@ -370,7 +372,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .bank-primary-btn.bank-submit-btn{ background: var(--amber); color: #1B2A41; }
 
   .actions-row{ display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:16px; margin-top:8px; margin-bottom:8px; flex-shrink:0; }
-  #next-puzzle-btn, #share-btn{ font-size: 0.95rem; padding: 12px 21px; }
+  #next-puzzle-btn{ font-size: 0.95rem; padding: 12px 21px; }
   .hint-display{
     text-align:center; margin-top:6px; margin-bottom:8px; font-size:0.85rem; color: var(--ink-dim);
     font-style:italic; flex-shrink:0; min-height: 0;
@@ -453,16 +455,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   .timer-widget{
-    position: relative;
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
   }
   .hint-time-penalty-indicator{
     position: absolute; bottom: -20px; right: 0;
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
-    color: var(--amber); font-size: 0.8rem;
+    color: var(--amber); font-size: 0.8rem; white-space: nowrap;
   }
   .account-widget{
     position: absolute; left: 0; top: 50%; transform: translateY(-50%);
     display: flex; align-items: center;
+    z-index: 1100;
   }
   .account-icon-btn{
     width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
@@ -480,7 +483,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .account-dropdown{
     position: absolute; top: calc(100% + 8px); left: 0;
     background: var(--bg-panel); border-radius: 12px; padding: 14px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.45); min-width: 180px; z-index: 200;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45); min-width: 180px; z-index: 1100;
     text-align: left;
   }
   .account-dropdown-username{
@@ -540,7 +543,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .brand-logo{ width: 42px; height: 42px; }
     .timer-widget-btn{ font-size: 0.85rem; }
   }
-
   .confetti-piece{
     position: fixed;
     top: -12px;
@@ -877,12 +879,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <h1 class="brand">Letter Ladder</h1>
         <button type="button" class="howto-icon-btn" id="howto-icon-btn" aria-label="How to play">?</button>
       </div>
-      <img src="og-image.png" alt="" class="brand-logo">
+      <div class="brand-logo-row">
+        <img src="og-image.png" alt="" class="brand-logo">
+        <div class="timer-widget" id="timer-widget"></div>
+      </div>
     </div>
   </header>
-  <div class="timer-widget-row">
-    <div class="timer-widget" id="timer-widget"></div>
-  </div>
 
   <div class="tabs" id="tabs">
     <div class="tab" data-tier="easy">Easy</div>
@@ -1423,23 +1425,21 @@ function renderTimerWidget(){
   }
 
   const choice = getTimerChoice();
-  let displayText = '—';
+  const timerOffIndicator = `<span style="display:inline-flex;align-items:center;gap:0;"><span class="timer-emoji">⏱️</span><span style="font-size:1.1em;font-weight:700;color:#111;line-height:1;margin-left:1px;">/</span></span>`;
+  let displayContent = timerOffIndicator;
   if(choice === 'timed'){
     const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
     if(frozenElapsed !== null){
-      // Puzzle completed - the timer is stopped, so use the same shared
-      // formatter as leaderboard times, Your Stats, and Share Results,
-      // instead of the live, ticking M:SS format.
-      displayText = formatDurationForShare(Number(frozenElapsed));
+      displayContent = `<span class="timer-emoji">⏱️</span><span class="timer-display">${formatDurationForShare(Number(frozenElapsed))}</span>`;
     } else {
-      displayText = formatElapsed(getCurrentElapsedMs(activeTier));
+      displayContent = `<span class="timer-emoji">⏱️</span><span class="timer-display">${formatElapsed(getCurrentElapsedMs(activeTier))}</span>`;
     }
   }
 
   const tooltipText = choice === 'timed' ? 'Timer: On — click to turn off' : 'Timer: Off — click to turn on';
   widget.innerHTML = `
     <button type="button" class="timer-widget-btn">
-      <span class="timer-emoji">⏱️</span><span class="timer-display">${displayText}</span>
+      ${displayContent}
       <span class="timer-tooltip">${tooltipText}</span>
     </button>
   `;
@@ -3097,7 +3097,7 @@ function render(focusInput = false, pendingErrors = null){
         `<button type="button" class="bank-tile ${belowMatchSet.has(i) ? 'from-below' : ''} ${usedSet.has(stableIds[i]) ? 'used' : ''}" data-letter="${letter}" data-index="${i}" data-stable-id="${stableIds[i]}">${letter.toUpperCase()}</button>`
       ).join('');
       bankTilesHtml = `<div class="bank-tiles" id="bank-tiles">${tilesHtml}</div>`;
-      const backspaceIcon = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6H9l-6 6 6 6h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Z"></path><line x1="12" y1="9" x2="18" y2="15"></line><line x1="18" y1="9" x2="12" y2="15"></line></svg>`;
+      const backspaceIcon = `<svg width="36" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6H9l-6 6 6 6h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1Z"></path><line x1="12" y1="9" x2="18" y2="15"></line><line x1="18" y1="9" x2="12" y2="15"></line></svg>`;
       backspaceButtonHtml = `<button type="button" class="bank-primary-btn bank-submit-btn" id="bank-backspace-btn" aria-label="Delete last letter">${backspaceIcon}</button>`;
     }
     // No keyboard-toggle at all on desktop - a physical keyboard is
@@ -3118,10 +3118,12 @@ function render(focusInput = false, pendingErrors = null){
   // built independently of that condition rather than nested inside it.
   const primaryActionsHtml = `
     <div class="bank-primary-actions">
-      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters">🔀</button>` : ''}
+      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg></button>` : ''}
       ${showHintBtn ? `<button type="button" class="bank-ctrl-btn" id="hint-btn" aria-label="Hint">${lightbulbIcon}</button>` : ''}
-      <button type="button" class="bank-ctrl-btn" id="clear-btn" aria-label="Clear guesses">${trashIcon}</button>
-      ${isMechanicallyComplete ? `<span class="clear-hint-text">Clear puzzle to find a new path?</span>` : ''}
+      ${isMechanicallyComplete
+        ? `<span class="clear-hint-text"><a href="#" id="clear-btn" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);">Clear puzzle to find a new path?</a></span>`
+        : `<button type="button" class="bank-ctrl-btn" id="clear-btn" aria-label="Clear guesses">${trashIcon}</button>`
+      }
       ${backspaceButtonHtml}
     </div>
   `;
@@ -3142,17 +3144,17 @@ function render(focusInput = false, pendingErrors = null){
     <div class="feedback ${feedbackClassFinal}">${feedbackHtml}</div>
     ${details.map(d=>`<div class="details">${d}</div>`).join('')}
     <div class="hint-display" id="hint-display"></div>
-    <div class="actions-row">
-      ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button">Next puzzle</button>` : ''}
-      ${isWon && anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
+    <div class="actions-row" style="justify-content:center;">
+      ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button" style="font-size:1.19rem;padding:15px 26px;">Next puzzle</button>` : ''}
     </div>
-    <a href="#" id="solution-link" class="view-solution-link">View solution</a>
+    ${isWon && anyTierSolvedToday ? `<div style="text-align:center;margin:6px 0 2px;"><a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a></div>` : ''}
     ${bankHtml}
     ${primaryActionsHtml}
-    ${!isWon ? `<div class="actions-row">
-      ${anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
+    ${`<div class="actions-row" style="flex-direction:column;align-items:center;gap:10px;">
       ${activeLength != null ? kbToggleHtml : ''}
-    </div>` : ''}
+      ${!isWon && anyTierSolvedToday ? `<a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a>` : ''}
+    </div>`}
+    <a href="#" id="solution-link" class="view-solution-link">View solution</a>
     <div class="share-status" id="share-status"></div>
   `;
   suppressBlurCommit = false;
@@ -3186,9 +3188,10 @@ function render(focusInput = false, pendingErrors = null){
     });
   });
 
-  const shareBtn = document.getElementById('share-btn');
+  const shareBtn = document.getElementById('share-link');
   if(shareBtn){
-    shareBtn.addEventListener('click', async ()=>{
+    shareBtn.addEventListener('click', async (e)=>{
+      e.preventDefault();
       const shareText = buildShareText();
       const statusEl = document.getElementById('share-status');
 
