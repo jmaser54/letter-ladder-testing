@@ -113,9 +113,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
   }
   .timer-widget-anchor .hint-time-penalty-indicator{
-    position: static; /* flows naturally below timer-widget inside the anchor */
-    margin-top: 2px;
-    text-align: right;
+    position: absolute; top: calc(50% + 16px); right: 0;
+    /* sits just below the vertically-centered timer button without moving it */
   }
   .brand .rung-i{ color: var(--amber); }
   /* ? how-to-play icon — top right, matching landing page exactly */
@@ -467,6 +466,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   .timer-widget{
+    position: relative;
     display: block;
   }
   .hint-time-penalty-indicator{
@@ -1033,7 +1033,7 @@ function bindEnterToSubmit(inputEls, submitBtnEl){
   });
 }
 
-function showConfirmModal(message, onConfirm){
+function showConfirmModal(message, onConfirm, onDismiss){
   const overlay = document.createElement('div');
   overlay.className = 'confirm-overlay';
   overlay.innerHTML = `
@@ -1047,11 +1047,14 @@ function showConfirmModal(message, onConfirm){
   `;
   document.body.appendChild(overlay);
 
-  function close(){ overlay.remove(); }
-  bindTapAction(overlay.querySelector('.confirm-cancel'), close);
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+  function close(confirmed){
+    overlay.remove();
+    if(!confirmed && onDismiss) onDismiss();
+  }
+  bindTapAction(overlay.querySelector('.confirm-cancel'), ()=> close(false));
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(false); });
   bindTapAction(overlay.querySelector('.confirm-ok'), ()=>{
-    close();
+    close(true);
     onConfirm();
   });
 }
@@ -1867,15 +1870,17 @@ function showHintTimePenaltyIndicator(){
   const existing = document.getElementById('hint-time-penalty-indicator');
   if(existing) existing.remove();
 
-  // Append to timer-widget-anchor — flows as a block below the timer button
-  const logoRow = document.querySelector('.timer-widget-anchor');
-  if(!logoRow) return;
+  // Append to timer-widget-anchor — the indicator is absolutely positioned
+  // relative to timer-widget (its sibling's parent), so it floats below
+  // the timer without affecting the flex layout or moving the timer.
+  const anchor = document.querySelector('.timer-widget-anchor');
+  if(!anchor) return;
 
   const indicator = document.createElement('div');
   indicator.id = 'hint-time-penalty-indicator';
   indicator.className = 'hint-time-penalty-indicator';
   indicator.textContent = '+3 mins';
-  logoRow.appendChild(indicator);
+  anchor.appendChild(indicator);
 
   setTimeout(() => {
     if(indicator.parentNode) indicator.remove();
@@ -3334,10 +3339,13 @@ function render(focusInput = false, pendingErrors = null){
   const hintBtn = document.getElementById('hint-btn');
   if(hintBtn){
     bindTapAction(hintBtn, ()=>{
+      if(hintBtn.dataset.pending === '1') return; // prevent double-tap before modal appears
+      hintBtn.dataset.pending = '1';
       const hintDisplay = document.getElementById('hint-display');
       const unfilled = steps.filter(L => !guesses[L]);
       if(unfilled.length === 0){
         hintDisplay.innerHTML = `Every rung is already filled in!`;
+        hintBtn.dataset.pending = '0';
         return;
       }
       const focusedEl = document.activeElement;
@@ -3351,6 +3359,7 @@ function render(focusInput = false, pendingErrors = null){
 
       if(!targetWord){
         hintDisplay.innerHTML = `No hint available for this puzzle yet`;
+        hintBtn.dataset.pending = '0';
         return;
       }
 
@@ -3364,6 +3373,7 @@ function render(focusInput = false, pendingErrors = null){
       }
 
       showConfirmModal(confirmMsg, ()=>{
+        hintBtn.dataset.pending = '0';
         const updatedInfo = { ...hintInfo };
         if(!isSecondHint){
           updatedInfo.letters = joinAnd(getHintLetterOrder(targetWord).map(ch => ch.toUpperCase()));
@@ -3385,6 +3395,8 @@ function render(focusInput = false, pendingErrors = null){
           });
         }
         render(true);
+      }, ()=>{
+        hintBtn.dataset.pending = '0'; // cancelled — re-enable the button
       });
     });
   }
