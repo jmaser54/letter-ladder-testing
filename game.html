@@ -104,8 +104,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     justify-content: center;
     width: 100%;
     position: relative;
-    padding-bottom: 22px; /* room for the +3 mins hint indicator at bottom:-18px */
+    padding-bottom: 0;
     gap: 0;
+  }
+  /* Anchor for timer + hint indicator — sits right side of the logo row */
+  .timer-widget-anchor{
+    position: absolute; right: 0; top: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+  }
+  .timer-widget-anchor .hint-time-penalty-indicator{
+    position: static; /* flows naturally below timer-widget inside the anchor */
+    margin-top: 2px;
+    text-align: right;
   }
   .brand .rung-i{ color: var(--amber); }
   /* ? how-to-play icon — top right, matching landing page exactly */
@@ -457,11 +467,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   .timer-widget{
-    position: absolute; right: 0; top: 0; bottom: 0;
-    display: flex; align-items: center; /* vertically centers timer with logo */
+    display: block;
   }
   .hint-time-penalty-indicator{
-    position: absolute; bottom: -18px; right: 0;
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
     color: var(--amber); font-size: 0.8rem; white-space: nowrap;
   }
@@ -884,7 +892,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </div>
       <div class="brand-logo-row">
         <img src="og-image.png" alt="" class="brand-logo">
-        <div class="timer-widget" id="timer-widget"></div>
+        <div class="timer-widget-anchor">
+          <div class="timer-widget" id="timer-widget"></div>
+        </div>
       </div>
     </div>
   </header>
@@ -1857,9 +1867,8 @@ function showHintTimePenaltyIndicator(){
   const existing = document.getElementById('hint-time-penalty-indicator');
   if(existing) existing.remove();
 
-  // Append to brand-logo-row (not timer-widget, which gets innerHTML replaced
-  // on every timer tick — that would instantly wipe the indicator).
-  const logoRow = document.querySelector('.brand-logo-row');
+  // Append to timer-widget-anchor — flows as a block below the timer button
+  const logoRow = document.querySelector('.timer-widget-anchor');
   if(!logoRow) return;
 
   const indicator = document.createElement('div');
