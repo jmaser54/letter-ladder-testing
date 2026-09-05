@@ -147,14 +147,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     width: 100%;
     max-width: 280px;
   }
-  .play-date{
-    color: var(--ink-dim);
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-align: center;
-    margin-top: 22px;
-  }
 
   button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:0.95rem;
@@ -169,8 +161,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      padding so the larger text has comfortable room without feeling cramped */
   .play-btn-full{
     width: 100%;
-    font-size: 1.1rem;   /* 0.95rem × 1.15 ≈ 1.09rem, rounded to 1.1rem */
-    padding: 14px 18px;  /* 12px → 14px vertical for comfortable fit */
+    font-size: 0.99rem;  /* 1.1rem × 0.9 */
+    padding: 13px 18px;  /* 14px × 0.9 ≈ 13px */
+  }
+
+  .play-date{
+    color: var(--ink-dim);
+    font-size: 0.89rem;  /* 0.99rem × 0.9 — 10% smaller than button font */
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: center;
+    margin-top: 22px;
   }
 
   /* How to Play overlay — identical structure to index.html */
