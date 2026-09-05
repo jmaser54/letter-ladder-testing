@@ -230,9 +230,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size:1rem; text-align:center; margin:6px 0 20px 0; padding-right:0; font-weight:700;
   }
 
-  footer{
-    padding: 16px 0 8px;
-  }
+  footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
+  footer a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation; }
+  footer a:hover{ color: var(--amber); border-color: var(--amber); }
+  .footer-attribution{ font-size: 0.72rem; line-height: 1.7; opacity: 0.75; margin-bottom: 10px; }
+  .footer-attribution p{ margin: 0; }
+  .footer-attribution a{ color: var(--ink-dim); border-bottom: 1px dotted rgba(159,179,200,0.5); }
+  .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
+  .footer-sep{ color: var(--ink-dim); opacity: 0.5; }
 
   @media(max-width:400px){
     .brand-row{ font-size: 2.26rem; } /* 2.66rem × 0.85 — proportional scale-down */
@@ -267,7 +272,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="play-date" id="play-date"></div>
   </main>
 
-  <footer></footer>
+  <footer>
+    <div class="footer-attribution">
+      <p>All puzzles are crafted by humans</p>
+      <p>Dictionary adapted from the <a href="https://github.com/zeisler/scrabble" target="_blank" rel="noopener">zeisler/scrabble</a> project on GitHub</p>
+      <p>Letter Ladder created and developed by Jeff Maser</p>
+    </div>
+    <div class="footer-nav">
+      <a href="contact.html">Contact</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="privacy.html">Privacy Policy</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
+    </div>
+  </footer>
 </div>
 
 <script type="module">

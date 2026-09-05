@@ -65,11 +65,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   header{ position: relative; text-align:center; margin-bottom: 12px; flex-shrink:0; }
   .brand-row{
     position: relative;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     font-size: 2rem;
+    margin-bottom: 4px;
+  }
+  .brand-title-row{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 36px;
+    padding: 0 44px; /* clears the 32px icons with ~12px gap each side */
   }
   .brand{
     grid-column: 2;
@@ -78,16 +88,36 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size: inherit;
     letter-spacing: -0.01em;
     margin: 0;
+    line-height: 1.1;
   }
   .brand-logo{
-    grid-column: 1;
-    justify-self: end;
-    width: 1em;
-    height: 1em;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     flex-shrink: 0;
+    display: block;
   }
   .brand .rung-i{ color: var(--amber); }
+  /* ? how-to-play icon — top right, matching landing page exactly */
+  .howto-icon-btn{
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
+    background: none; color: var(--ink-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1rem;
+    touch-action: manipulation; padding: 0; line-height: 1;
+    transition: color 0.15s, border-color 0.15s; flex-shrink: 0;
+  }
+  .howto-icon-btn:hover{ color: var(--amber); border-color: var(--amber); }
+  /* Timer row — sits below the header, right-aligned, with enough top
+     margin so it's clearly separated from the ? icon above it */
+  .timer-widget-row{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+    min-height: 28px;
+    flex-shrink: 0;
+  }
   .top-links{
     display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px; margin-top:6px; font-size: 0.8rem;
   }
@@ -465,7 +495,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .timer-choice-actions button:hover{ background: var(--amber); color: #1B2A41; }
 
   .timer-widget{
-    position: absolute; bottom: 0; right: 0;
+    position: relative;
   }
   .hint-time-penalty-indicator{
     position: absolute; bottom: -20px; right: 0;
@@ -473,7 +503,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     color: var(--amber); font-size: 0.8rem;
   }
   .account-widget{
-    position: absolute; bottom: 0; left: 0;
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center;
   }
   .account-icon-btn{
     width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
@@ -536,16 +567,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     transition-delay: 1s;
   }
 
-  footer{ text-align:center; margin-top: 8px; color: var(--ink-dim); font-size: 0.85rem; flex-shrink:0; }
+  footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
   footer a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation; }
   footer a:hover{ color: var(--amber); border-color: var(--amber); }
-  footer .footer-ig-link{ display:inline-flex; align-items:center; vertical-align:middle; border-bottom:none; line-height:0; }
-  footer .footer-ig-link svg{ display:block; border-radius:50%; transition:opacity 0.15s ease; }
-  footer .footer-ig-link:hover svg{ opacity:0.8; }
+  .footer-attribution{ font-size: 0.72rem; line-height: 1.7; opacity: 0.75; margin-bottom: 10px; }
+  .footer-attribution p{ margin: 0; }
+  .footer-attribution a{ color: var(--ink-dim); border-bottom: 1px dotted rgba(159,179,200,0.5); }
+  .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
+  .footer-sep{ color: var(--ink-dim); opacity: 0.5; }
 
   @media (max-width: 420px){
     .rung{ min-width: calc(var(--rung-minw, 140px) * 0.8); }
-    .brand-row{ font-size: 1.7rem; }
+    .brand-row{ font-size: 1.6rem; }
+    .brand-logo{ width: 42px; height: 42px; }
     .timer-widget-btn{ font-size: 0.85rem; }
   }
 
@@ -880,20 +914,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <div class="wrap">
   <header>
     <div class="brand-row">
+      <div class="brand-title-row">
+        <div class="account-widget" id="account-widget"></div>
+        <h1 class="brand">Letter Ladder</h1>
+        <button type="button" class="howto-icon-btn" id="howto-icon-btn" aria-label="How to play">?</button>
+      </div>
       <img src="og-image.png" alt="" class="brand-logo">
-      <h1 class="brand">Letter Ladder</h1>
-      <div class="account-widget" id="account-widget"></div>
-      <div class="timer-widget" id="timer-widget"></div>
-    </div>
-    <div class="top-links">
-      <a href="about.html">How to play</a>
-      <a href="game.html" id="todays-puzzles-link" style="display:none;">Today's puzzles</a>
-      <a href="past-puzzles.html">Past puzzles</a>
-      <a href="leaderboard.html" id="leaderboard-nav-link">Leaderboard</a>
     </div>
   </header>
-
-  <div class="date-row" id="date-row"></div>
+  <div class="timer-widget-row">
+    <div class="timer-widget" id="timer-widget"></div>
+  </div>
 
   <div class="tabs" id="tabs">
     <div class="tab" data-tier="easy">Easy</div>
@@ -906,25 +937,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 
   <footer>
-    <a href="contact.html">Contact</a>
-    &nbsp;&middot;&nbsp;
-    <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener" class="footer-ig-link" aria-label="Follow Letter Ladder on Instagram">
-      <svg width="24" height="24" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="igGradientFooter" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#FFD600"/>
-            <stop offset="30%" stop-color="#FF7A00"/>
-            <stop offset="55%" stop-color="#E1306C"/>
-            <stop offset="80%" stop-color="#C13584"/>
-            <stop offset="100%" stop-color="#5B51D8"/>
-          </linearGradient>
-        </defs>
-        <rect x="4" y="4" width="120" height="120" rx="32" fill="url(#igGradientFooter)"/>
-        <rect x="30" y="30" width="68" height="68" rx="20" fill="none" stroke="#FFFFFF" stroke-width="8"/>
-        <circle cx="64" cy="64" r="18" fill="none" stroke="#FFFFFF" stroke-width="8"/>
-        <circle cx="93" cy="35" r="6" fill="#FFFFFF"/>
-      </svg>
-    </a>
+    <div class="footer-attribution">
+      <p>All puzzles are crafted by humans</p>
+      <p>Dictionary adapted from the <a href="https://github.com/zeisler/scrabble" target="_blank" rel="noopener">zeisler/scrabble</a> project on GitHub</p>
+      <p>Letter Ladder created and developed by Jeff Maser</p>
+    </div>
+    <div class="footer-nav">
+      <a href="contact.html">Contact</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="privacy.html">Privacy Policy</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
+    </div>
   </footer>
 </div>
 
@@ -1541,13 +1565,6 @@ if(localStorage.getItem(LAST_VIEWED_DATE_KEY) !== dateKey){
 // personal stats tracked anyway, so this only matters for the day's
 // in-progress guesses/hints, which is fine to share among guest sessions.
 const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
-if(isArchiveMode){
-  const todaysPuzzlesLink = document.getElementById('todays-puzzles-link');
-  if(todaysPuzzlesLink) todaysPuzzlesLink.style.display = '';
-
-  const leaderboardNavLink = document.getElementById('leaderboard-nav-link');
-  if(leaderboardNavLink) leaderboardNavLink.href = `past-leaderboards.html#day-${dateKey}`;
-}
 
 // ---------- optional per-puzzle timer ----------
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
@@ -1610,33 +1627,14 @@ function hasEverStartedTimer(tier){
 }
 
 function showPlayPopupIfNeeded(tier, onPlay, onBack){
-  const hasScheduledPuzzle = PUZZLE_SCHEDULE[dateKey] && PUZZLE_SCHEDULE[dateKey][tier];
-  if(isArchiveMode || !hasScheduledPuzzle || hasEverStartedTimer(tier)){
-    onPlay();
-    return;
+  // The landing page now handles pre-game onboarding, so there is no
+  // longer an intermediate "Ready to begin?" screen on the game page.
+  // Always call onPlay() immediately.
+  onPlay();
+  if(!isTouchDevice && activeLength != null){
+    const inputEl = document.getElementById(`rung-input-${activeLength}`);
+    if(inputEl) inputEl.focus({ preventScroll: true });
   }
-  const overlay = document.createElement('div');
-  overlay.className = 'play-overlay';
-  overlay.innerHTML = `
-    <div class="play-card" style="position:relative;">
-      <a href="#" class="play-back-link" style="position:absolute; top:16px; left:18px; font-size:0.82rem; color:var(--ink-dim); text-decoration:none; display:flex; align-items:center; gap:4px; touch-action:manipulation;">← Back</a>
-      <div class="play-prompt-text">Ready to begin?</div>
-      <button type="button" class="play-btn-big" id="play-btn-big">Play</button>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  bindTapAction(overlay.querySelector('.play-back-link'), ()=>{
-    overlay.remove();
-    if(onBack) onBack();
-  });
-  bindTapAction(overlay.querySelector('#play-btn-big'), ()=>{
-    overlay.remove();
-    onPlay();
-    if(!isTouchDevice && activeLength != null){
-      const inputEl = document.getElementById(`rung-input-${activeLength}`);
-      if(inputEl) inputEl.focus({ preventScroll: true });
-    }
-  });
 }
 
 function startTimerIfNeeded(tier){
@@ -2617,7 +2615,7 @@ function specialDayLabelSuffix(key){
   if(dayOfWeek === 5) return ' - HARD';
   return '';
 }
-document.getElementById('date-row').textContent = prettyDate(dateKey) + specialDayLabelSuffix(dateKey);
+// date-row removed - date no longer shown on game page
 
 function handleViewSolutionClick(){
   if(isArchiveMode){
@@ -4123,11 +4121,11 @@ document.getElementById('tabs').addEventListener('click', (e)=>{
 // so there's no risk of a call site being accidentally missed.
 // Only acts when the timer is actually running (daily mode, not archive).
 const BLOCKING_OVERLAY_CLASSES = new Set([
-  'confirm-overlay', 'howto-overlay', 'timer-overlay', 'play-overlay'
+  'confirm-overlay', 'howto-overlay', 'timer-overlay'
 ]);
 function hasBlockingOverlay(){
   return !!document.querySelector(
-    '.confirm-overlay, .howto-overlay, .timer-overlay, .play-overlay'
+    '.confirm-overlay, .howto-overlay, .timer-overlay'
   );
 }
 new MutationObserver((mutations)=>{
@@ -4153,6 +4151,32 @@ new MutationObserver((mutations)=>{
   }
 }).observe(document.body, { childList: true });
 
+// How to Play ? icon — opens the existing howto popup on demand,
+// without triggering the onboarding chain (that's the landing page's job now).
+function showHowToPlayPopup(){
+  const overlay = document.createElement('div');
+  overlay.className = 'howto-overlay';
+  overlay.innerHTML = `
+    <div class="howto-card">
+      <button type="button" class="howto-close" aria-label="Close">&times;</button>
+      <h2>How to Play</h2>
+      <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
+      <ul>
+        <li>Words can be guessed in any order</li>
+        <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
+        <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
+        <li>Every word must be a real English word</li>
+      </ul>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  function close(){ overlay.remove(); }
+  bindTapAction(overlay.querySelector('.howto-close'), close);
+  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+}
+const howtoIconBtn = document.getElementById('howto-icon-btn');
+if(howtoIconBtn) bindTapAction(howtoIconBtn, showHowToPlayPopup);
+
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
     pauseTimer(activeTier);
@@ -4172,6 +4196,7 @@ window.addEventListener('pagehide', ()=>{
 });
 
 render(!isTouchDevice);
+startTimerIfNeeded(activeTier); // resume timer on page load / return from another page
 showMigrationWelcomeBannerIfNeeded();
 showMigrationLinkBannerIfNeeded();
 
@@ -4318,16 +4343,7 @@ let ownerCheckDone = false;
         renderTimerWidget();
 
         // The play popup's own check ran earlier, against empty local
-        // data, before this restore completed - if it's still showing
-        // now that the real, restored data reveals the puzzle was
-        // already started or solved, dismiss it exactly as if "Play"
-        // had been tapped, rather than leaving a stale prompt on screen
-        // for a puzzle that's actually already done.
-        const playOverlay = document.querySelector('.play-overlay');
-        if(playOverlay && hasEverStartedTimer(activeTier)){
-          playOverlay.remove();
-          startTimerIfNeeded(activeTier);
-        }
+        // play-overlay no longer exists; timer is started at page load directly
       }
     });
   } else if(attemptsLeft > 0){
