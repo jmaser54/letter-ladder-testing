@@ -50,7 +50,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   header{ position: relative; text-align:center; flex-shrink:0; padding-bottom: 0; margin-bottom: 0; }
   .brand-row{
     position: relative;
-    font-size: 3.125rem; /* ~50px — prominent, with room for icons */
+    font-size: 2.66rem; /* 3.125rem × 0.85 ≈ 2.66rem — 15% smaller than before */
   }
   .brand-title-row{
     position: relative;
@@ -67,7 +67,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size: inherit;
     letter-spacing: -0.01em;
     margin: 0;
-    line-height: 1.1;
+    line-height: 1.15;
+    /* Lock to two lines at all screen widths by constraining the max-width
+       to just under the width of "Letter Ladder" on one line at this font
+       size. "Letter" and "Ladder" are similar lengths so they split cleanly. */
+    max-width: 5.5ch; /* ~5.5 characters wide forces the break after "Letter" */
+    word-break: normal;
   }
   .brand .rung-i{ color: var(--ink); }
   .account-widget{
@@ -124,7 +129,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 80px 0 40px; /* ~80px from header to logo — the title-to-logo breathing room */
+    padding: 60px 0 40px; /* title→logo gap: 60px. Reduced from 80px to even out distribution */
   }
   .brand-logo{
     width: 76px;
@@ -132,7 +137,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-radius: 50%;
     flex-shrink: 0;
     display: block;
-    margin-bottom: 48px; /* logo to first button — less space than title-to-logo */
+    margin-bottom: 36px; /* logo→buttons: 36px. Was 48px — now closer to buttons, making title→logo→buttons feel more even */
   }
   .play-buttons{
     display: flex;
@@ -160,7 +165,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   button:active{ transform: scale(0.97); }
   .btn-primary{ background: var(--amber); color:#1B2A41; }
   .btn-ghost{ background: rgba(245,239,224,0.08); color: var(--ink); }
-  .play-btn-full{ width: 100%; }
+  /* Play buttons specifically get 15% larger font + slightly more vertical
+     padding so the larger text has comfortable room without feeling cramped */
+  .play-btn-full{
+    width: 100%;
+    font-size: 1.1rem;   /* 0.95rem × 1.15 ≈ 1.09rem, rounded to 1.1rem */
+    padding: 14px 18px;  /* 12px → 14px vertical for comfortable fit */
+  }
 
   /* How to Play overlay — identical structure to index.html */
   .howto-overlay{
@@ -223,9 +234,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   @media(max-width:400px){
-    .brand-row{ font-size: 2.6rem; }
+    .brand-row{ font-size: 2.26rem; } /* 2.66rem × 0.85 — proportional scale-down */
     .brand-logo{ width: 64px; height: 64px; }
-    .landing-body{ padding-top: 60px; }
+    .landing-body{ padding-top: 48px; }
+    .brand-logo{ margin-bottom: 30px; }
   }
 </style>
 </head>
