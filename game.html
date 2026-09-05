@@ -104,7 +104,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     justify-content: center;
     width: 100%;
     position: relative;
-    padding-bottom: 18px; /* breathing room below for hint-time-penalty-indicator */
+    padding-bottom: 8px;
+    gap: 0;
   }
   .brand .rung-i{ color: var(--amber); }
   /* ? how-to-play icon — top right, matching landing page exactly */
@@ -348,9 +349,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .bank-primary-actions{
     display: flex; gap: 14px;
     align-items: center;
+    justify-content: center;
     max-width: 100%;
     margin-top: 0;
-    margin-bottom: 8px;
+    margin-bottom: 0;
   }
   .clear-hint-text{
     color: var(--ink-dim);
@@ -381,7 +383,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .share-status{ text-align:center; margin-top:8px; font-size:0.8rem; color: var(--blue); font-weight:600; flex-shrink:0; }
 
   .view-solution-link{
-    display:table; margin: 8px auto 8px auto;
+    display:table; margin: 20px auto 8px auto;
     font-size:0.88rem; color: var(--ink-dim); text-decoration:none;
     border-bottom: 1px dotted var(--ink-dim);
     touch-action: manipulation;
@@ -455,10 +457,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   .timer-widget{
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    position: absolute; right: 0; top: 0; bottom: 0;
+    display: flex; align-items: center; /* vertically centers timer with logo */
   }
   .hint-time-penalty-indicator{
-    position: absolute; bottom: -20px; right: 0;
+    position: absolute; top: calc(100% + 4px); right: 0;
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
     color: var(--amber); font-size: 0.8rem; white-space: nowrap;
   }
@@ -1425,7 +1428,7 @@ function renderTimerWidget(){
   }
 
   const choice = getTimerChoice();
-  const timerOffIndicator = `<span style="display:inline-flex;align-items:center;gap:0;"><span class="timer-emoji">⏱️</span><span style="font-size:1.1em;font-weight:700;color:#111;line-height:1;margin-left:1px;">/</span></span>`;
+  const timerOffIndicator = `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;"><span class="timer-emoji">⏱️</span><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-54%) rotate(0deg);font-size:1.25em;font-weight:900;color:#111;line-height:1;pointer-events:none;">/</span></span>`;
   let displayContent = timerOffIndicator;
   if(choice === 'timed'){
     const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
@@ -1854,14 +1857,15 @@ function showHintTimePenaltyIndicator(){
   const existing = document.getElementById('hint-time-penalty-indicator');
   if(existing) existing.remove();
 
-  const brandRow = document.querySelector('.brand-row');
-  if(!brandRow) return;
+  // Append to the timer-widget so "+3 mins" appears directly below the timer
+  const timerWidget = document.getElementById('timer-widget');
+  if(!timerWidget) return;
 
   const indicator = document.createElement('div');
   indicator.id = 'hint-time-penalty-indicator';
   indicator.className = 'hint-time-penalty-indicator';
   indicator.textContent = '+3 mins';
-  brandRow.appendChild(indicator);
+  timerWidget.appendChild(indicator);
 
   setTimeout(() => {
     if(indicator.parentNode) indicator.remove();
@@ -3118,10 +3122,10 @@ function render(focusInput = false, pendingErrors = null){
   // built independently of that condition rather than nested inside it.
   const primaryActionsHtml = `
     <div class="bank-primary-actions">
-      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg></button>` : ''}
+      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg></button>` : ''}
       ${showHintBtn ? `<button type="button" class="bank-ctrl-btn" id="hint-btn" aria-label="Hint">${lightbulbIcon}</button>` : ''}
       ${isMechanicallyComplete
-        ? `<span class="clear-hint-text"><a href="#" id="clear-btn" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);">Clear puzzle to find a new path?</a></span>`
+        ? `<span class="clear-hint-text" style="text-align:center;width:100%;"><a href="#" id="clear-btn" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);">Clear puzzle to find a new path?</a></span>`
         : `<button type="button" class="bank-ctrl-btn" id="clear-btn" aria-label="Clear guesses">${trashIcon}</button>`
       }
       ${backspaceButtonHtml}
@@ -3147,7 +3151,7 @@ function render(focusInput = false, pendingErrors = null){
     <div class="actions-row" style="justify-content:center;">
       ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button" style="font-size:1.19rem;padding:15px 26px;">Next puzzle</button>` : ''}
     </div>
-    ${isWon && anyTierSolvedToday ? `<div style="text-align:center;margin:6px 0 2px;"><a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a></div>` : ''}
+    ${isWon && anyTierSolvedToday ? `<div style="text-align:center;margin:6px 0 10px;"><a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a></div>` : ''}
     ${bankHtml}
     ${primaryActionsHtml}
     ${`<div class="actions-row" style="flex-direction:column;align-items:center;gap:10px;">
