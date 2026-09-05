@@ -72,14 +72,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-radius: 50%;
     flex-shrink: 0;
   }
-  .brand .rung-i{ color: var(--amber); }
-
-  /* Account icon — identical to index.html */
+  .brand .rung-i{ color: var(--ink); }
   .account-widget{
-    grid-column: 3;
-    justify-self: start;
-    position: relative;
+    position: absolute; bottom: 0; left: 0;
   }
+  .howto-icon-btn{
+    position: absolute; bottom: 0; right: 0;
+    width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
+    background: none; color: var(--ink-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1rem;
+    touch-action: manipulation; padding: 0; line-height: 1;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .howto-icon-btn:hover{ color: var(--amber); border-color: var(--amber); }
+
+  /* Account icon and dropdown — identical to game.html */
   .account-icon-btn{
     width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -112,19 +120,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .account-dropdown a:hover, .account-dropdown button.dropdown-item:hover{ color: var(--amber); }
 
-  /* How to play icon — top right */
-  .howto-icon-btn{
-    grid-column: 3;
-    justify-self: end;
-    width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
-    background: none; color: var(--ink-dim); cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1rem;
-    touch-action: manipulation; padding: 0; line-height: 1;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .howto-icon-btn:hover{ color: var(--amber); border-color: var(--amber); }
-
   /* Landing body */
   .landing-body{
     flex: 1;
@@ -146,6 +141,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .play-date{
     color: var(--ink-dim);
     font-size: 0.95rem;
+    font-weight: 700;
     letter-spacing: 0.02em;
     text-align: center;
   }
@@ -218,11 +214,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   footer{
-    text-align:center; padding: 16px 0 8px;
-    font-size:0.8rem; color:var(--ink-dim);
+    padding: 16px 0 8px;
   }
-  footer a{ color:var(--ink-dim); text-decoration:none; border-bottom:1px dotted var(--ink-dim); }
-  footer a:hover{ color:var(--amber); border-color:var(--amber); }
 
   @media(max-width:400px){
     .brand-row{ font-size: 1.7rem; }
@@ -239,8 +232,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <header>
     <div class="brand-row">
       <img src="og-image.png" alt="" class="brand-logo">
-      <h1 class="brand">Letter <span class="rung-i">L</span>adder</h1>
+      <h1 class="brand">Letter Ladder</h1>
       <div class="account-widget" id="account-widget"></div>
+      <button type="button" class="howto-icon-btn" id="howto-btn" aria-label="How to play">?</button>
     </div>
   </header>
 
@@ -249,14 +243,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- filled by JS based on auth state -->
     </div>
     <div class="play-date" id="play-date"></div>
-
-    <!-- How to play icon — bottom of landing body area, right-aligned -->
-    <button type="button" class="howto-icon-btn" id="howto-btn" aria-label="How to play">?</button>
   </main>
 
-  <footer>
-    <a href="contact.html">Contact</a>
-  </footer>
+  <footer></footer>
 </div>
 
 <script type="module">
