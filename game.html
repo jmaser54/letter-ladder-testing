@@ -104,7 +104,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     justify-content: center;
     width: 100%;
     position: relative;
-    padding-bottom: 8px;
+    padding-bottom: 22px; /* room for the +3 mins hint indicator at bottom:-18px */
     gap: 0;
   }
   .brand .rung-i{ color: var(--amber); }
@@ -461,7 +461,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; align-items: center; /* vertically centers timer with logo */
   }
   .hint-time-penalty-indicator{
-    position: absolute; top: calc(100% + 4px); right: 0;
+    position: absolute; bottom: -18px; right: 0;
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
     color: var(--amber); font-size: 0.8rem; white-space: nowrap;
   }
@@ -1857,15 +1857,16 @@ function showHintTimePenaltyIndicator(){
   const existing = document.getElementById('hint-time-penalty-indicator');
   if(existing) existing.remove();
 
-  // Append to the timer-widget so "+3 mins" appears directly below the timer
-  const timerWidget = document.getElementById('timer-widget');
-  if(!timerWidget) return;
+  // Append to brand-logo-row (not timer-widget, which gets innerHTML replaced
+  // on every timer tick — that would instantly wipe the indicator).
+  const logoRow = document.querySelector('.brand-logo-row');
+  if(!logoRow) return;
 
   const indicator = document.createElement('div');
   indicator.id = 'hint-time-penalty-indicator';
   indicator.className = 'hint-time-penalty-indicator';
   indicator.textContent = '+3 mins';
-  timerWidget.appendChild(indicator);
+  logoRow.appendChild(indicator);
 
   setTimeout(() => {
     if(indicator.parentNode) indicator.remove();
@@ -3122,7 +3123,7 @@ function render(focusInput = false, pendingErrors = null){
   // built independently of that condition rather than nested inside it.
   const primaryActionsHtml = `
     <div class="bank-primary-actions">
-      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l6 6"></path><path d="M4 4l5 5"></path></svg></button>` : ''}
+      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><polyline points="21 16 21 21 16 21"></polyline><line x1="4" y1="4" x2="21" y2="21"></line><line x1="21" y1="3" x2="4" y2="20"></line></svg></button>` : ''}
       ${showHintBtn ? `<button type="button" class="bank-ctrl-btn" id="hint-btn" aria-label="Hint">${lightbulbIcon}</button>` : ''}
       ${isMechanicallyComplete
         ? `<span class="clear-hint-text" style="text-align:center;width:100%;"><a href="#" id="clear-btn" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);">Clear puzzle to find a new path?</a></span>`
@@ -3149,7 +3150,7 @@ function render(focusInput = false, pendingErrors = null){
     ${details.map(d=>`<div class="details">${d}</div>`).join('')}
     <div class="hint-display" id="hint-display"></div>
     <div class="actions-row" style="justify-content:center;">
-      ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button" style="font-size:1.19rem;padding:15px 26px;">Next puzzle</button>` : ''}
+      ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button" style="font-size:1.19rem;padding:13px 23px;">Next puzzle</button>` : ''}
     </div>
     ${isWon && anyTierSolvedToday ? `<div style="text-align:center;margin:6px 0 10px;"><a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a></div>` : ''}
     ${bankHtml}
