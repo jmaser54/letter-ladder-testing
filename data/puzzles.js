@@ -587,5 +587,159 @@ const PUZZLE_SCHEDULE = {
       "start": "sane",
       "final": "readiness"
     }
+  },
+  "2026-09-07": {
+    "easy": {
+      "start": "if",
+      "final": "fixer"
+    },
+    "medium": {
+      "start": "bid",
+      "final": "builder"
+    },
+    "hard": {
+      "start": "gee",
+      "final": "designer"
+    }
+  },
+  "2026-09-08": {
+    "easy": {
+      "start": "ow",
+      "final": "cower"
+    },
+    "medium": {
+      "start": "he",
+      "final": "hoarse"
+    },
+    "hard": {
+      "start": "at",
+      "final": "tractor"
+    }
+  },
+  "2026-09-09": {
+    "easy": {
+      "start": "am",
+      "final": "tamed"
+    },
+    "medium": {
+      "start": "so",
+      "final": "rosary"
+    },
+    "hard": {
+      "start": "ors",
+      "final": "oranges"
+    }
+  },
+  "2026-09-10": {
+    "easy": {
+      "start": "peen",
+      "final": "penned"
+    },
+    "medium": {
+      "start": "duo",
+      "final": "abound"
+    },
+    "hard": {
+      "start": "tag",
+      "final": "originate"
+    }
+  },
+  "2026-09-11": {
+    "easy": {
+      "start": "pa",
+      "final": "clamp"
+    },
+    "medium": {
+      "start": "pea",
+      "final": "pirates"
+    },
+    "hard": {
+      "start": "me",
+      "final": "heroism"
+    }
+  },
+  "2026-09-12": {
+    "easy": {
+      "start": "go",
+      "final": "forge"
+    },
+    "medium": {
+      "start": "en",
+      "final": "tinkle"
+    },
+    "hard": {
+      "start": "rue",
+      "final": "flounder"
+    }
+  },
+  "2026-09-13": {
+    "easy": {
+      "start": "or",
+      "final": "boxer"
+    },
+    "medium": {
+      "start": "tad",
+      "final": "tadpole"
+    },
+    "hard": {
+      "start": "louden",
+      "final": "convulsed"
+    }
+  },
+  "2026-09-14": {
+    "easy": {
+      "start": "at",
+      "final": "water"
+    },
+    "medium": {
+      "start": "ale",
+      "final": "clapped"
+    },
+    "hard": {
+      "start": "louden",
+      "final": "convulsed"
+    }
+  },
+  "2026-09-15": {
+    "easy": {
+      "start": "ad",
+      "final": "dread"
+    },
+    "medium": {
+      "start": "us",
+      "final": "plumes"
+    },
+    "hard": {
+      "start": "us",
+      "final": "supreme"
+    }
+  },
+  "2026-09-16": {
+    "easy": {
+      "start": "is",
+      "final": "spine"
+    },
+    "medium": {
+      "start": "is",
+      "final": "stride"
+    },
+    "hard": {
+      "start": "is",
+      "final": "perusing"
+    }
+  },
+  "2026-09-17": {
+    "easy": {
+      "start": "to",
+      "final": "boast"
+    },
+    "medium": {
+      "start": "so",
+      "final": "drowns"
+    },
+    "hard": {
+      "start": "anti",
+      "final": "fornicate"
+    }
   }
 };
