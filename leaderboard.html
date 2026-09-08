@@ -111,6 +111,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // button, duplicated verbatim here since this is a separate static
   // HTML file with no shared JS module system to import it from directly.
   function formatTime(ms){
+    if(ms === null || ms === undefined || ms === 0) return '—';
     const totalSeconds = ms / 1000;
     if(totalSeconds < 60){
       return `${totalSeconds.toFixed(1)}s`;
@@ -134,6 +135,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           collection(db, 'scores'),
           where('date', '==', today),
           where('tier', '==', tier),
+          where('timeMs', '>', 0),
           orderBy('timeMs', 'asc'),
           limit(3)
         );
