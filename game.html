@@ -3308,10 +3308,9 @@ function render(focusInput = false, pendingErrors = null){
   const shuffleBtn = document.getElementById('shuffle-btn');
   if(shuffleBtn){
     bindTapAction(shuffleBtn, ()=>{
-      // Blur any focused input so partial text doesn't get highlighted
-      if(document.activeElement && document.activeElement.blur){
-        document.activeElement.blur();
-      }
+      // Collapse any text selection without blurring — keeps typed text intact
+      // but removes the blue highlight that appeared when shuffle was tapped.
+      if(window.getSelection) window.getSelection().removeAllRanges();
       const order = bankState[activeTier].order;
       const stableIds = bankState[activeTier].stableIds;
       // Fisher-Yates shuffle, in place - stableIds must move in lockstep
