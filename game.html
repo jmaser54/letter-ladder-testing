@@ -960,10 +960,13 @@ function getPlayerId(){
 }
 
 function todayKey(){
+  // Always use US Eastern time so puzzles launch at midnight ET worldwide.
+  // A player in Florence at 11pm ET sees the same puzzle as someone in New York.
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
+  const eastern = new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const y = eastern.getFullYear();
+  const m = String(eastern.getMonth()+1).padStart(2,'0');
+  const day = String(eastern.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
 function prettyDate(key){

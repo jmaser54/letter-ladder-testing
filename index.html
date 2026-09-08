@@ -318,8 +318,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const BLANK_PERSON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"></path></svg>`;
 
   // ── date display ───────────────────────────────────────────────────────────
-  function todayFormatted(){
+  function easternDate(){
+    // Always use US Eastern time so the displayed date and puzzle match ET midnight
     const d = new Date();
+    return new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  }
+  function todayFormatted(){
+    const d = easternDate();
     return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
   }
   document.getElementById('play-date').textContent = todayFormatted();
@@ -328,7 +333,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const DATE_ATTRIBUTIONS = {
     '2026-09-08': "Today's EASY submitted by Redditor Ray2024",
   };
-  const todayKey = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+  const todayKey = easternDate().toLocaleDateString('en-CA'); // YYYY-MM-DD in Eastern time
   const attrEl = document.getElementById('play-date-attribution');
   attrEl.textContent = DATE_ATTRIBUTIONS[todayKey] || '';
 
@@ -364,7 +369,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     overlay.querySelector('.howto-close').addEventListener('click', close);
     overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
   }
-  document.getElementById('howto-btn').addEventListener('click', showHowToPlay);
+  bindTapAction(document.getElementById('howto-btn'), showHowToPlay);
 
   // ── account dropdown ───────────────────────────────────────────────────────
   function closeDropdown(){
