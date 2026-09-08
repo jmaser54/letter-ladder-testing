@@ -129,7 +129,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 60px 0 40px; /* title→logo gap: 60px. Reduced from 80px to even out distribution */
+    padding: 50px 0 40px; /* title→logo: 50px — matches logo→buttons for balanced feel */
   }
   .brand-logo{
     width: 76px;
@@ -137,7 +137,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-radius: 50%;
     flex-shrink: 0;
     display: block;
-    margin-bottom: 36px; /* logo→buttons: 36px. Was 48px — now closer to buttons, making title→logo→buttons feel more even */
+    margin-bottom: 50px; /* logo→buttons: 36px × 1.4 = 50px */
   }
   .play-buttons{
     display: flex;
@@ -167,11 +167,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   .play-date{
     color: var(--ink-dim);
-    font-size: 0.89rem;  /* 0.99rem × 0.9 — 10% smaller than button font */
+    font-size: 0.98rem;  /* 0.89rem × 1.10 — 10% larger */
     font-weight: 700;
     letter-spacing: 0.02em;
     text-align: center;
     margin-top: 22px;
+  }
+  .play-date-attribution{
+    color: var(--ink-dim);
+    font-size: 0.93rem;  /* 0.98rem × 0.95 — 5% smaller than date */
+    font-style: italic;
+    text-align: center;
+    margin-top: 4px;
   }
 
   /* How to Play overlay — identical structure to index.html */
@@ -270,6 +277,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <!-- filled by JS based on auth state -->
     </div>
     <div class="play-date" id="play-date"></div>
+    <div class="play-date-attribution" id="play-date-attribution"></div>
   </main>
 
   <footer>
@@ -315,6 +323,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
   document.getElementById('play-date').textContent = todayFormatted();
 
+  // Date-specific attributions — keyed by YYYY-MM-DD
+  const DATE_ATTRIBUTIONS = {
+    '2026-09-08': "Today's EASY submitted by Redditor Ray2024",
+  };
+  const todayKey = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+  const attrEl = document.getElementById('play-date-attribution');
+  attrEl.textContent = DATE_ATTRIBUTIONS[todayKey] || '';
+
   // ── navigation helpers ─────────────────────────────────────────────────────
   function goToGame(timerChoice){
     // Set the timer preference before navigating so index.html picks it up
@@ -335,8 +351,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <h2>How to Play</h2>
         <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
         <ul>
-          <li>Words can be guessed in any order</li>
           <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
+          <li>Words can be guessed in any order</li>
           <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
           <li>Every word must be a real English word</li>
         </ul>
@@ -488,16 +504,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(isLogin){
           const player = await findPlayerByUsername(username);
           const registeredEmail = (player && player.authEmail) || usernameToSyntheticEmail(username);
+          // Save anon UID before signing in so backfill can delete old guest docs
+          if(auth.currentUser && auth.currentUser.isAnonymous){
+            sessionStorage.setItem('letterladder:anonUidForCleanup', auth.currentUser.uid);
+          }
           await signInWithEmailAndPassword(auth, registeredEmail, password);
-          localStorage.setItem('letterladder:accountUsername', player ? player.username : username);
+          const loggedInUsername = player ? player.username : username;
+          localStorage.setItem('letterladder:accountUsername', loggedInUsername);
+          // Migrate guest localStorage keys and signal game.html to backfill
+          // scores/stats — same as the create account path.
+          const guestPrefix = 'letterladder:guest:';
+          const newPrefix = `letterladder:${loggedInUsername}:`;
+          const keysToMigrate = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            if(k && k.startsWith(guestPrefix)) keysToMigrate.push(k);
+          }
+          for(const oldKey of keysToMigrate){
+            const newKey = newPrefix + oldKey.slice(guestPrefix.length);
+            localStorage.setItem(newKey, localStorage.getItem(oldKey));
+          }
+          sessionStorage.setItem('letterladder:pendingGuestBackfill', loggedInUsername);
           overlay.remove();
-          renderPlayButtons(auth.currentUser);
-          renderAccountWidget(auth.currentUser);
+          window.location.href = 'game.html';
         } else {
           // Validate username
-          const BANNED = ['fuck','bitch','bastard','cunt','kike','nigger','nigga','asshole','faggot'];
+          const BANNED = ['fuck','bitch','bastard','cunt','kike','nigger','nigga','asshole','faggot','.com','.net','.org','.edu','.io','.xyz','gmail'];
           const lower = username.toLowerCase();
           if(username.length > 20){ errorEl.textContent = 'Username must be 20 characters or fewer.'; return; }
+          if(username.includes('.')){ errorEl.textContent = 'Usernames cannot contain periods.'; return; }
           if(BANNED.some(b => lower.includes(b))){ errorEl.textContent = 'Please choose a different username.'; return; }
           const existing = await findPlayerByUsername(username);
           if(existing){ errorEl.textContent = 'That username is already taken.'; return; }
@@ -505,6 +540,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           const email = (overlay.querySelector('#auth-email') || {}).value || '';
           const trimmedEmail = email.trim();
           const registeredEmail = trimmedEmail || usernameToSyntheticEmail(username);
+          // Save the anonymous UID before account creation so the backfill
+          // can delete the old guest score docs from the leaderboard.
+          if(auth.currentUser && auth.currentUser.isAnonymous){
+            sessionStorage.setItem('letterladder:anonUidForCleanup', auth.currentUser.uid);
+          }
+
           const cred = await createUserWithEmailAndPassword(auth, registeredEmail, password);
           const playerDoc = {
             username: username.trim(),
@@ -517,9 +558,33 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             await setDoc(doc(db, 'playerRecovery', cred.user.uid), { recoveryEmail: trimmedEmail });
           }
           localStorage.setItem('letterladder:accountUsername', username.trim());
+
+          // Migrate all guest-scoped localStorage keys to the new account
+          // scope right now, before navigating to the game page. This
+          // transfers today's puzzle progress (guesses, timer state) so
+          // it isn't lost when the account scope changes.
+          const guestPrefix = 'letterladder:guest:';
+          const newPrefix = `letterladder:${username.trim()}:`;
+          const keysToMigrate = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            if(k && k.startsWith(guestPrefix)) keysToMigrate.push(k);
+          }
+          for(const oldKey of keysToMigrate){
+            const newKey = newPrefix + oldKey.slice(guestPrefix.length);
+            localStorage.setItem(newKey, localStorage.getItem(oldKey));
+            // Keep the guest key too — game.html's backfill reads it to
+            // know what scores to re-submit under the new account name.
+          }
+
+          // Signal game.html to run the guest→account backfill on load
+          // (stats counting + score re-submission under the real username).
+          sessionStorage.setItem('letterladder:pendingGuestBackfill', username.trim());
+
           overlay.remove();
-          renderPlayButtons(cred.user);
-          renderAccountWidget(cred.user);
+          // Navigate to game.html so the full auth/game module loads and
+          // runs the backfill via backfillGuestStatsAndScores.
+          window.location.href = 'game.html';
         }
       }catch(err){
         const msg = err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'

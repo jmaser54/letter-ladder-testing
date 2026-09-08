@@ -439,30 +439,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .leaderboard-form-hint{ color: var(--ink-dim); font-size: 0.76rem; margin: -6px 0 12px 0; }
 
   .howto-overlay{
-    position: fixed; inset: 0; background: rgba(10,16,26,0.6);
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
     display: flex; align-items:center; justify-content:center;
-    z-index: 1000; padding: 20px;
+    z-index: 1000; padding: 16px;
   }
   .howto-card{
     position: relative;
-    background: var(--bg-panel); border-radius: 18px; padding: 26px 24px;
-    max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto;
+    background: var(--bg-panel); border-radius: 18px; padding: 28px 24px;
+    max-width: 380px; width: 100%;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
   .howto-card h2{ font-family:'Fraunces',serif; margin-top:0; }
   .howto-card ul{ line-height:1.7; }
   .howto-close{
-    position: absolute; top: 14px; right: 14px;
-    width: 32px; height: 32px; border-radius: 50%; border: none;
-    background: rgba(245,239,224,0.1); color: var(--ink);
-    font-size: 1.1rem; line-height: 1; cursor: pointer;
-    display: flex; align-items:center; justify-content:center;
+    position: absolute; top: 12px; right: 12px;
+    background: none; border: none; color: var(--ink-dim); font-size: 1.4rem;
+    cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; touch-action: manipulation; padding: 0;
   }
   .howto-close:hover{ background: rgba(245,239,224,0.2); }
   .howto-example-word{
-    font-family:'Fraunces',serif; background: var(--rung); color:#1B2A41;
-    padding: 2px 8px; border-radius:6px; font-weight:600; text-transform: uppercase;
-    display: inline-block; margin: 3px 0; line-height: 1.4;
+    display: inline-block; background: var(--rung-empty);
+    border-radius: 6px; padding: 1px 7px; font-weight: 600; font-size: 0.9em;
   }
 
   .timer-widget{
@@ -522,7 +520,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
     color: var(--amber); font-size: 0.95rem;
   }
-  .timer-emoji{ font-size: 0.9em; line-height: 1; }
+  .timer-emoji{ font-size: 1.575em; line-height: 1; } /* 0.9em × 1.75 = 1.575em — 75% larger */
   .timer-display{ min-width: 2.4em; text-align: left; }
   .timer-tooltip{
     position: absolute; top: 100%; right: 0; margin-top: 6px;
@@ -674,7 +672,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     signInAnonymously, signOut, onAuthStateChanged, sendPasswordResetEmail
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
-    getFirestore, collection, doc, setDoc, getDoc, addDoc,
+    getFirestore, collection, doc, setDoc, getDoc, addDoc, deleteDoc,
     query, where, orderBy, limit, getDocs
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -729,12 +727,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   const BANNED_USERNAME_SUBSTRINGS = [
     'fuck', 'bitch', 'bastard', 'cunt', 'kike', 'nigger', 'nigga', 'asshole', 'faggot',
+    '.com', '.net', '.org', '.edu', '.io', '.xyz', 'gmail',
   ];
 
   async function createAccount(username, password, recoveryEmail){
     const trimmedUsername = username.trim();
     if(trimmedUsername.length > 20){
       return { success: false, error: 'Username must be 20 characters or fewer.' };
+    }
+    if(trimmedUsername.includes('.')){
+      return { success: false, error: 'Usernames cannot contain periods.' };
     }
     const lowerUsername = trimmedUsername.toLowerCase();
     if(BANNED_USERNAME_SUBSTRINGS.some(word => lowerUsername.includes(word))){
@@ -849,16 +851,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         isGuest: !user || user.isAnonymous,
         createdAt: Date.now(),
       };
-      if(user && !user.isAnonymous){
-        // Deterministic ID per (uid, date, tier) - this is what actually
-        // prevents duplicate leaderboard entries for the same person's
-        // same puzzle, no matter how many separate sessions or devices
-        // submit it. A later submission correctly overwrites an earlier
-        // one for the same puzzle, rather than creating a second entry.
+      if(user){
+        // Use a deterministic doc ID for ALL users (real and anonymous),
+        // keyed by their Firebase UID. For real accounts this prevents
+        // duplicates across sessions/devices. For anonymous users it also
+        // prevents duplicates, AND it means the backfill can find and
+        // delete the old guest doc when they later create a real account.
         await setDoc(doc(db, 'scores', `${user.uid}_${date}_${tier}`), scoreData);
       } else {
-        // Guests have no persistent identity to deduplicate against, so
-        // they keep the previous auto-ID behavior unchanged.
         await addDoc(collection(db, 'scores'), scoreData);
       }
       return { success: true };
@@ -873,7 +873,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     createAccount, login, playAsGuest, logOut, submitScore, requestPasswordReset,
     getCurrentUser: () => auth.currentUser,
     onAuthReady: (callback) => onAuthStateChanged(auth, callback),
-    db, doc, setDoc, getDoc, collection, query, where, orderBy, limit, getDocs,
+    db, doc, setDoc, getDoc, deleteDoc, collection, query, where, orderBy, limit, getDocs,
   };
 </script>
 </head>
@@ -1441,7 +1441,12 @@ function renderTimerWidget(){
   }
 
   const choice = getTimerChoice();
-  const timerOffIndicator = `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;"><span class="timer-emoji">⏱️</span><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-54%) rotate(0deg);font-size:1.25em;font-weight:900;color:#111;line-height:1;pointer-events:none;">/</span></span>`;
+  const timerOffIndicator = `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+    <span class="timer-emoji">⏱️</span>
+    <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;overflow:visible;" width="36" height="36" viewBox="-18 -18 36 36">
+      <line x1="-13.6" y1="11.9" x2="13.6" y2="-11.9" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+  </span>`;
   let displayContent = timerOffIndicator;
   if(choice === 'timed'){
     const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
@@ -1683,7 +1688,12 @@ function migrateGuestProgressToAccount(newUsername){
 // already-attributed score is a harmless overwrite given deterministic,
 // per-account document IDs, and the lastSolvedDate check below is what
 // actually prevents double-counting stats.
-function backfillGuestStatsAndScores(newUsername){
+async function backfillGuestStatsAndScores(newUsername){
+  // Grab the anonymous UID saved just before account creation — used to
+  // delete the old guest score docs so they don't persist alongside the
+  // new real-account entries on the leaderboard.
+  const anonUidToClean = sessionStorage.getItem('letterladder:anonUidForCleanup') || null;
+  if(anonUidToClean) sessionStorage.removeItem('letterladder:anonUidForCleanup');
   // loadStats()/saveStats() both read and write the module-level
   // STATS_KEY constant, which is fixed to the OLD 'guest' scope at this
   // point in execution (accountScope only re-evaluates on the page's
@@ -1723,7 +1733,16 @@ function backfillGuestStatsAndScores(newUsername){
       // Same protection for "solved" - explicitly set here rather than
       // relying solely on migration to have already copied it over.
       localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:solvedCounted`, '1');
-      submitCurrentScore(tier, newUsername);
+      await submitCurrentScore(tier, newUsername);
+      // Delete the old guest score doc so it doesn't persist alongside
+      // the new real-account entry on the leaderboard.
+      if(anonUidToClean && window.LetterLadderAuth && window.LetterLadderAuth.deleteDoc){
+        try{
+          await window.LetterLadderAuth.deleteDoc(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'scores', `${anonUidToClean}_${dateKey}_${tier}`)
+          );
+        }catch(e){}
+      }
     }
   }
   if(TIERS.every(isTierGenuinelyWon) && stats.total.lastSolvedDate !== dateKey){
@@ -2089,6 +2108,11 @@ function showAccountForm(mode){
     }
     errorEl.textContent = '';
     const emailField = overlay.querySelector('#acct-email-field');
+    // Save anon UID before account creation so backfill can delete old guest docs
+    const currentUserBeforeCreate = window.LetterLadderAuth.getCurrentUser();
+    if(currentUserBeforeCreate && currentUserBeforeCreate.isAnonymous){
+      sessionStorage.setItem('letterladder:anonUidForCleanup', currentUserBeforeCreate.uid);
+    }
     const result = isLogin
       ? await window.LetterLadderAuth.login(username, password)
       : await window.LetterLadderAuth.createAccount(username, password, emailField ? emailField.value : '');
@@ -2096,12 +2120,13 @@ function showAccountForm(mode){
       errorEl.textContent = result.error;
       return;
     }
+    // Migrate guest localStorage keys BEFORE updating accountUsername,
+    // so migrateGuestProgressToAccount sees accountScope as 'guest'.
+    migrateGuestProgressToAccount(result.username);
     localStorage.setItem('letterladder:accountUsername', result.username);
     localStorage.setItem('letterladder:activeTier', 'easy');
-    if(!isLogin){
-      migrateGuestProgressToAccount(result.username);
-      backfillGuestStatsAndScores(result.username);
-    }
+    // Backfill scores and stats — runs for both login and create account.
+    await backfillGuestStatsAndScores(result.username);
 
     // Pull this account's usual timer preference from the cloud, so
     // someone who always plays timed doesn't stay stuck on whatever was
@@ -2184,7 +2209,28 @@ const LEADERBOARD_PROMPT_DISMISSED_KEY = 'letterladder:leaderboardPromptDismisse
 
 async function submitCurrentScore(tier, displayName){
   if(!window.LetterLadderAuth) return;
-  const timeMs = Number(localStorage.getItem(timerElapsedKey(tier)) || 0);
+  const timerChoice = getTimerChoice();
+
+  // If the timer was never frozen for this tier but the user is timed,
+  // freeze it now before reading — covers edge cases where the win path
+  // didn't call pauseTimer first.
+  if(timerChoice === 'timed' && !localStorage.getItem(timerElapsedKey(tier))){
+    const current = getCurrentElapsedMs(tier);
+    if(current > 0){
+      localStorage.setItem(timerElapsedKey(tier), String(current));
+    }
+  }
+
+  const rawElapsed = localStorage.getItem(timerElapsedKey(tier));
+  const timeMs = timerChoice === 'timed' ? Number(rawElapsed || 0) : null;
+
+  // Never submit a timed score of 0 — that's impossible for a real solve
+  // and always indicates a bug (timer never started, wrong scope, etc.).
+  // Untimed scores are submitted with timeMs:null and won't rank on timed leaderboards.
+  if(timerChoice === 'timed' && (timeMs === 0 || timeMs === null)){
+    return;
+  }
+
   const hintsUsed = getHintsUsed(tier);
   await window.LetterLadderAuth.submitScore({ date: dateKey, tier, timeMs, hintsUsed, displayName });
 }
@@ -2193,12 +2239,18 @@ function showLeaderboardPromptIfNeeded(tier){
   if(isArchiveMode) return;
   if(!window.LetterLadderAuth) return;
   const savedUsername = localStorage.getItem('letterladder:accountUsername');
-  if(hasRealAccount()){
-    submitCurrentScore(tier, savedUsername);
+
+  // Belt-and-suspenders: check both localStorage AND Firebase auth state.
+  // If either indicates a real account, submit under the real username.
+  const currentUser = window.LetterLadderAuth.getCurrentUser();
+  const isRealFirebaseUser = currentUser && !currentUser.isAnonymous;
+
+  if(hasRealAccount() || isRealFirebaseUser){
+    const username = savedUsername || (isRealFirebaseUser ? currentUser.displayName : null);
+    if(username) submitCurrentScore(tier, username);
     return;
   }
   // Guests automatically play as guest and submit — no popup.
-  // Account creation is available from the menu whenever they want it.
   window.LetterLadderAuth.playAsGuest().then(() => submitCurrentScore(tier, 'Guest'));
 }
 
@@ -3253,6 +3305,10 @@ function render(focusInput = false, pendingErrors = null){
   const shuffleBtn = document.getElementById('shuffle-btn');
   if(shuffleBtn){
     bindTapAction(shuffleBtn, ()=>{
+      // Blur any focused input so partial text doesn't get highlighted
+      if(document.activeElement && document.activeElement.blur){
+        document.activeElement.blur();
+      }
       const order = bankState[activeTier].order;
       const stableIds = bankState[activeTier].stableIds;
       // Fisher-Yates shuffle, in place - stableIds must move in lockstep
@@ -3867,8 +3923,8 @@ function showHowToPlayPopup(){
       <h2>How to Play</h2>
       <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
       <ul>
-        <li>Words can be guessed in any order</li>
         <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
+        <li>Words can be guessed in any order</li>
         <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
         <li>Every word must be a real English word</li>
       </ul>
@@ -3901,7 +3957,18 @@ window.addEventListener('pagehide', ()=>{
 });
 
 render(!isTouchDevice);
-startTimerIfNeeded(activeTier); // resume timer on page load / return from another page
+// Start or resume the timer on page load:
+// - If it was already running before (resume from navigating away), restart it
+// - If the user chose timed mode and this puzzle hasn't been started/solved yet, start fresh
+// Never auto-start for puzzles the user hasn't navigated to yet (that broke the per-tier timing)
+const timerAlreadyRunning = hasEverStartedTimer(activeTier);
+const timerFresh = getTimerChoice() === 'timed'
+  && !isArchiveMode
+  && !localStorage.getItem(timerElapsedKey(activeTier))
+  && !localStorage.getItem(timerAccumulatedKey(activeTier));
+if(timerAlreadyRunning || timerFresh){
+  startTimerIfNeeded(activeTier);
+}
 showMigrationWelcomeBannerIfNeeded();
 showMigrationLinkBannerIfNeeded();
 
@@ -3979,6 +4046,17 @@ let ownerCheckDone = false;
       }
 
       renderAccountWidget();
+
+      // If the user just created an account on the landing page, run the
+      // full guest→account backfill: re-count stats and re-submit today's
+      // scores under the new account name instead of 'Guest'.
+      const pendingBackfill = sessionStorage.getItem('letterladder:pendingGuestBackfill');
+      if(pendingBackfill){
+        sessionStorage.removeItem('letterladder:pendingGuestBackfill');
+        try{
+          await backfillGuestStatsAndScores(pendingBackfill);
+        }catch(e){}
+      }
 
       // Set the Firebase UID as the GA4 user_id for this session.
       // This links analytics events to a specific account without sending
