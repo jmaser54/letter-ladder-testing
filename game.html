@@ -819,7 +819,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       if(!recoveryEmail){
         return { success: false, error: 'No recovery email is on file for that username.' };
       }
-      await sendPasswordResetEmail(auth, recoveryEmail);
+      const actionCodeSettings = {
+        url: 'https://letterladder.io/',
+        handleCodeInApp: false,
+      };
+      await sendPasswordResetEmail(auth, recoveryEmail, actionCodeSettings);
       return { success: true };
     }catch(error){
       return { success: false, error: 'Something went wrong. Please try again.' };

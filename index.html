@@ -638,7 +638,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           if(!recoverySnap.exists() || !recoverySnap.data().recoveryEmail){
             overlay.querySelector('#auth-error').textContent = 'No recovery email on file for that username.'; return;
           }
-          await sendPasswordResetEmail(auth, recoverySnap.data().recoveryEmail);
+          await sendPasswordResetEmail(auth, recoverySnap.data().recoveryEmail, {
+            url: 'https://letterladder.io/',
+            handleCodeInApp: false,
+          });
           overlay.querySelector('#auth-error').style.color = 'var(--green)';
           overlay.querySelector('#auth-error').textContent = 'Check your email for a reset link.';
         }catch(e){
