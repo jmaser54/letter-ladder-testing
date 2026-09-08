@@ -368,7 +368,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     document.body.appendChild(overlay);
     function close(){ overlay.remove(); }
     overlay.querySelector('.howto-close').addEventListener('click', close);
-    overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+    // Defer backdrop listener so the opening click doesn't immediately close the popup.
+    setTimeout(()=>{
+      overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+    }, 0);
   }
   // Howto button — handles both touch (prevent double-fire) and desktop click
   const howtoBtn = document.getElementById('howto-btn');

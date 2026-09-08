@@ -3943,7 +3943,11 @@ function showHowToPlayPopup(){
   document.body.appendChild(overlay);
   function close(){ overlay.remove(); }
   bindTapAction(overlay.querySelector('.howto-close'), close);
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+  // Defer the backdrop listener by one tick so the click that opened the
+  // popup doesn't immediately bubble into the overlay and close it.
+  setTimeout(()=>{
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
+  }, 0);
 }
 const howtoIconBtn = document.getElementById('howto-icon-btn');
 if(howtoIconBtn) bindTapAction(howtoIconBtn, showHowToPlayPopup);
