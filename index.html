@@ -621,32 +621,60 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(isLogin){
       overlay.querySelector('#auth-forgot').addEventListener('click', async e=>{
         e.preventDefault();
-        const username = overlay.querySelector('#auth-username').value.trim();
-        if(!username){ overlay.querySelector('#auth-error').textContent = 'Enter your username first.'; return; }
-        try{
-          const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-          const { getFirestore, collection, query, where, getDocs } =
-            await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-          const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-          const db = getFirestore(app);
-          function normalizeUsername(u){ return u.toLowerCase().trim(); }
-          const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(username)));
-          const snap = await getDocs(q);
-          if(snap.empty){ overlay.querySelector('#auth-error').textContent = 'No recovery email on file for that username.'; return; }
-          const uid = snap.docs[0].id;
-          const recoverySnap = await getDoc(doc(db, 'playerRecovery', uid));
-          if(!recoverySnap.exists() || !recoverySnap.data().recoveryEmail){
-            overlay.querySelector('#auth-error').textContent = 'No recovery email on file for that username.'; return;
+        overlay.remove();
+        // Show a standalone reset form with instructions visible immediately
+        const resetOverlay = document.createElement('div');
+        resetOverlay.className = 'confirm-overlay';
+        resetOverlay.innerHTML = `
+          <div class="leaderboard-prompt-card">
+            <div class="leaderboard-prompt-title">Reset your password</div>
+            <div class="leaderboard-form-hint" style="text-align:center; margin-bottom:10px;">Enter your username and we'll send a reset link to the email on file. It may take 5–15 minutes to arrive — check your spam folder if you don't see it.</div>
+            <div class="leaderboard-form-error" id="reset-error"></div>
+            <input type="text" class="leaderboard-form-field" id="reset-username" placeholder="Username" autocomplete="username">
+            <div class="leaderboard-prompt-actions">
+              <button type="button" class="btn-primary" id="reset-submit">Send reset email</button>
+              <button type="button" class="btn-ghost" id="reset-cancel">Cancel</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(resetOverlay);
+        setTimeout(()=>{ resetOverlay.addEventListener('click', e=>{ if(e.target===resetOverlay) resetOverlay.remove(); }); }, 0);
+        resetOverlay.querySelector('#reset-cancel').addEventListener('click', ()=> resetOverlay.remove());
+        resetOverlay.querySelector('#reset-submit').addEventListener('click', async ()=>{
+          const username = resetOverlay.querySelector('#reset-username').value.trim();
+          const errorEl = resetOverlay.querySelector('#reset-error');
+          if(!username){ errorEl.textContent = 'Please enter your username.'; return; }
+          errorEl.textContent = '';
+          try{
+            const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+            const { getFirestore, collection, query, where, getDocs, doc, getDoc } =
+              await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+            const db2 = getFirestore(app);
+            const q = query(collection(db2, 'players'), where('usernameLower', '==', username.toLowerCase().trim()));
+            const snap = await getDocs(q);
+            if(snap.empty){ errorEl.textContent = 'No recovery email on file for that username.'; return; }
+            const uid = snap.docs[0].id;
+            const recoverySnap = await getDoc(doc(db2, 'playerRecovery', uid));
+            if(!recoverySnap.exists() || !recoverySnap.data().recoveryEmail){
+              errorEl.textContent = 'No recovery email on file for that username.'; return;
+            }
+            await sendPasswordResetEmail(auth, recoverySnap.data().recoveryEmail, {
+              url: 'https://letterladder.io/',
+              handleCodeInApp: false,
+            });
+            const card = resetOverlay.querySelector('.leaderboard-prompt-card');
+            card.innerHTML = `
+              <div class="leaderboard-prompt-title" style="font-weight:bold;">Check your email</div>
+              <div class="leaderboard-form-hint" style="text-align:center;">A reset link is on its way. It may take 5–15 minutes — check your spam folder if you don't see it.</div>
+              <div class="leaderboard-prompt-actions">
+                <button type="button" class="btn-ghost" id="reset-done">Close</button>
+              </div>
+            `;
+            card.querySelector('#reset-done').addEventListener('click', ()=> resetOverlay.remove());
+          }catch(e){
+            resetOverlay.querySelector('#reset-error').textContent = 'Something went wrong. Please try again.';
           }
-          await sendPasswordResetEmail(auth, recoverySnap.data().recoveryEmail, {
-            url: 'https://letterladder.io/',
-            handleCodeInApp: false,
-          });
-          overlay.querySelector('#auth-error').style.color = 'var(--green)';
-          overlay.querySelector('#auth-error').textContent = 'Check your email for a reset link.';
-        }catch(e){
-          overlay.querySelector('#auth-error').textContent = 'Something went wrong. Please try again.';
-        }
+        });
       });
     }
   }
