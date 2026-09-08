@@ -2417,7 +2417,7 @@ function computeInitialUsedIndices(order, typedValue){
 function setupBankTileDragging(){
   const bankTiles = document.getElementById('bank-tiles');
   if(!bankTiles) return;
-  const HOLD_DELAY_MS = 180; // long enough to not trigger on a normal tap, short enough to feel responsive
+  const HOLD_DELAY_MS = 120; // reduced from 180ms — activates drag sooner, shrinks the race window that caused stuck-pressed tiles
   const MOVE_CANCEL_THRESHOLD = 10; // px of movement before the hold timer fires that cancels the drag-intent (lets a quick swipe/scroll pass through untouched)
 
   bankTiles.querySelectorAll('.bank-tile').forEach(tile => {
@@ -2435,6 +2435,7 @@ function setupBankTileDragging(){
       const grabOffsetY = rect.height * 1.5;
       let dragging = false;
       let holdTimeout = null;
+      let pointerReleased = false; // guard: if finger lifted before hold timer, cancel drag
 
       // Preview-only state while dragging - the real bankState order
       // isn't touched until an actual drop. originalIndex is where the
@@ -2449,6 +2450,7 @@ function setupBankTileDragging(){
       let bankTop = 0;
 
       function beginDrag(){
+        if(pointerReleased) return; // finger lifted before hold timer fired — don't start a ghost drag
         dragging = true;
         skipNextBankTap = true;
         tile.classList.add('dragging');
@@ -2567,6 +2569,7 @@ function setupBankTileDragging(){
       }
 
       function onUp(){
+        pointerReleased = true;
         clearTimeout(holdTimeout);
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
