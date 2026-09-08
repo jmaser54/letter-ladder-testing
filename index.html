@@ -369,7 +369,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     overlay.querySelector('.howto-close').addEventListener('click', close);
     overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
   }
-  bindTapAction(document.getElementById('howto-btn'), showHowToPlay);
+  // Howto button — handles both touch (prevent double-fire) and desktop click
+  const howtoBtn = document.getElementById('howto-btn');
+  let howtoFiredViaTouch = false;
+  howtoBtn.addEventListener('touchend', (e)=>{
+    e.preventDefault();
+    howtoFiredViaTouch = true;
+    showHowToPlay();
+  });
+  howtoBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(howtoFiredViaTouch){ howtoFiredViaTouch = false; return; }
+    showHowToPlay();
+  });
 
   // ── account dropdown ───────────────────────────────────────────────────────
   function closeDropdown(){
