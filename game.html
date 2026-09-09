@@ -2296,9 +2296,11 @@ async function submitCurrentScore(tier, displayName, forceIfElapsed = false){
         }catch(e){}
       }
       const entryId = `${uid}_${dateKey}_${tier}`;
+      // Use merge:false so we always overwrite — including correcting visible status
       await window.LetterLadderAuth.setDoc(
         window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'leaderboardEntries', entryId),
-        { ...scoreData, visible, createdAt: Date.now() }
+        { ...scoreData, visible, createdAt: Date.now() },
+        { merge: false }
       );
     }catch(e){
       console.error('Failed to write leaderboardEntries:', e);
