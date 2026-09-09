@@ -2785,24 +2785,22 @@ function buildShareText(){
     if(!puzzle) continue;
     if(isTierGenuinelyWon(tier)){
       const hints = getHintsUsed(tier);
-      const hintStr = hints > 0 ? ` (${('💡').repeat(hints)})` : '';
+      const hintStr = hints > 0 ? `  ( ${'💡'.repeat(hints)} )` : '';
 
       // Build the arrow chain from the solution — number of arrows = steps between words
       const solution = HINTS_SCHEDULE[dateKey] && HINTS_SCHEDULE[dateKey][tier]
         ? HINTS_SCHEDULE[dateKey][tier].solution : null;
-      const start = puzzle.start.toUpperCase();
-      const final = puzzle.final.toUpperCase();
       const arrows = solution && solution.length > 1
         ? Array(solution.length - 1).fill('→').join(' ')
         : '→';
-      const chain = `⬜ ${arrows} ⬜`;
+      const chain = `⬜  ${arrows}  ⬜`;
 
       // Time suffix for timed users only
       let timePart = '';
       if(timerChoice === 'timed'){
         const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
         if(frozenElapsed !== null){
-          timePart = ` · ${formatDurationForShare(Number(frozenElapsed))}`;
+          timePart = `  ·  ${formatDurationForShare(Number(frozenElapsed))}`;
         }
       }
 
@@ -2811,7 +2809,7 @@ function buildShareText(){
       lines.push(`✖️ ${tierLabels[tier]}:   —`);
     }
   }
-  return `Letter Ladder #${puzzleDayNumber()} 🪜\n\n${lines.join('\n')}\n\n${SITE_URL}`;
+  return `Letter Ladder #${puzzleDayNumber()} 🪜\n\n${lines.join('\n\n')}\n\n${SITE_URL}`;
 }
 
 async function buildShareImage(){
