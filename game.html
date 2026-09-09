@@ -1772,7 +1772,7 @@ async function backfillGuestStatsAndScores(newUsername){
       // Same protection for "solved" - explicitly set here rather than
       // relying solely on migration to have already copied it over.
       localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:solvedCounted`, '1');
-      await submitCurrentScore(tier, newUsername);
+      await submitCurrentScore(tier, newUsername, true); // true = force submit if elapsed time exists
       // Delete the old guest score doc so it doesn't persist alongside
       // the new real-account entry on the leaderboard.
       if(anonUidToClean && window.LetterLadderAuth && window.LetterLadderAuth.deleteDoc){
@@ -2247,14 +2247,14 @@ function showForgotPasswordForm(){
 
 const LEADERBOARD_PROMPT_DISMISSED_KEY = 'letterladder:leaderboardPromptDismissed';
 
-async function submitCurrentScore(tier, displayName){
+async function submitCurrentScore(tier, displayName, forceIfElapsed = false){
   if(!window.LetterLadderAuth) return;
   const timerChoice = getTimerChoice();
 
   // If the timer was never frozen for this tier but the user is timed,
   // freeze it now before reading — covers edge cases where the win path
   // didn't call pauseTimer first.
-  if(timerChoice === 'timed' && !localStorage.getItem(timerElapsedKey(tier))){
+  if(!localStorage.getItem(timerElapsedKey(tier))){
     const current = getCurrentElapsedMs(tier);
     if(current > 0){
       localStorage.setItem(timerElapsedKey(tier), String(current));
@@ -2262,12 +2262,13 @@ async function submitCurrentScore(tier, displayName){
   }
 
   const rawElapsed = localStorage.getItem(timerElapsedKey(tier));
-  const timeMs = timerChoice === 'timed' ? Number(rawElapsed || 0) : null;
+  const timeMs = rawElapsed ? Number(rawElapsed) : null;
 
-  // Never submit a timed score of 0 — impossible for a real solve.
-  // Untimed scores are not submitted at all — they don't appear on the leaderboard.
-  if(timerChoice !== 'timed') return;
-  if(timeMs === 0 || timeMs === null) return;
+  // Submit if: display toggle is timed, OR forceIfElapsed=true and a real elapsed time exists.
+  // Never submit a 0 or null time — that's always a bug.
+  const shouldSubmit = (timerChoice === 'timed' || (forceIfElapsed && timeMs !== null && timeMs > 0));
+  if(!shouldSubmit) return;
+  if(!timeMs || timeMs === 0) return;
 
   const hintsUsed = getHintsUsed(tier);
   const user = window.LetterLadderAuth.getCurrentUser();
@@ -2779,33 +2780,33 @@ function buildShareText(){
   const timerChoice = getTimerChoice();
   for(const tier of TIERS){
     const puzzle = getTodaysPuzzle(tier);
-    if(!puzzle) continue; // nothing scheduled for this tier today, skip it
+    if(!puzzle) continue;
     if(isTierGenuinelyWon(tier)){
       const hints = getHintsUsed(tier);
-      let timeSuffix = null;
+      const hintStr = hints > 0 ? ` (${('💡').repeat(hints)})` : '';
+
+      // Build the arrow chain from the solution — number of arrows = steps between words
+      const solution = HINTS_SCHEDULE[dateKey] && HINTS_SCHEDULE[dateKey][tier]
+        ? HINTS_SCHEDULE[dateKey][tier].solution : null;
+      const start = puzzle.start.toUpperCase();
+      const final = puzzle.final.toUpperCase();
+      const arrows = solution && solution.length > 1
+        ? Array(solution.length - 1).fill('→').join(' ')
+        : '→';
+      const chain = `${start} ${arrows} ${final}`;
+
+      // Time suffix for timed users only
+      let timePart = '';
       if(timerChoice === 'timed'){
         const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
         if(frozenElapsed !== null){
-          timeSuffix = formatDurationForShare(Number(frozenElapsed));
+          timePart = ` · ${formatDurationForShare(Number(frozenElapsed))}`;
         }
       }
-      let line;
-      if(timeSuffix !== null){
-        // The time itself already proves completion, so the checkmark
-        // (and parentheses around the time) would just be redundant -
-        // hints still get shown alongside it though, since that's
-        // distinct, meaningful info about how much help was needed.
-        line = hints > 0
-          ? `${tierLabels[tier]}: ${timeSuffix} ${'💡'.repeat(hints)}`
-          : `${tierLabels[tier]}: ${timeSuffix}`;
-      } else {
-        line = hints > 0
-          ? `${tierLabels[tier]}: ${'💡'.repeat(hints)}`
-          : `${tierLabels[tier]}: ✔️`;
-      }
-      lines.push(line);
+
+      lines.push(`✅ ${tierLabels[tier]}:   ${chain}${timePart}${hintStr}`);
     } else {
-      lines.push(`${tierLabels[tier]}: —`);
+      lines.push(`✖️ ${tierLabels[tier]}:   —`);
     }
   }
   return `Letter Ladder #${puzzleDayNumber()} 🪜\n\n${lines.join('\n')}\n\n${SITE_URL}`;
