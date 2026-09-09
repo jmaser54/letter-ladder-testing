@@ -1961,7 +1961,7 @@ function recordHintUsed(tier){
     localStorage.setItem(accumulatedKey, String(currentAccumulated + HINT_TIME_PENALTY_MS));
   }
 
-  if(getTimerChoice() === 'timed' && !isArchiveMode){
+  if(!isArchiveMode){
     showHintTimePenaltyIndicator();
   }
 }
@@ -4039,16 +4039,14 @@ window.addEventListener('pagehide', ()=>{
 });
 
 render(!isTouchDevice);
-// Start or resume the timer on page load:
-// - If it was already running before (resume from navigating away), restart it
-// - If the user chose timed mode and this puzzle hasn't been started/solved yet, start fresh
-// Never auto-start for puzzles the user hasn't navigated to yet (that broke the per-tier timing)
+// Always start/resume the timer on page load — the timer runs silently
+// in the background regardless of the display toggle state. The toggle
+// controls visibility only, not whether the clock is running.
+// Exception: archive mode puzzles are never timed.
 const timerAlreadyRunning = hasEverStartedTimer(activeTier);
-const timerFresh = getTimerChoice() === 'timed'
-  && !isArchiveMode
-  && !localStorage.getItem(timerElapsedKey(activeTier))
+const puzzleNotYetSolved = !localStorage.getItem(timerElapsedKey(activeTier))
   && !localStorage.getItem(timerAccumulatedKey(activeTier));
-if(timerAlreadyRunning || timerFresh){
+if(!isArchiveMode && (timerAlreadyRunning || puzzleNotYetSolved)){
   startTimerIfNeeded(activeTier);
 }
 showMigrationWelcomeBannerIfNeeded();

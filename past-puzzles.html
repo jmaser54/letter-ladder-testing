@@ -88,11 +88,13 @@ function prettyDate(key){
 }
 
 const container = document.getElementById('past-puzzles-list');
-// Reads from hints.js directly (same file that already powers the in-game
-// hint button and the Solution page) rather than a separate, narrower
-// file - hints.js always covers the entire scheduled window regardless
-// of exactly when the schedule script was last run, so this page can
-// never go stale the way a generation-time-dependent file would.
+
+// Puzzle attributions — keyed by "date_tier"
+// Add new entries here when a puzzle is submitted by a community member.
+const PUZZLE_ATTRIBUTIONS = {
+  '2026-09-08_easy': 'Submitted by Redditor Ray2024',
+};
+
 const allDayKeys = Object.keys(HINTS_SCHEDULE || {}).sort().reverse();
 const today = todayKey();
 // Strictly before today only - never show today's own puzzle here (that's
@@ -109,9 +111,13 @@ if(pastKeys.length === 0){
       .filter(tier => day[tier])
       .map(tier => {
         const p = day[tier];
+        const attribution = PUZZLE_ATTRIBUTIONS[`${dayKey}_${tier}`];
+        const tierLabel = attribution
+          ? `${tierNames[tier]} <span style="font-size:0.85em; text-transform:none; letter-spacing:0; font-weight:400; color:var(--ink-dim);">— ${attribution}</span>`
+          : tierNames[tier];
         return `
           <div class="tier-row">
-            <div class="tier-label">${tierNames[tier]}</div>
+            <div class="tier-label">${tierLabel}</div>
             <div class="chain">
               <span class="chain-word">${p.start}</span>
               <span class="chain-arrow">→</span>
