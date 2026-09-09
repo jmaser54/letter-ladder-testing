@@ -1082,7 +1082,9 @@ function showConfirmModal(message, onConfirm, onDismiss){
     if(!confirmed && onDismiss) onDismiss();
   }
   bindTapAction(overlay.querySelector('.confirm-cancel'), ()=> close(false));
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(false); });
+  setTimeout(()=>{
+    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(false); });
+  }, 0);
   bindTapAction(overlay.querySelector('.confirm-ok'), ()=>{
     close(true);
     onConfirm();
@@ -3309,7 +3311,7 @@ function render(focusInput = false, pendingErrors = null){
     if(hd) hd.innerHTML = buildHintDisplayHtml(activeTier, activeLength);
   }
 
-  document.getElementById('clear-btn').addEventListener('click', ()=>{
+  bindTapAction(document.getElementById('clear-btn'), ()=>{
     showConfirmModal('Are you sure you want to clear your puzzle?', ()=>{
       const ladderEl = panel.querySelector('.ladder');
       if(ladderEl){
