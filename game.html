@@ -2785,7 +2785,7 @@ function buildShareText(){
     if(!puzzle) continue;
     if(isTierGenuinelyWon(tier)){
       const hints = getHintsUsed(tier);
-      const hintStr = hints > 0 ? `\n  ${'💡'.repeat(hints)}` : '';
+      const hintStr = hints > 0 ? `\n  ${'💡'.repeat(hints)}\n` : '';
 
       const solution = HINTS_SCHEDULE[dateKey] && HINTS_SCHEDULE[dateKey][tier]
         ? HINTS_SCHEDULE[dateKey][tier].solution : null;
