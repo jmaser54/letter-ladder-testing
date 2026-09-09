@@ -159,6 +159,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .btn-ghost{ background: rgba(245,239,224,0.08); color: var(--ink); }
   /* Play buttons specifically get 15% larger font + slightly more vertical
      padding so the larger text has comfortable room without feeling cramped */
+  .play-streak{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--amber);
+    text-align: center;
+    margin-bottom: 10px;
+  }
   .play-btn-full{
     width: 100%;
     font-size: 0.99rem;  /* 1.1rem × 0.9 */
@@ -680,17 +688,29 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   // ── play buttons ───────────────────────────────────────────────────────────
+  function getStreak(){
+    const username = localStorage.getItem('letterladder:accountUsername');
+    if(!username) return 0;
+    try{
+      const raw = localStorage.getItem(`letterladder:${username}:stats`);
+      const stats = raw ? JSON.parse(raw) : null;
+      return (stats && stats.total && stats.total.currentStreak) || 0;
+    }catch(e){ return 0; }
+  }
+
   function renderPlayButtons(user){
     const hasAccount = !!(user && !user.isAnonymous && localStorage.getItem('letterladder:accountUsername'));
     const container = document.getElementById('play-buttons');
-    // Single Play button for everyone. Guests default to untimed (no timer pressure).
-    // Logged-in users carry their saved timer preference via goToGame(null).
-    container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
+    const streak = hasAccount ? getStreak() : 0;
+    const streakHtml = streak > 0
+      ? `<div class="play-streak">🔥 ${streak} day streak</div>`
+      : '';
+    container.innerHTML = `${streakHtml}<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
     container.querySelector('#play-btn').addEventListener('click', ()=> {
       if(hasAccount){
-        goToGame(null); // respect saved preference
+        goToGame(null);
       } else {
-        goToGame('untimed'); // new/guest users: default to untimed
+        goToGame('untimed');
       }
     });
   }

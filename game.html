@@ -2923,7 +2923,9 @@ function triggerTierWinConfetti(){
 function showSummitBanner(){
   const banner = document.createElement('div');
   banner.className = 'summit-banner';
-  banner.textContent = "Well done! You've completed all three of today's ladders!";
+  const streak = loadStats().total.currentStreak || 0;
+  const streakLine = streak > 0 ? `\n🔥 ${streak} day streak!` : '';
+  banner.textContent = `Well done! You've completed all three of today's ladders!${streakLine}`;
   document.body.appendChild(banner);
   setTimeout(()=> banner.remove(), 4000);
 }
