@@ -128,7 +128,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 50px 0 40px;
+    padding-top: 50px;
+    padding-bottom: 40px;
+    gap: 50px;
   }
   .brand-logo{
     width: 76px;
@@ -136,7 +138,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-radius: 50%;
     flex-shrink: 0;
     display: block;
-    margin-bottom: 50px;
+  }
+  .play-streak{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--amber);
+    text-align: center;
+  }
+  .play-streak:empty{
+    display: none;
   }
   .play-buttons{
     display: flex;
@@ -145,15 +156,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     gap: 12px;
     width: 100%;
     max-width: 280px;
-  }
-  .play-streak{
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--amber);
-    text-align: center;
-    margin-top: -50px;
-    padding-bottom: 14px;
   }
   .play-btn-full{
     width: 100%;
@@ -279,6 +281,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <main class="landing-body">
     <img src="og-image.png" alt="" class="brand-logo">
+    <div class="play-streak" id="play-streak"></div>
     <div class="play-buttons" id="play-buttons">
       <!-- filled by JS based on auth state -->
     </div>
@@ -698,11 +701,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function renderPlayButtons(user){
     const hasAccount = !!(user && !user.isAnonymous && localStorage.getItem('letterladder:accountUsername'));
     const container = document.getElementById('play-buttons');
+    const streakEl = document.getElementById('play-streak');
     const streak = hasAccount ? getStreak() : 0;
-    const streakHtml = streak > 0
-      ? `<div class="play-streak">🔥 ${streak} day streak</div>`
-      : '';
-    container.innerHTML = `${streakHtml}<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
+    if(streakEl) streakEl.textContent = streak > 0 ? `🔥 ${streak} day streak` : '';
+    container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
     container.querySelector('#play-btn').addEventListener('click', ()=> {
       if(hasAccount){
         goToGame(null);
