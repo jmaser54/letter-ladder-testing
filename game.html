@@ -1487,7 +1487,6 @@ function renderTimerWidget(){
     `;
     bindTapAction(widget.querySelector('.timer-widget-btn'), ()=>{
       setTimerChoice('untimed');
-      pauseTimer(activeTier);
       render();
     });
   } else {
