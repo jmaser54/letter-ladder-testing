@@ -2795,7 +2795,7 @@ function buildShareText(){
       const arrows = solution && solution.length > 1
         ? Array(solution.length - 1).fill('→').join(' ')
         : '→';
-      const chain = `${start} ${arrows} ${final}`;
+      const chain = `⬜ ${arrows} ⬜`;
 
       // Time suffix for timed users only
       let timePart = '';
