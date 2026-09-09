@@ -123,13 +123,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .account-dropdown a:hover, .account-dropdown button.dropdown-item:hover{ color: var(--amber); }
 
-  /* Landing body */
   .landing-body{
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 50px 0 40px; /* title→logo: 50px — matches logo→buttons for balanced feel */
+    padding: 50px 0 40px;
   }
   .brand-logo{
     width: 76px;
@@ -137,17 +136,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-radius: 50%;
     flex-shrink: 0;
     display: block;
-    margin-bottom: 24px; /* reduced — streak line sits in this gap when present */
+    margin-bottom: 50px;
   }
   .play-buttons{
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     width: 100%;
     max-width: 280px;
   }
-
+  .play-streak{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--amber);
+    text-align: center;
+    margin-top: -50px;
+    padding-bottom: 14px;
+  }
+  .play-btn-full{
+    width: 100%;
+    font-size: 0.99rem;
+    padding: 13px 18px;
+  }
   button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:0.95rem;
     border:none; border-radius:10px; cursor:pointer; padding: 12px 18px;
@@ -157,21 +169,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   button:active{ transform: scale(0.97); }
   .btn-primary{ background: var(--amber); color:#1B2A41; }
   .btn-ghost{ background: rgba(245,239,224,0.08); color: var(--ink); }
-  /* Play buttons specifically get 15% larger font + slightly more vertical
-     padding so the larger text has comfortable room without feeling cramped */
-  .play-streak{
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--amber);
-    text-align: center;
-    margin: 0;
-  }
-  .play-btn-full{
-    width: 100%;
-    font-size: 0.99rem;  /* 1.1rem × 0.9 */
-    padding: 13px 18px;  /* 14px × 0.9 ≈ 13px */
-  }
 
   .play-date{
     color: var(--ink-dim);
