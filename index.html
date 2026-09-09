@@ -683,20 +683,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   function renderPlayButtons(user){
     const hasAccount = !!(user && !user.isAnonymous && localStorage.getItem('letterladder:accountUsername'));
     const container = document.getElementById('play-buttons');
-
-    if(hasAccount){
-      // Logged-in: single Play button, respects saved timer preference
-      container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
-      container.querySelector('#play-btn').addEventListener('click', ()=> goToGame(null));
-    } else {
-      // Logged-out: must choose timer before entering
-      container.innerHTML = `
-        <button type="button" class="btn-primary play-btn-full" id="play-timed-btn">Play with timer</button>
-        <button type="button" class="btn-ghost play-btn-full" id="play-untimed-btn">Play without timer</button>
-      `;
-      container.querySelector('#play-timed-btn').addEventListener('click', ()=> goToGame('timed'));
-      container.querySelector('#play-untimed-btn').addEventListener('click', ()=> goToGame('untimed'));
-    }
+    // Single Play button for everyone. Guests default to untimed (no timer pressure).
+    // Logged-in users carry their saved timer preference via goToGame(null).
+    container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
+    container.querySelector('#play-btn').addEventListener('click', ()=> {
+      if(hasAccount){
+        goToGame(null); // respect saved preference
+      } else {
+        goToGame('untimed'); // new/guest users: default to untimed
+      }
+    });
   }
 
   // ── auth state ─────────────────────────────────────────────────────────────

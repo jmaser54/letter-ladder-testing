@@ -34,6 +34,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .back:hover{ color: var(--amber); }
 
   .profile-card{ background: var(--bg-panel); border-radius:18px; padding: 22px; margin-bottom:18px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); }
+  /* Leaderboard visibility toggle */
+  .vis-toggle{
+    flex-shrink: 0;
+    width: 44px; height: 24px; border-radius: 12px; border: none;
+    background: var(--amber); cursor: pointer; padding: 2px;
+    display: flex; align-items: center;
+    transition: background 0.2s ease;
+    position: relative;
+  }
+  .vis-toggle[aria-pressed="false"]{
+    background: rgba(159,179,200,0.25);
+  }
+  .vis-toggle-thumb{
+    width: 20px; height: 20px; border-radius: 50%;
+    background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease;
+    transform: translateX(20px); /* right = on */
+  }
+  .vis-toggle[aria-pressed="false"] .vis-toggle-thumb{
+    transform: translateX(0); /* left = off */
+  }
   .profile-row{ padding: 10px 0; border-bottom: 1px solid rgba(245,239,224,0.08); }
   .profile-row:last-child{ border-bottom:none; }
   .profile-label{ font-size:0.72rem; color: var(--ink-dim); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
@@ -80,7 +101,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -146,12 +167,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div class="profile-value">${joinDateText}</div>
         </div>
       </div>
+      <div class="profile-card" id="leaderboard-visibility-card">
+        <div class="profile-row" style="display:flex; align-items:center; justify-content:space-between; border-bottom:none;">
+          <div>
+            <div style="font-family:'Fraunces',serif; font-size:0.9975rem; font-weight:700; color:var(--ink);">Publicly display my times on leaderboards</div>
+          </div>
+          <button type="button" id="leaderboard-vis-toggle" class="vis-toggle" aria-pressed="true" aria-label="Toggle leaderboard visibility">
+            <span class="vis-toggle-thumb"></span>
+          </button>
+        </div>
+        <div style="font-size:0.78rem; color:var(--ink-dim); margin-top:10px; line-height:1.4; opacity:0.75;">Turning this off removes your times from leaderboards but keeps them in your personal stats</div>
+      </div>
       <div class="profile-card">
         <div class="password-title">Change password</div>
         <div class="form-message" id="pw-message"></div>
         <input type="password" class="form-field" id="new-password-field" placeholder="New password" autocomplete="new-password">
         <input type="email" class="form-field" id="recovery-email-field" placeholder="Email (optional)" autocomplete="email" value="${existingEmail}">
-        <div class="form-hint">Your email will only be used for password recovery purposes.</div>
+        <div class="form-hint">Your email will only be used for password recovery purposes</div>
         <button type="button" class="btn-primary" id="update-account-btn">Update</button>
       </div>
       <div class="page-footer">
@@ -211,6 +243,53 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         messageEl.textContent = friendlyUpdateError(err);
       }
     });
+    // ── Leaderboard visibility toggle ──────────────────────────────────────
+    const visToggle = document.getElementById('leaderboard-vis-toggle');
+    if(visToggle && user && !user.isAnonymous){
+      // Read current visibility from players doc (default true if absent)
+      let currentlyVisible = true;
+      try{
+        const playerSnap = await getDoc(doc(db, 'players', user.uid));
+        if(playerSnap.exists() && playerSnap.data().leaderboardVisible === false){
+          currentlyVisible = false;
+        }
+      }catch(e){}
+      visToggle.setAttribute('aria-pressed', String(currentlyVisible));
+
+      visToggle.addEventListener('click', async ()=>{
+        const nowVisible = visToggle.getAttribute('aria-pressed') !== 'true';
+        visToggle.setAttribute('aria-pressed', String(nowVisible));
+        visToggle.disabled = true;
+
+        try{
+          // 1. Write preference to players doc
+          await setDoc(doc(db, 'players', user.uid),
+            { leaderboardVisible: nowVisible }, { merge: true });
+
+          // 2. Batch-update all leaderboardEntries for this user
+          const q = query(
+            collection(db, 'leaderboardEntries'),
+            where('uid', '==', user.uid)
+          );
+          const snap = await getDocs(q);
+          if(!snap.empty){
+            const batch = writeBatch(db);
+            snap.docs.forEach(d => batch.update(d.ref, { visible: nowVisible }));
+            await batch.commit();
+          }
+        }catch(e){
+          console.error('Failed to update leaderboard visibility:', e);
+          // Revert toggle on failure
+          visToggle.setAttribute('aria-pressed', String(!nowVisible));
+        }finally{
+          visToggle.disabled = false;
+        }
+      });
+    } else if(visToggle){
+      // Hide toggle for guests — they have no profile settings
+      const card = document.getElementById('leaderboard-visibility-card');
+      if(card) card.style.display = 'none';
+    }
   });
 </script>
 </body>

@@ -520,7 +520,30 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
     color: var(--amber); font-size: 0.95rem;
   }
-  .timer-emoji{ font-size: 1.575em; line-height: 1; } /* 0.9em × 1.75 = 1.575em — 75% larger */
+  .timer-widget-btn--off{
+    color: var(--ink-dim);
+    opacity: 0.7;
+  }
+  .timer-emoji{ font-size: 1.575em; line-height: 1; }
+  .timer-emoji--off{ filter: grayscale(1); opacity: 0.6; }
+  /* Toggle switch track */
+  .timer-toggle-track{
+    display: inline-flex; align-items: center;
+    width: 28px; height: 16px; border-radius: 8px;
+    background: rgba(159,179,200,0.25); border: 1px solid rgba(159,179,200,0.3);
+    padding: 2px; box-sizing: border-box; flex-shrink: 0;
+  }
+  /* Toggle switch thumb — left = off */
+  .timer-toggle-thumb{
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--ink-dim);
+    transition: transform 0.15s ease;
+    /* stays left (off position) */
+  }
+  .timer-toggle-label{
+    font-family: 'Inter', sans-serif; font-weight: 600;
+    font-size: 0.75rem; color: var(--ink-dim);
+  }
   .timer-display{ min-width: 2.4em; text-align: left; }
   .timer-tooltip{
     position: absolute; top: 100%; right: 0; margin-top: 6px;
@@ -1448,33 +1471,43 @@ function renderTimerWidget(){
   }
 
   const choice = getTimerChoice();
-  const timerOffIndicator = `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
-    <span class="timer-emoji">⏱️</span>
-    <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;overflow:visible;" width="36" height="36" viewBox="-18 -18 36 36">
-      <line x1="-13.6" y1="11.9" x2="13.6" y2="-11.9" stroke="#111" stroke-width="4" stroke-linecap="round"/>
-    </svg>
-  </span>`;
-  let displayContent = timerOffIndicator;
-  if(choice === 'timed'){
-    const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
-    if(frozenElapsed !== null){
-      displayContent = `<span class="timer-emoji">⏱️</span><span class="timer-display">${formatDurationForShare(Number(frozenElapsed))}</span>`;
-    } else {
-      displayContent = `<span class="timer-emoji">⏱️</span><span class="timer-display">${formatElapsed(getCurrentElapsedMs(activeTier))}</span>`;
-    }
-  }
 
-  const tooltipText = choice === 'timed' ? 'Timer: On — click to turn off' : 'Timer: Off — click to turn on';
-  widget.innerHTML = `
-    <button type="button" class="timer-widget-btn">
-      ${displayContent}
-      <span class="timer-tooltip">${tooltipText}</span>
-    </button>
-  `;
-  bindTapAction(widget.querySelector('.timer-widget-btn'), ()=>{
-    setTimerChoice(choice === 'timed' ? 'untimed' : 'timed');
-    render();
-  });
+  if(choice === 'timed'){
+    // Active timer — show running clock
+    const frozenElapsed = localStorage.getItem(timerElapsedKey(activeTier));
+    const displayTime = frozenElapsed !== null
+      ? formatDurationForShare(Number(frozenElapsed))
+      : formatElapsed(getCurrentElapsedMs(activeTier));
+    const tooltipText = 'Timer: On — click to turn off';
+    widget.innerHTML = `
+      <button type="button" class="timer-widget-btn" aria-label="${tooltipText}">
+        <span class="timer-emoji">⏱️</span><span class="timer-display">${displayTime}</span>
+        <span class="timer-tooltip">${tooltipText}</span>
+      </button>
+    `;
+    bindTapAction(widget.querySelector('.timer-widget-btn'), ()=>{
+      setTimerChoice('untimed');
+      pauseTimer(activeTier);
+      render();
+    });
+  } else {
+    // Inactive — grayed clock + toggle switch labeled "Off"
+    widget.innerHTML = `
+      <button type="button" class="timer-widget-btn timer-widget-btn--off" aria-label="Timer off — click to turn on">
+        <span class="timer-emoji timer-emoji--off">⏱️</span>
+        <span class="timer-toggle-track" aria-hidden="true">
+          <span class="timer-toggle-thumb"></span>
+        </span>
+        <span class="timer-toggle-label">Off</span>
+        <span class="timer-tooltip">Timer: Off — click to turn on</span>
+      </button>
+    `;
+    bindTapAction(widget.querySelector('.timer-widget-btn--off'), ()=>{
+      setTimerChoice('timed');
+      startTimerIfNeeded(activeTier);
+      render();
+    });
+  }
 }
 
 function storageKey(tier){ return `letterladder:${accountScope}:${dateKey}:${tier}`; }
@@ -2012,9 +2045,9 @@ function renderAccountWidget(){
       dropdown.className = 'account-dropdown';
       dropdown.innerHTML = `
         <div class="account-dropdown-username">${savedUsername}</div>
-        <a href="leaderboard.html">Leaderboard</a>
         <a href="past-puzzles.html">Past puzzles</a>
         <a href="stats.html">Stats</a>
+        <a href="leaderboard.html">Leaderboard</a>
         <a href="profile.html">Profile</a>
         <button type="button" class="dropdown-item" id="account-logout-btn">Log out</button>
       `;
@@ -2039,8 +2072,8 @@ function renderAccountWidget(){
       const dropdown = document.createElement('div');
       dropdown.className = 'account-dropdown';
       dropdown.innerHTML = `
-        <a href="leaderboard.html">Leaderboard</a>
         <a href="past-puzzles.html">Past puzzles</a>
+        <a href="leaderboard.html">Leaderboard</a>
         <a href="#" id="account-create-link">Create account</a>
         <a href="#" id="account-login-link">Log in</a>
       `;
@@ -2232,15 +2265,45 @@ async function submitCurrentScore(tier, displayName){
   const rawElapsed = localStorage.getItem(timerElapsedKey(tier));
   const timeMs = timerChoice === 'timed' ? Number(rawElapsed || 0) : null;
 
-  // Never submit a timed score of 0 — that's impossible for a real solve
-  // and always indicates a bug (timer never started, wrong scope, etc.).
-  // Untimed scores are submitted with timeMs:null and won't rank on timed leaderboards.
-  if(timerChoice === 'timed' && (timeMs === 0 || timeMs === null)){
-    return;
-  }
+  // Never submit a timed score of 0 — impossible for a real solve.
+  // Untimed scores are not submitted at all — they don't appear on the leaderboard.
+  if(timerChoice !== 'timed') return;
+  if(timeMs === 0 || timeMs === null) return;
 
   const hintsUsed = getHintsUsed(tier);
+  const user = window.LetterLadderAuth.getCurrentUser();
+  const uid = user ? user.uid : null;
+  const isGuest = !user || user.isAnonymous;
+
+  const scoreData = { date: dateKey, tier, timeMs, hintsUsed, displayName, uid, isGuest };
+
+  // Always write to the immutable scores event log
   await window.LetterLadderAuth.submitScore({ date: dateKey, tier, timeMs, hintsUsed, displayName });
+
+  // Also write to the leaderboardEntries display layer (timed only)
+  if(uid && window.LetterLadderAuth.setDoc && window.LetterLadderAuth.doc && window.LetterLadderAuth.db){
+    try{
+      // Check leaderboardVisible preference (default true if not set)
+      let visible = true;
+      if(!isGuest){
+        try{
+          const playerSnap = await window.LetterLadderAuth.getDoc(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', uid)
+          );
+          if(playerSnap.exists() && playerSnap.data().leaderboardVisible === false){
+            visible = false;
+          }
+        }catch(e){}
+      }
+      const entryId = `${uid}_${dateKey}_${tier}`;
+      await window.LetterLadderAuth.setDoc(
+        window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'leaderboardEntries', entryId),
+        { ...scoreData, visible, createdAt: Date.now() }
+      );
+    }catch(e){
+      console.error('Failed to write leaderboardEntries:', e);
+    }
+  }
 }
 
 function showLeaderboardPromptIfNeeded(tier){

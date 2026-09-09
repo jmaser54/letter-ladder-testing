@@ -132,10 +132,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     try{
       const tierSections = await Promise.all(['easy','medium','hard'].map(async (tier) => {
         const q = query(
-          collection(db, 'scores'),
+          collection(db, 'leaderboardEntries'),
           where('date', '==', today),
           where('tier', '==', tier),
-          where('timeMs', '>', 0),
+          where('visible', '==', true),
           orderBy('timeMs', 'asc'),
           limit(3)
         );
