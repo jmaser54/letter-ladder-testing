@@ -3311,29 +3311,33 @@ function render(focusInput = false, pendingErrors = null){
     if(hd) hd.innerHTML = buildHintDisplayHtml(activeTier, activeLength);
   }
 
-  bindTapAction(document.getElementById('clear-btn'), ()=>{
-    showConfirmModal('Are you sure you want to clear your puzzle?', ()=>{
-      const ladderEl = panel.querySelector('.ladder');
-      if(ladderEl){
-        ladderEl.classList.add('fading-out');
-        setTimeout(()=>{
+  const clearBtnEl = document.getElementById('clear-btn');
+  if(clearBtnEl){
+    clearBtnEl.addEventListener('pointerdown', (e)=>{ e.preventDefault(); });
+    bindTapAction(clearBtnEl, ()=>{
+      showConfirmModal('Are you sure you want to clear your puzzle?', ()=>{
+        const ladderEl = panel.querySelector('.ladder');
+        if(ladderEl){
+          ladderEl.classList.add('fading-out');
+          setTimeout(()=>{
+            activeLength = null;
+            clearGuesses(activeTier);
+            lastFeedback[activeTier] = null;
+            setLastHintedLength(activeTier, null);
+            bankState[activeTier] = null;
+            render();
+          }, 960);
+        } else {
           activeLength = null;
           clearGuesses(activeTier);
           lastFeedback[activeTier] = null;
           setLastHintedLength(activeTier, null);
           bankState[activeTier] = null;
           render();
-        }, 960);
-      } else {
-        activeLength = null;
-        clearGuesses(activeTier);
-        lastFeedback[activeTier] = null;
-        setLastHintedLength(activeTier, null);
-        bankState[activeTier] = null;
-        render();
-      }
+        }
+      });
     });
-  });
+  }
 
   const shareBtn = document.getElementById('share-link');
   if(shareBtn){
