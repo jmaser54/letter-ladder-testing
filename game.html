@@ -1800,7 +1800,8 @@ async function backfillGuestStatsAndScores(newUsername){
       }
     }
   }
-  if(TIERS.every(isTierGenuinelyWon) && stats.total.lastSolvedDate !== dateKey){
+  const allThreeScheduled = TIERS.every(t => getTodaysPuzzle(t) !== null);
+  if(allThreeScheduled && TIERS.every(isTierGenuinelyWon) && stats.total.lastSolvedDate !== dateKey){
     bumpStreak(stats.total, dateKey);
     anyBackfilled = true;
   }
@@ -2409,11 +2410,11 @@ function markSolvedIfNeeded(tier, guesses){
       stats.total.solved += 1;
       bumpStreak(stat, dateKey);
 
-      // If this solve completes all three tiers for today, the "total" streak
-      // (a separate concept from the per-tier ones - it tracks consecutive
-      // days you completed EVERY puzzle, tying into the summit celebration)
-      // gets its own bump.
-      if(TIERS.every(isTierComplete)){
+      // If this solve completes all three tiers for today, bump the
+      // total streak. Use isTierGenuinelyWon (not isTierComplete) so
+      // solution-reveals and unscheduled tiers don't count.
+      const allThreeScheduled = TIERS.every(t => getTodaysPuzzle(t) !== null);
+      if(allThreeScheduled && TIERS.every(isTierGenuinelyWon)){
         bumpStreak(stats.total, dateKey);
       }
 
