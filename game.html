@@ -4048,12 +4048,31 @@ document.addEventListener('visibilitychange', ()=>{
     syncStatsToCloud(loadStats());
   } else {
     // Check if the puzzle date has changed while the tab was hidden.
-    // If so, redirect to landing page for the "new day" experience.
     if(!isArchiveMode && todayKey() !== dateKey){
       localStorage.setItem('letterladder:activeTier', 'easy');
       window.location.replace('index.html');
       return;
     }
+    // Always pause first to fold any stale segment that may have
+    // accumulated while the page was hidden (mobile reliability fix).
+    pauseTimer(activeTier);
+    startTimerIfNeeded(activeTier);
+    renderTimerWidget();
+  }
+});
+
+// pageshow fires on bfcache restore — critical for mobile browsers that
+// suspend and restore pages rather than firing visibilitychange reliably.
+window.addEventListener('pageshow', (e)=>{
+  if(e.persisted){
+    // Page was restored from bfcache — same fix: pause to fold any
+    // stale segment, then resume cleanly.
+    if(!isArchiveMode && todayKey() !== dateKey){
+      localStorage.setItem('letterladder:activeTier', 'easy');
+      window.location.replace('index.html');
+      return;
+    }
+    pauseTimer(activeTier);
     startTimerIfNeeded(activeTier);
     renderTimerWidget();
   }
