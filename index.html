@@ -558,7 +558,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           sessionStorage.setItem('letterladder:pendingGuestBackfill', loggedInUsername);
           overlay.remove();
-          window.location.href = 'game.html';
+          // Stay on landing page — user should see streak messaging and
+          // consciously press Play to start the puzzle. Do NOT auto-navigate.
+          renderAccountWidget(auth.currentUser);
+          renderPlayButtons(auth.currentUser);
         } else {
           // Validate username
           const BANNED = ['fuck','bitch','bastard','cunt','kike','nigger','nigga','asshole','faggot','.com','.net','.org','.edu','.io','.xyz','gmail'];
