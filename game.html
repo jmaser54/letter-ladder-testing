@@ -2937,8 +2937,8 @@ function showSummitBanner(){
   const banner = document.createElement('div');
   banner.className = 'summit-banner';
   const streak = loadStats().total.currentStreak || 0;
-  const streakLine = streak > 0 ? `\n🔥 ${streak} day streak!` : '';
-  banner.textContent = `Well done! You've completed all three of today's ladders!${streakLine}`;
+  const streakLine = streak > 0 ? `<br>🔥 ${streak} day streak!` : '';
+  banner.innerHTML = `Well done! You&#39;ve completed all three of today&#39;s ladders!${streakLine}`;
   document.body.appendChild(banner);
   setTimeout(()=> banner.remove(), 4000);
 }
@@ -4043,6 +4043,7 @@ if(howtoIconBtn) bindTapAction(howtoIconBtn, showHowToPlayPopup);
 
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){
+    // Page going hidden — pause cleanly (fold current segment into accumulated)
     pauseTimer(activeTier);
     clearTimeout(dailyProgressSyncTimeout);
     syncDailyProgressToCloud();
@@ -4054,9 +4055,10 @@ document.addEventListener('visibilitychange', ()=>{
       window.location.replace('index.html');
       return;
     }
-    // Always pause first to fold any stale segment that may have
-    // accumulated while the page was hidden (mobile reliability fix).
-    pauseTimer(activeTier);
+    // Discard any stale start segment — do NOT fold it in via pauseTimer
+    // because that would count the hidden time as active play.
+    // Just remove the start key and begin a fresh segment from now.
+    localStorage.removeItem(timerStartKey(activeTier));
     startTimerIfNeeded(activeTier);
     renderTimerWidget();
   }
@@ -4066,14 +4068,13 @@ document.addEventListener('visibilitychange', ()=>{
 // suspend and restore pages rather than firing visibilitychange reliably.
 window.addEventListener('pageshow', (e)=>{
   if(e.persisted){
-    // Page was restored from bfcache — same fix: pause to fold any
-    // stale segment, then resume cleanly.
     if(!isArchiveMode && todayKey() !== dateKey){
       localStorage.setItem('letterladder:activeTier', 'easy');
       window.location.replace('index.html');
       return;
     }
-    pauseTimer(activeTier);
+    // Discard stale start segment — suspended time must not count.
+    localStorage.removeItem(timerStartKey(activeTier));
     startTimerIfNeeded(activeTier);
     renderTimerWidget();
   }
@@ -4086,15 +4087,22 @@ window.addEventListener('pagehide', ()=>{
 });
 
 render(!isTouchDevice);
-// Always start/resume the timer on page load — the timer runs silently
-// in the background regardless of the display toggle state. The toggle
-// controls visibility only, not whether the clock is running.
-// Exception: archive mode puzzles are never timed.
-const timerAlreadyRunning = hasEverStartedTimer(activeTier);
-const puzzleNotYetSolved = !localStorage.getItem(timerElapsedKey(activeTier))
-  && !localStorage.getItem(timerAccumulatedKey(activeTier));
-if(!isArchiveMode && (timerAlreadyRunning || puzzleNotYetSolved)){
-  startTimerIfNeeded(activeTier);
+// On page load, discard any stale timer segment from a previous session.
+// A timerStartKey left in localStorage from a prior session means the timer
+// was running when the user left — that offline time must NOT be counted.
+// We remove it (discarding the stale segment) and start fresh.
+// This is different from visibilitychange/pageshow where we pauseTimer first
+// (fold segment in) — here we DISCARD because the gap between sessions is offline time.
+if(!isArchiveMode){
+  const staleSegment = localStorage.getItem(timerStartKey(activeTier));
+  if(staleSegment !== null){
+    // Remove the stale start without folding — discards offline gap
+    localStorage.removeItem(timerStartKey(activeTier));
+  }
+  const puzzleNotYetSolved = !localStorage.getItem(timerElapsedKey(activeTier));
+  if(hasEverStartedTimer(activeTier) || puzzleNotYetSolved){
+    startTimerIfNeeded(activeTier);
+  }
 }
 showMigrationWelcomeBannerIfNeeded();
 showMigrationLinkBannerIfNeeded();
