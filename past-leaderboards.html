@@ -66,7 +66,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -114,15 +114,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const today = todayKey();
 
     try{
-      // No per-date index exists to query against directly, so this pulls
-      // every score once and groups it client-side by date and tier -
-      // completely reasonable at this stage's scale, and means dates
-      // with zero recorded scores simply never appear at all, rather
-      // than padding the page out with empty placeholders.
-      const q = query(collection(db, 'scores'), orderBy('date', 'desc'), limit(1000));
+      // Query leaderboardEntries (visibility-controlled display layer) instead
+      // of scores (immutable event log) so that opted-out users are excluded.
+      // No orderBy needed — dates are grouped and sorted client-side below.
+      const q = query(
+        collection(db, 'leaderboardEntries'),
+        where('visible', '==', true),
+        limit(1000)
+      );
       const snap = await getDocs(q);
-      console.log('DIAG past-leaderboards: scores collection returned', snap.docs.length, 'total documents');
-      snap.docs.forEach(d => console.log('DIAG score doc:', d.id, JSON.stringify(d.data())));
 
       const byDate = {};
       snap.docs.forEach(docSnap => {
