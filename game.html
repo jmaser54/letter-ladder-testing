@@ -864,6 +864,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   async function logOut(){
     await signOut(auth);
+    // Clear the keys that establish account identity so the next user
+    // cannot inherit stale state. A full redirect then resets all
+    // in-memory module state (including accountScope).
+    localStorage.removeItem('letterladder:accountUsername');
+    localStorage.removeItem('letterladder:activeTier');
+    localStorage.removeItem('letterladder:lastViewedDateKey');
   }
 
   // Writes one completed-puzzle score as a new document, structured so
@@ -1271,7 +1277,7 @@ function importMigrationDataIfPresent(){
     const data = JSON.parse(decodeURIComponent(migrateParam));
     let importedCount = 0;
     for(const [key, value] of Object.entries(data)){
-      if(key === STATS_KEY){
+      if(key === getStatsKey()){
         // Stats get a genuine field-by-field merge rather than an
         // all-or-nothing replace, since someone may have already played
         // a bit on this domain before migrating - a whole-object
@@ -1395,7 +1401,10 @@ if(!isArchiveMode && lastViewedDate && lastViewedDate !== dateKey){
 // matching how things worked before accounts existed - guests don't get
 // personal stats tracked anyway, so this only matters for the day's
 // in-progress guesses/hints, which is fine to share among guest sessions.
-const accountScope = localStorage.getItem('letterladder:accountUsername') || 'guest';
+// accountScope starts as 'guest' and is set authoritatively in onAuthReady
+// after Firebase Auth resolves and players/{uid}.username is confirmed from
+// Firestore. Nothing reads puzzle state before accountScope is correct.
+let accountScope = 'guest';
 
 // ---------- optional per-puzzle timer ----------
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
@@ -1541,7 +1550,9 @@ function clearGuesses(tier){
 
 // ---------- stats, streaks & score (all local to this device/browser -
 // there are no accounts, so none of this follows you to another device) ----------
-const STATS_KEY = `letterladder:${accountScope}:stats`;
+// STATS_KEY is a function, not a constant, so it always reflects the current
+// accountScope rather than the value at module parse time.
+function getStatsKey(){ return `letterladder:${accountScope}:stats`; }
 
 function blankStat(){
   return { played:0, solved:0, currentStreak:0, maxStreak:0, lastSolvedDate:null };
@@ -1554,7 +1565,7 @@ function loadStats(){
     // that pre-existing history rather than silently losing it - the old
     // key is left in place rather than deleted, since it's ambiguous
     // which account should end up claiming it.
-    const raw = localStorage.getItem(STATS_KEY);
+    const raw = localStorage.getItem(getStatsKey());
     if(raw){
       const parsed = JSON.parse(raw);
       // guard against a corrupted/partial object from an older version
@@ -1567,7 +1578,7 @@ function loadStats(){
   return { easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() };
 }
 function saveStats(stats){
-  try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){}
+  try{ localStorage.setItem(getStatsKey(), JSON.stringify(stats)); }catch(e){}
   syncStatsToCloud(stats);
 }
 
@@ -1862,7 +1873,29 @@ async function pullDailyProgressFromCloudIfNeeded(){
     if(cloudModifiedAt <= localModifiedAt && !localIsGenuinelyEmpty){
       return false;
     }
-    applyProgressSnapshot(snap.data().snapshot);
+    const snapshot = snap.data().snapshot;
+    // Validate that the snapshot's keys belong to the current accountScope.
+    // If they belong to a different account (cross-account contamination —
+    // the toohotforapenguin/Umbrellaboy bug), reject the snapshot entirely
+    // rather than applying another account's puzzle state to this session.
+    const expectedPrefix = `letterladder:${accountScope}:`;
+    const snapshotKeys = Object.keys(snapshot);
+    const foreignKeys = snapshotKeys.filter(k => !k.startsWith(expectedPrefix));
+    if(foreignKeys.length > 0){
+      // Determine what account the snapshot actually belongs to
+      const sampleKey = foreignKeys[0];
+      const rejectedPrefix = sampleKey.split(':').slice(0,2).join(':') + ':';
+      console.warn(
+        '[Letter Ladder] dailyProgress snapshot rejected — cross-account contamination detected.\n' +
+        `  Current accountScope: "${accountScope}"\n` +
+        `  Rejected key prefix:  "${rejectedPrefix}"\n` +
+        `  UID: ${user.uid}\n` +
+        `  dateKey: ${dateKey}\n` +
+        `  Foreign keys (${foreignKeys.length}): ${foreignKeys.slice(0,3).join(', ')}${foreignKeys.length > 3 ? '…' : ''}`
+      );
+      return false;
+    }
+    applyProgressSnapshot(snapshot);
     return true;
   }catch(e){
   }
@@ -2073,6 +2106,7 @@ function renderAccountWidget(){
         bindTapAction(logoutBtn, async ()=>{
           closeAnyOpenAccountDropdown();
           await window.LetterLadderAuth.logOut();
+          window.location.replace('index.html');
         });
       }
       setTimeout(()=>{
@@ -4097,24 +4131,13 @@ window.addEventListener('pagehide', ()=>{
   syncStatsToCloud(loadStats());
 });
 
-render(!isTouchDevice);
-// On page load, discard any stale timer segment from a previous session.
-// A timerStartKey left in localStorage from a prior session means the timer
-// was running when the user left — that offline time must NOT be counted.
-// We remove it (discarding the stale segment) and start fresh.
-// This is different from visibilitychange/pageshow where we pauseTimer first
-// (fold segment in) — here we DISCARD because the gap between sessions is offline time.
-if(!isArchiveMode){
-  const staleSegment = localStorage.getItem(timerStartKey(activeTier));
-  if(staleSegment !== null){
-    // Remove the stale start without folding — discards offline gap
-    localStorage.removeItem(timerStartKey(activeTier));
-  }
-  const puzzleNotYetSolved = !localStorage.getItem(timerElapsedKey(activeTier));
-  if(hasEverStartedTimer(activeTier) || puzzleNotYetSolved){
-    startTimerIfNeeded(activeTier);
-  }
-}
+// render() and timer startup are deferred into onAuthReady so accountScope
+// is authoritative (from Firestore players/{uid}.username) before any
+// puzzle state is read from localStorage. This prevents cross-account
+// state contamination like the toohotforapenguin/Umbrellaboy dailyProgress bug.
+// A brief loading state prevents a flash of wrong-account content.
+const puzzlePanelEl = document.getElementById('panel');
+if(puzzlePanelEl) puzzlePanelEl.style.visibility = 'hidden';
 showMigrationWelcomeBannerIfNeeded();
 showMigrationLinkBannerIfNeeded();
 
@@ -4136,9 +4159,9 @@ async function pullStatsFromCloudIfNeeded(){
     if(!snap.exists()) return;
     const cloudStats = snap.data();
     let localStats;
-    try{ localStats = JSON.parse(localStorage.getItem(STATS_KEY) || 'null'); }catch(e){ localStats = null; }
+    try{ localStats = JSON.parse(localStorage.getItem(getStatsKey()) || 'null'); }catch(e){ localStats = null; }
     if(!localStats){
-      localStorage.setItem(STATS_KEY, JSON.stringify(cloudStats));
+      localStorage.setItem(getStatsKey(), JSON.stringify(cloudStats));
       return;
     }
     const merged = {};
@@ -4160,7 +4183,7 @@ async function pullStatsFromCloudIfNeeded(){
         maxStreak: Math.max(localTier.maxStreak || 0, cloudTier.maxStreak || 0),
       };
     }
-    localStorage.setItem(STATS_KEY, JSON.stringify(merged));
+    localStorage.setItem(getStatsKey(), JSON.stringify(merged));
   }catch(e){}
 }
 
@@ -4169,10 +4192,39 @@ let ownerCheckDone = false;
   if(attemptsLeft === undefined) attemptsLeft = 100; // ~5 seconds total at 50ms intervals
   if(window.LetterLadderAuth){
     window.LetterLadderAuth.onAuthReady(async () => {
+      const player = window.LetterLadderAuth.getCurrentUser();
+
+      // ── Step 1: Establish authoritative accountScope ─────────────────────
+      // For real accounts: fetch username from Firestore (keyed by UID,
+      // so the mapping is Firebase-authoritative, not just localStorage).
+      // For guests/anonymous: scope stays 'guest'.
+      if(player && !player.isAnonymous){
+        try{
+          const playerSnap = await window.LetterLadderAuth.getDocFromServer(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', player.uid)
+          );
+          if(playerSnap.exists()){
+            const authoritativeUsername = playerSnap.data().username;
+            if(authoritativeUsername){
+              // Correct localStorage in case it had a stale/wrong username
+              localStorage.setItem('letterladder:accountUsername', authoritativeUsername);
+              accountScope = authoritativeUsername;
+            }
+          }
+        }catch(e){
+          // Firestore read failed — fall back to localStorage username.
+          // This is less safe but allows offline use.
+          const fallback = localStorage.getItem('letterladder:accountUsername');
+          if(fallback) accountScope = fallback;
+        }
+      } else {
+        accountScope = 'guest';
+      }
+
+      // ── Step 2: ownerUid check (now with correct accountScope) ───────────
       if(!ownerCheckDone){
         ownerCheckDone = true;
         try{
-          const player = window.LetterLadderAuth.getCurrentUser();
           if(player && !player.isAnonymous && accountScope !== 'guest'){
             const ownerKey = `letterladder:${accountScope}:ownerUid`;
             const storedOwnerUid = localStorage.getItem(ownerKey);
@@ -4191,11 +4243,50 @@ let ownerCheckDone = false;
         }catch(e){}
       }
 
+      // ── Step 3: Cloud stats pull ──────────────────────────────────────────
+      statsPullPromise = pullStatsFromCloudIfNeeded();
+      await statsPullPromise;
+      if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
+        setTimerChoice(getTimerChoice());
+      }
+
+      // ── Step 4: dailyProgress cloud restore (with snapshot validation) ───
+      // pullDailyProgressFromCloudIfNeeded validates that the snapshot's
+      // keys match the current accountScope before applying. If they belong
+      // to a different account, the snapshot is rejected and logged.
+      const restored = await pullDailyProgressFromCloudIfNeeded();
+      if(restored){
+        rebaselineProgressComparison();
+        activeLength = null;
+      }
+
+      // ── Step 5: Reveal panel and render ──────────────────────────────────
+      // Account scope is confirmed, ownerUid validated, cloud state applied.
+      // Only now is it safe to render the puzzle from localStorage.
+      const puzzlePanelEl2 = document.getElementById('panel');
+      if(puzzlePanelEl2) puzzlePanelEl2.style.visibility = '';
+      render(!isTouchDevice);
+
+      // ── Step 6: Timer startup ─────────────────────────────────────────────
+      if(!isArchiveMode){
+        // Discard stale timerStartKey (offline gap since last session).
+        // Do NOT clear timerAccumulatedMs — legitimate accumulated time
+        // from tab-switches within the previous session must be preserved.
+        const staleSegment = localStorage.getItem(timerStartKey(activeTier));
+        if(staleSegment !== null){
+          localStorage.removeItem(timerStartKey(activeTier));
+        }
+        const puzzleNotYetSolved = !localStorage.getItem(timerElapsedKey(activeTier));
+        if(hasEverStartedTimer(activeTier) || puzzleNotYetSolved){
+          startTimerIfNeeded(activeTier);
+        }
+      }
+      renderTimerWidget();
+
+      // ── Step 7: Non-critical UI and analytics ─────────────────────────────
       renderAccountWidget();
 
-      // If the user just created an account on the landing page, run the
-      // full guest→account backfill: re-count stats and re-submit today's
-      // scores under the new account name instead of 'Guest'.
+      // ── Step 8: Backfill (guest→account migration) ───────────────────────
       const pendingBackfill = sessionStorage.getItem('letterladder:pendingGuestBackfill');
       if(pendingBackfill){
         sessionStorage.removeItem('letterladder:pendingGuestBackfill');
@@ -4204,42 +4295,27 @@ let ownerCheckDone = false;
         }catch(e){}
       }
 
-      // Set the Firebase UID as the GA4 user_id for this session.
-      // This links analytics events to a specific account without sending
-      // any personally identifiable information (usernames, emails) to
-      // Google. For real accounts the UID is stable across devices and
-      // sessions. For anonymous (guest) users it persists per browser
-      // profile but resets on each private/incognito session - that's
-      // the correct behavior given the privacy guarantees those modes
-      // provide. Guarded against ad blockers the same way all other
-      // analytics calls in this file are.
+      // ── Step 9: GA4 user_id ───────────────────────────────────────────────
       try{
         const analyticsUser = window.LetterLadderAuth.getCurrentUser();
         if(analyticsUser && typeof gtag !== 'undefined'){
-          gtag('config', 'GTM-K8X9ZNZP', {
-            user_id: analyticsUser.uid,
-          });
+          gtag('config', 'GTM-K8X9ZNZP', { user_id: analyticsUser.uid });
         }
       }catch(e){}
 
-      // If there's a pending email change, check whether it's actually
-      // been confirmed yet (the verification link clicked) - Firebase's
-      // real account email only updates once that happens, and nothing
-      // proactively tells the app when it does. Reloading the user
-      // object first ensures this checks the genuinely current email,
-      // not a stale cached value from before the link was clicked.
+      // ── Step 10: Pending email change check ──────────────────────────────
       try{
-        const player = window.LetterLadderAuth.getCurrentUser();
-        if(player && !player.isAnonymous){
-          await player.reload();
+        const player2 = window.LetterLadderAuth.getCurrentUser();
+        if(player2 && !player2.isAnonymous){
+          await player2.reload();
           const recoverySnap = await window.LetterLadderAuth.getDoc(
-            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerRecovery', player.uid)
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerRecovery', player2.uid)
           );
           if(recoverySnap.exists()){
             const data = recoverySnap.data();
-            if(data.pendingEmail && player.email === data.pendingEmail){
+            if(data.pendingEmail && player2.email === data.pendingEmail){
               await window.LetterLadderAuth.setDoc(
-                window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerRecovery', player.uid),
+                window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerRecovery', player2.uid),
                 { recoveryEmail: data.pendingEmail, pendingEmail: null },
                 { merge: true }
               );
@@ -4247,39 +4323,24 @@ let ownerCheckDone = false;
           }
         }
       }catch(e){}
-
-      statsPullPromise = pullStatsFromCloudIfNeeded();
-      await statsPullPromise;
-      // Backfills the account's cloud timer-choice record from this
-      // device's existing local choice, if one was genuinely already
-      // made - covers a preference set before this sync feature
-      // existed, or a device that's simply never touched the toggle
-      // since, so the cloud record naturally catches up over time.
-      if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
-        setTimerChoice(getTimerChoice());
-      }
-      const restored = await pullDailyProgressFromCloudIfNeeded();
-      if(restored){
-        rebaselineProgressComparison();
-        // activeLength may have been computed during an earlier, empty
-        // pre-restore render (pointing at whichever rung looked
-        // incomplete at that moment) and, being a persistent variable,
-        // would otherwise stay stuck there across this render even
-        // though the underlying data just changed - forcing a fresh
-        // recalculation against the now-correct, restored guesses.
-        activeLength = null;
-        render(false);
-        renderTimerWidget();
-
-        // The play popup's own check ran earlier, against empty local
-        // play-overlay no longer exists; timer is started at page load directly
-      }
     });
   } else if(attemptsLeft > 0){
     setTimeout(() => waitForLetterLadderAuth(attemptsLeft - 1), 50);
+  } else {
+    // Auth module never loaded (ad-blocker, offline, etc.).
+    // Still render the puzzle so guests can play — accountScope stays 'guest'.
+    const puzzlePanelEl3 = document.getElementById('panel');
+    if(puzzlePanelEl3) puzzlePanelEl3.style.visibility = '';
+    render(!isTouchDevice);
+    if(!isArchiveMode){
+      const staleSegment = localStorage.getItem(timerStartKey(activeTier));
+      if(staleSegment !== null) localStorage.removeItem(timerStartKey(activeTier));
+      const puzzleNotYetSolved = !localStorage.getItem(timerElapsedKey(activeTier));
+      if(hasEverStartedTimer(activeTier) || puzzleNotYetSolved) startTimerIfNeeded(activeTier);
+    }
   }
-  // If it never loads (ad-blocker, offline, etc.), this quietly gives up -
-  // the account widget just stays empty rather than polling forever.
+  // If it never loads (ad-blocker, offline, etc.), the else-branch above
+  // handles the final fallback render — no indefinite loading state.
 })();
 if(new URLSearchParams(window.location.search).get('showsignup') === '1'){
   showAccountForm('create');
