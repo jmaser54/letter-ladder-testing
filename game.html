@@ -695,7 +695,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     signInAnonymously, signOut, onAuthStateChanged, sendPasswordResetEmail
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
-    getFirestore, collection, doc, setDoc, getDoc, addDoc, deleteDoc,
+    getFirestore, collection, doc, setDoc, getDoc, getDocFromServer, addDoc, deleteDoc,
     query, where, orderBy, limit, getDocs
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -900,7 +900,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     createAccount, login, playAsGuest, logOut, submitScore, requestPasswordReset,
     getCurrentUser: () => auth.currentUser,
     onAuthReady: (callback) => onAuthStateChanged(auth, callback),
-    db, doc, setDoc, getDoc, deleteDoc, collection, query, where, orderBy, limit, getDocs,
+    db, doc, setDoc, getDoc, getDocFromServer, deleteDoc, collection, query, where, orderBy, limit, getDocs,
   };
 </script>
 </head>
@@ -1766,25 +1766,31 @@ async function backfillGuestStatsAndScores(newUsername){
 
   let anyBackfilled = false;
   for(const tier of TIERS){
-    if(isTierGenuinelyWon(tier) && stats[tier].lastSolvedDate !== dateKey){
+    const playedFlag = `letterladder:${newUsername}:${dateKey}:${tier}:playedCounted`;
+    const solvedFlag = `letterladder:${newUsername}:${dateKey}:${tier}:solvedCounted`;
+    const alreadyCounted = localStorage.getItem(playedFlag);
+    if(isTierGenuinelyWon(tier) && !alreadyCounted){
       stats[tier].played += 1;
       stats[tier].solved += 1;
       bumpStreak(stats[tier], dateKey);
       stats.total.played += 1;
       stats.total.solved += 1;
       anyBackfilled = true;
-      // markPlayedIfNeeded checks for a real account before it ever sets
-      // its own "already counted" flag, so that flag never got set
-      // during guest play - without setting it here too, the normal
-      // play-tracking code would see no flag on a later visit and
-      // increment "played" a second time.
-      localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:playedCounted`, '1');
-      // Same protection for "solved" - explicitly set here rather than
-      // relying solely on migration to have already copied it over.
-      localStorage.setItem(`letterladder:${newUsername}:${dateKey}:${tier}:solvedCounted`, '1');
-      await submitCurrentScore(tier, newUsername, true); // true = force submit if elapsed time exists
-      // Delete the old guest score doc so it doesn't persist alongside
-      // the new real-account entry on the leaderboard.
+      localStorage.setItem(playedFlag, '1');
+      localStorage.setItem(solvedFlag, '1');
+      await submitCurrentScore(tier, newUsername, true);
+      if(anonUidToClean && window.LetterLadderAuth && window.LetterLadderAuth.deleteDoc){
+        try{
+          await window.LetterLadderAuth.deleteDoc(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'scores', `${anonUidToClean}_${dateKey}_${tier}`)
+          );
+        }catch(e){}
+      }
+    } else if(isTierGenuinelyWon(tier) && alreadyCounted){
+      // markPlayedIfNeeded already ran for this tier — just submit the
+      // score under the real account without double-counting stats.
+      anyBackfilled = true;
+      await submitCurrentScore(tier, newUsername, true);
       if(anonUidToClean && window.LetterLadderAuth && window.LetterLadderAuth.deleteDoc){
         try{
           await window.LetterLadderAuth.deleteDoc(
@@ -2294,20 +2300,31 @@ async function submitCurrentScore(tier, displayName, forceIfElapsed = false){
   // Also write to the leaderboardEntries display layer (timed only)
   if(uid && window.LetterLadderAuth.setDoc && window.LetterLadderAuth.doc && window.LetterLadderAuth.db){
     try{
-      // Check leaderboardVisible preference (default true if not set)
-      let visible = true;
-      if(!isGuest){
+      // Default to NOT visible — safe failure mode for a privacy setting.
+      // Only show publicly if we can positively confirm the user has opted in.
+      let visible = false;
+      if(isGuest){
+        // Guests have no profile toggle — always show their times publicly
+        visible = true;
+      } else {
         try{
-          const playerSnap = await window.LetterLadderAuth.getDoc(
+          // Use getDocFromServer (not getDoc) to bypass the Firestore SDK cache.
+          // If we used the cached version, a recently-changed toggle preference
+          // might not be reflected yet, causing scores to be written with the
+          // wrong visibility. This is a privacy-critical read.
+          const playerSnap = await window.LetterLadderAuth.getDocFromServer(
             window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', uid)
           );
-          if(playerSnap.exists() && playerSnap.data().leaderboardVisible === false){
-            visible = false;
+          if(playerSnap.exists()){
+            visible = playerSnap.data().leaderboardVisible !== false;
           }
-        }catch(e){}
+          // If doc doesn't exist: visible stays false (safe default)
+        }catch(e){
+          // Read failed — keep visible=false (safe default)
+          console.error('Could not read leaderboard preference, defaulting to hidden:', e);
+        }
       }
       const entryId = `${uid}_${dateKey}_${tier}`;
-      // Use merge:false so we always overwrite — including correcting visible status
       await window.LetterLadderAuth.setDoc(
         window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'leaderboardEntries', entryId),
         { ...scoreData, visible, createdAt: Date.now() },

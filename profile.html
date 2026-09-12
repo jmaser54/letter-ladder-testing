@@ -267,14 +267,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             { leaderboardVisible: nowVisible }, { merge: true });
 
           // 2. Batch-update all leaderboardEntries for this user
-          // Note: requires a Firestore index on leaderboardEntries.uid
           const q = query(
             collection(db, 'leaderboardEntries'),
             where('uid', '==', user.uid)
           );
           const snap = await getDocs(q);
           if(!snap.empty){
-            // Process in batches of 500 (Firestore limit)
             const docs = snap.docs;
             for(let i = 0; i < docs.length; i += 499){
               const batch = writeBatch(db);
@@ -284,7 +282,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
         }catch(e){
           console.error('Failed to update leaderboard visibility:', e);
-          // Revert toggle on failure
           visToggle.setAttribute('aria-pressed', String(!nowVisible));
           alert('Failed to save visibility preference. Please try again.');
         }finally{
