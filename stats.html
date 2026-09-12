@@ -198,13 +198,14 @@ function renderStatsPage(stats){
   }
 }
 
-renderStatsPage(loadStats());
+document.getElementById('stats-list').innerHTML =
+  '<div class="empty-state">Loading your stats\u2026</div>';
 </script>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, getDocFromServer, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // This module script has a fully separate top-level scope from the
   // classic <script> blocks earlier in this file - accountScope,
@@ -318,8 +319,11 @@ renderStatsPage(loadStats());
   // device that already has some.
   let ownerCheckDone = false;
   onAuthStateChanged(auth, async (user) => {
-    if(!user || user.isAnonymous) return;
-
+    if(!user || user.isAnonymous){
+      document.getElementById('stats-list').innerHTML =
+        '<div class="empty-state">Sign in to see your stats.</div>';
+      return;
+    }
 
     if(!ownerCheckDone && accountScope !== 'guest'){
       ownerCheckDone = true;
@@ -341,7 +345,11 @@ renderStatsPage(loadStats());
     }
 
     try{
-      const snap = await getDoc(doc(db, 'playerStats', user.uid));
+      // Use getDocFromServer (not getDoc) to bypass the Firestore SDK
+      // cache and always read the authoritative current value from the
+      // server. This is the single authoritative render — localStorage
+      // is never used as a display source.
+      const snap = await getDocFromServer(doc(db, 'playerStats', user.uid));
       if(snap.exists()){
         const cloudStats = snap.data();
         let localStats;
@@ -366,8 +374,17 @@ renderStatsPage(loadStats());
           localStorage.setItem(STATS_KEY, JSON.stringify(merged));
         }
         renderStatsPage(loadStats());
+      } else {
+        // No playerStats doc — new account or doc not yet created.
+        // Render blank state rather than leaving the page on "Loading…".
+        renderStatsPage({ easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() });
       }
     }catch(e){
+      // Network error, timeout, or Firestore unavailable.
+      // Show an explicit error rather than leaving the page stuck on "Loading…".
+      // Do NOT fall back to localStorage — that would reintroduce stale data.
+      document.getElementById('stats-list').innerHTML =
+        '<div class="empty-state">Unable to load your stats. Check your connection and try refreshing.</div>';
     }
 
     const hasRealScoreData = await renderTimeSummaryTable(user);
