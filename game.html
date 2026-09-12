@@ -1554,16 +1554,6 @@ function loadStats(){
     // that pre-existing history rather than silently losing it - the old
     // key is left in place rather than deleted, since it's ambiguous
     // which account should end up claiming it.
-    if(accountScope !== 'guest' && localStorage.getItem(STATS_KEY) === null){
-      const legacyRaw = localStorage.getItem('letterladder:stats');
-      // Only migrate legacy (pre-account) stats if there are no guest-scoped
-      // stats in this browser. If guest stats exist, this is a new account
-      // created on a browser that already had guest play — don't inherit those.
-      const guestStats = localStorage.getItem('letterladder:guest:stats');
-      if(legacyRaw && !guestStats){
-        localStorage.setItem(STATS_KEY, legacyRaw);
-      }
-    }
     const raw = localStorage.getItem(STATS_KEY);
     if(raw){
       const parsed = JSON.parse(raw);
