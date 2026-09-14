@@ -1728,9 +1728,9 @@ const HINTS_SCHEDULE = {
       "solution": ["ale","pale","apple","lapped","clapped"]
     },
     "hard": {
-      "start": "louden",
-      "final": "convulsed",
-      "solution": ["louden","unloved","unsolved","convulsed"]
+      "start": "ions",
+      "final": "obscuring",
+      "solution": ["ions","irons","groins","rousing","sourcing","obscuring"]
     }
   },
   "2026-09-15": {

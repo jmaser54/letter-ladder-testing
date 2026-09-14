@@ -696,8 +696,8 @@ const PUZZLE_SCHEDULE = {
       "final": "clapped"
     },
     "hard": {
-      "start": "louden",
-      "final": "convulsed"
+      "start": "ions",
+      "final": "obscuring"
     }
   },
   "2026-09-15": {
