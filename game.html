@@ -864,9 +864,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   async function logOut(){
     await signOut(auth);
-    // Clear the keys that establish account identity so the next user
-    // cannot inherit stale state. A full redirect then resets all
-    // in-memory module state (including accountScope).
+    accountScopeReady = false; // prevent post-logout syncs with stale accountScope
     localStorage.removeItem('letterladder:accountUsername');
     localStorage.removeItem('letterladder:activeTier');
     localStorage.removeItem('letterladder:lastViewedDateKey');
@@ -1405,6 +1403,13 @@ if(!isArchiveMode && lastViewedDate && lastViewedDate !== dateKey){
 // after Firebase Auth resolves and players/{uid}.username is confirmed from
 // Firestore. Nothing reads puzzle state before accountScope is correct.
 let accountScope = 'guest';
+
+// Guard that prevents visibilitychange/pagehide from syncing stats before
+// authoritative account initialization is complete. Set to true only after:
+// Auth resolved → accountScope confirmed from Firestore → ownerUid validated
+// → cloud stats/dailyProgress restored → game rendered.
+// Prevents a pre-init sync from writing another account's stats to Firestore.
+let accountScopeReady = false;
 
 // ---------- optional per-puzzle timer ----------
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
@@ -4092,7 +4097,9 @@ document.addEventListener('visibilitychange', ()=>{
     pauseTimer(activeTier);
     clearTimeout(dailyProgressSyncTimeout);
     syncDailyProgressToCloud();
-    syncStatsToCloud(loadStats());
+    // Only sync stats if account initialization is complete. Before that,
+    // accountScope may be wrong and a sync could write contaminated data.
+    if(accountScopeReady) syncStatsToCloud(loadStats());
   } else {
     // Check if the puzzle date has changed while the tab was hidden.
     if(!isArchiveMode && todayKey() !== dateKey){
@@ -4128,7 +4135,8 @@ window.addEventListener('pagehide', ()=>{
   pauseTimer(activeTier);
   clearTimeout(dailyProgressSyncTimeout);
   syncDailyProgressToCloud();
-  syncStatsToCloud(loadStats());
+  // Only sync stats if account initialization is complete.
+  if(accountScopeReady) syncStatsToCloud(loadStats());
 });
 
 // render() and timer startup are deferred into onAuthReady so accountScope
@@ -4158,28 +4166,57 @@ async function pullStatsFromCloudIfNeeded(){
     );
     if(!snap.exists()) return;
     const cloudStats = snap.data();
+
+    // Validate currentStreak against today's ET date.
+    // A streak is only live if lastSolvedDate is today or yesterday.
+    // This must be applied to BOTH the cloud data and the merged result
+    // so that a stale/contaminated cloud currentStreak can never be
+    // made authoritative simply because cloud.lastSolvedDate is newer.
+    // bumpStreak() enforces this invariant when a solve occurs;
+    // this function must enforce it when cloud data is loaded.
+    const todayET = todayKey();
+    const yesterdayET = dateKeyMinusOneDay(todayET);
+    function clampStreak(stat){
+      if(!stat) return stat;
+      const live = stat.lastSolvedDate === todayET || stat.lastSolvedDate === yesterdayET;
+      if(!live && stat.currentStreak){
+        return Object.assign({}, stat, { currentStreak: 0 });
+      }
+      return stat;
+    }
+
     let localStats;
     try{ localStats = JSON.parse(localStorage.getItem(getStatsKey()) || 'null'); }catch(e){ localStats = null; }
     if(!localStats){
-      localStorage.setItem(getStatsKey(), JSON.stringify(cloudStats));
+      // No local stats — write cloud directly, but clamp stale streaks first.
+      const clamped = {};
+      for(const tier of [...TIERS, 'total']){
+        clamped[tier] = clampStreak(cloudStats[tier] || blankStat());
+      }
+      localStorage.setItem(getStatsKey(), JSON.stringify(clamped));
       return;
     }
     const merged = {};
     for(const tier of [...TIERS, 'total']){
       const localTier = localStats[tier] || blankStat();
       const cloudTier = cloudStats[tier] || blankStat();
-      // Whichever side has the more recent lastSolvedDate is the
-      // genuinely current source of truth for that tier's played/solved/
-      // streak - the other side is, by definition, stale for this tier.
+      // Whichever side has the more recent lastSolvedDate wins for
+      // played/solved/lastSolvedDate — but currentStreak is then
+      // independently validated against today's ET date regardless
+      // of which side won. A more-recent lastSolvedDate does NOT
+      // grant authority to carry a streak forward.
       const cloudIsNewer = (cloudTier.lastSolvedDate || '') > (localTier.lastSolvedDate || '');
       const winner = cloudIsNewer ? cloudTier : localTier;
+      const winnerLastSolved = winner.lastSolvedDate || null;
+      const streakIsLive = winnerLastSolved === todayET || winnerLastSolved === yesterdayET;
       merged[tier] = {
         played: winner.played || 0,
         solved: winner.solved || 0,
-        currentStreak: winner.currentStreak || 0,
-        lastSolvedDate: winner.lastSolvedDate || null,
-        // A personal-best streak should never regress just because the
-        // other device happens to be "more current" right now.
+        // currentStreak: take the higher of both sides IF the streak is
+        // still live. If neither side's lastSolvedDate is today or
+        // yesterday, the streak has broken and must be 0.
+        currentStreak: streakIsLive ? Math.max(localTier.currentStreak || 0, cloudTier.currentStreak || 0) : 0,
+        lastSolvedDate: winnerLastSolved,
         maxStreak: Math.max(localTier.maxStreak || 0, cloudTier.maxStreak || 0),
       };
     }
@@ -4267,6 +4304,11 @@ let ownerCheckDone = false;
       if(puzzlePanelEl2) puzzlePanelEl2.style.visibility = '';
       render(!isTouchDevice);
 
+      // Mark initialization complete — visibilitychange/pagehide may now
+      // safely call syncStatsToCloud. Before this point, accountScope may
+      // have been wrong and a sync would have written contaminated data.
+      accountScopeReady = true;
+
       // ── Step 6: Timer startup ─────────────────────────────────────────────
       if(!isArchiveMode){
         // Discard stale timerStartKey (offline gap since last session).
@@ -4332,6 +4374,7 @@ let ownerCheckDone = false;
     const puzzlePanelEl3 = document.getElementById('panel');
     if(puzzlePanelEl3) puzzlePanelEl3.style.visibility = '';
     render(!isTouchDevice);
+    accountScopeReady = true; // guest session — no cloud sync risk
     if(!isArchiveMode){
       const staleSegment = localStorage.getItem(timerStartKey(activeTier));
       if(staleSegment !== null) localStorage.removeItem(timerStartKey(activeTier));
