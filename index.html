@@ -699,7 +699,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     try{
       const raw = localStorage.getItem(`letterladder:${username}:stats`);
       const stats = raw ? JSON.parse(raw) : null;
-      return (stats && stats.total && stats.total.currentStreak) || 0;
+      if(!stats || !stats.total) return 0;
+      const cs = stats.total.currentStreak || 0;
+      if(cs === 0) return 0;
+      // Validate liveness — streak only counts if lastSolvedDate is today
+      // or yesterday in ET. Stale values must not be displayed.
+      const lsd = stats.total.lastSolvedDate;
+      if(!lsd) return 0;
+      const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const [y,m,d] = todayET.split('-').map(Number);
+      const yestDt = new Date(y,m-1,d); yestDt.setDate(yestDt.getDate()-1);
+      const yesterdayET = `${yestDt.getFullYear()}-${String(yestDt.getMonth()+1).padStart(2,'0')}-${String(yestDt.getDate()).padStart(2,'0')}`;
+      if(lsd !== todayET && lsd !== yesterdayET) return 0;
+      return cs;
     }catch(e){ return 0; }
   }
 
