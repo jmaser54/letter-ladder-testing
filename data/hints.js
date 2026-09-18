@@ -1783,5 +1783,141 @@ const HINTS_SCHEDULE = {
       "final": "fornicate",
       "solution": ["anti","antic","action","faction","fraction","fornicate"]
     }
+  },
+  "2026-09-18": {
+    "easy": {
+      "start": "no",
+      "final": "shone",
+      "solution": ["no","one","nose","shone"]
+    },
+    "medium": {
+      "start": "can",
+      "final": "congeal",
+      "solution": ["can","cane","lance","glance","congeal"]
+    },
+    "hard": {
+      "start": "ear",
+      "final": "visceral",
+      "solution": ["ear","real","clear","eclair","eclairs","visceral"]
+    }
+  },
+  "2026-09-19": {
+    "easy": {
+      "start": "us",
+      "final": "curse",
+      "solution": ["us","use","sure","curse"]
+    },
+    "medium": {
+      "start": "ore",
+      "final": "clovers",
+      "solution": ["ore","sore","loser","solver","clovers"]
+    },
+    "hard": {
+      "start": "dues",
+      "final": "recused",
+      "solution": ["dues","suede","reused","recused"]
+    }
+  },
+  "2026-09-20": {
+    "easy": {
+      "start": "me",
+      "final": "ramen",
+      "solution": ["me","men","mane","ramen"]
+    },
+    "medium": {
+      "start": "ay",
+      "final": "ramify",
+      "solution": ["ay","ray","airy","fairy","ramify"]
+    },
+    "hard": {
+      "start": "ma",
+      "final": "rampant",
+      "solution": ["ma","man","mana","manta","mantra","rampant"]
+    }
+  },
+  "2026-09-21": {
+    "easy": {
+      "start": "go",
+      "final": "gloom",
+      "solution": ["go","log","logo","gloom"]
+    },
+    "medium": {
+      "start": "us",
+      "final": "insure",
+      "solution": ["us","use","ruse","runes","insure"]
+    },
+    "hard": {
+      "start": "asp",
+      "final": "pulsated",
+      "solution": ["asp","spat","spate","staple","stapled","pulsated"]
+    }
+  },
+  "2026-09-22": {
+    "easy": {
+      "start": "or",
+      "final": "world",
+      "solution": ["or","rod","word","world"]
+    },
+    "medium": {
+      "start": "map",
+      "final": "primate",
+      "solution": ["map","ramp","tramp","tamper","primate"]
+    },
+    "hard": {
+      "start": "aft",
+      "final": "defaults",
+      "solution": ["aft","flat","fault","faults","sulfate","defaults"]
+    }
+  },
+  "2026-09-23": {
+    "easy": {
+      "start": "as",
+      "final": "nasty",
+      "solution": ["as","sat","ants","nasty"]
+    },
+    "medium": {
+      "start": "rat",
+      "final": "nastier",
+      "solution": ["rat","rant","train","trains","nastier"]
+    },
+    "hard": {
+      "start": "nag",
+      "final": "restraining",
+      "solution": ["nag","gain","grain","airing","ingrain","training","retaining","retraining","restraining"]
+    }
+  },
+  "2026-09-24": {
+    "easy": {
+      "start": "do",
+      "final": "loved",
+      "solution": ["do","doe","dove","loved"]
+    },
+    "medium": {
+      "start": "is",
+      "final": "bruised",
+      "solution": ["is","sir","rids","rides","brides","bruised"]
+    },
+    "hard": {
+      "start": "id",
+      "final": "candied",
+      "solution": ["id","aid","acid","canid","candid","candied"]
+    }
+  },
+  "2026-09-25": {
+    "easy": {
+      "start": "in",
+      "final": "glint",
+      "solution": ["in","tin","lint","glint"]
+    },
+    "medium": {
+      "start": "dig",
+      "final": "unsigned",
+      "solution": ["dig","digs","dings","singed","sending","unsigned"]
+    },
+    "hard": {
+      "start": "ad",
+      "final": "demeanor",
+      "solution": ["ad","rad","dear","dream","remand","renamed","demeanor"]
+    }
   }
 };

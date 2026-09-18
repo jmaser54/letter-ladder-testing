@@ -741,5 +741,45 @@ const PUZZLE_SCHEDULE = {
       "start": "anti",
       "final": "fornicate"
     }
+  },
+  "2026-09-18": {
+    "easy": { "start": "no", "final": "shone" },
+    "medium": { "start": "can", "final": "congeal" },
+    "hard": { "start": "ear", "final": "visceral" }
+  },
+  "2026-09-19": {
+    "easy": { "start": "us", "final": "curse" },
+    "medium": { "start": "ore", "final": "clovers" },
+    "hard": { "start": "dues", "final": "recused" }
+  },
+  "2026-09-20": {
+    "easy": { "start": "me", "final": "ramen" },
+    "medium": { "start": "ay", "final": "ramify" },
+    "hard": { "start": "ma", "final": "rampant" }
+  },
+  "2026-09-21": {
+    "easy": { "start": "go", "final": "gloom" },
+    "medium": { "start": "us", "final": "insure" },
+    "hard": { "start": "asp", "final": "pulsated" }
+  },
+  "2026-09-22": {
+    "easy": { "start": "or", "final": "world" },
+    "medium": { "start": "map", "final": "primate" },
+    "hard": { "start": "aft", "final": "defaults" }
+  },
+  "2026-09-23": {
+    "easy": { "start": "as", "final": "nasty" },
+    "medium": { "start": "rat", "final": "nastier" },
+    "hard": { "start": "nag", "final": "restraining" }
+  },
+  "2026-09-24": {
+    "easy": { "start": "do", "final": "loved" },
+    "medium": { "start": "is", "final": "bruised" },
+    "hard": { "start": "id", "final": "candied" }
+  },
+  "2026-09-25": {
+    "easy": { "start": "in", "final": "glint" },
+    "medium": { "start": "dig", "final": "unsigned" },
+    "hard": { "start": "ad", "final": "demeanor" }
   }
 };
