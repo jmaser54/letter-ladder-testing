@@ -248,6 +248,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
 
   footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
+  .example-ladders{
+    display: flex; justify-content: center; gap: 28px;
+    margin: 28px auto 20px; padding: 0 16px; max-width: 480px;
+  }
+  .example-ladder{
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .ex-word{
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 0.82rem; color: var(--rung);
+    opacity: 0.55; letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  @media(max-width: 319px){
+    .example-ladders{ flex-direction: column; align-items: center; gap: 20px; }
+  }
   footer a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation; }
   footer a:hover{ color: var(--amber); border-color: var(--amber); }
   .footer-attribution{ font-size: 0.72rem; line-height: 1.7; opacity: 0.75; margin-bottom: 10px; }
@@ -290,6 +306,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
   </main>
+
+  <div class="example-ladders">
+    <div class="example-ladder">
+      <div class="ex-word">As</div>
+      <div class="ex-word">Say</div>
+      <div class="ex-word">Easy</div>
+      <div class="ex-word">Years</div>
+    </div>
+    <div class="example-ladder">
+      <div class="ex-word">Dime</div>
+      <div class="ex-word">Mimed</div>
+      <div class="ex-word">Medium</div>
+      <div class="ex-word">Dummies</div>
+    </div>
+    <div class="example-ladder">
+      <div class="ex-word">Ad</div>
+      <div class="ex-word">Had</div>
+      <div class="ex-word">Head</div>
+      <div class="ex-word">Heard</div>
+      <div class="ex-word">Shared</div>
+      <div class="ex-word">Trashed</div>
+      <div class="ex-word">Thrashed</div>
+    </div>
+  </div>
 
   <footer>
     <div class="footer-nav">
