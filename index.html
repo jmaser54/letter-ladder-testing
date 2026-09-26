@@ -252,7 +252,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; justify-content: center;
     margin: 16px auto 32px; padding: 14px 18px;
     max-width: 460px;
-    background: #142132;
     border: 1px solid rgba(232,163,61,0.35);
     border-radius: 14px;
   }
@@ -272,6 +271,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     text-align: center; white-space: nowrap;
   }
   .ex-rung.ex-anchor{ background: var(--amber); }
+  .ex-rung.ex-highlight{ background: var(--amber); box-shadow: 0 0 0 2px rgba(255,255,255,0.45) inset; }
   @media(max-width: 319px){
     .example-ladders{ flex-direction: column; align-items: center; }
   }
@@ -323,18 +323,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="example-ladder">
         <div class="ex-rung ex-anchor">As</div>
         <div class="ex-rung">Say</div>
-        <div class="ex-rung">Easy</div>
+        <div class="ex-rung ex-highlight">Easy</div>
         <div class="ex-rung ex-anchor">Years</div>
       </div>
       <div class="example-ladder">
         <div class="ex-rung ex-anchor">Mid</div>
         <div class="ex-rung">Dime</div>
         <div class="ex-rung">Mimed</div>
-        <div class="ex-rung">Medium</div>
+        <div class="ex-rung ex-highlight">Medium</div>
         <div class="ex-rung ex-anchor">Dummies</div>
       </div>
       <div class="example-ladder">
         <div class="ex-rung ex-anchor">Had</div>
+        <div class="ex-rung ex-highlight">Hard</div>
         <div class="ex-rung">Head</div>
         <div class="ex-rung">Heard</div>
         <div class="ex-rung">Shared</div>
