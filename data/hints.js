@@ -1919,5 +1919,47 @@ const HINTS_SCHEDULE = {
       "final": "demeanor",
       "solution": ["ad","rad","dear","dream","remand","renamed","demeanor"]
     }
+  },
+  "2026-09-26": {
+    "easy": {
+      "start": "at", "final": "coast",
+      "solution": ["at","cat","coat","coast"]
+    },
+    "medium": {
+      "start": "ear", "final": "brazen",
+      "solution": ["ear","raze","zebra","brazen"]
+    },
+    "hard": {
+      "start": "ail", "final": "flamingo",
+      "solution": ["ail","nail","align","malign","flaming","flamingo"]
+    }
+  },
+  "2026-09-27": {
+    "easy": {
+      "start": "ah", "final": "watch",
+      "solution": ["ah","hat","chat","watch"]
+    },
+    "medium": {
+      "start": "be", "final": "bowler",
+      "solution": ["be","web","blew","elbow","bowler"]
+    },
+    "hard": {
+      "start": "sir", "final": "recessive",
+      "solution": ["sir","sire","rises","series","revises","services","recessive"]
+    }
+  },
+  "2026-09-28": {
+    "easy": {
+      "start": "an", "final": "bland",
+      "solution": ["an","and","band","bland"]
+    },
+    "medium": {
+      "start": "pa", "final": "placid",
+      "solution": ["pa","pad","paid","plaid","placid"]
+    },
+    "hard": {
+      "start": "roe", "final": "destroyer",
+      "solution": ["roe","sore","store","resort","restore","restored","destroyer"]
+    }
   }
 };

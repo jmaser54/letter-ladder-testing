@@ -781,5 +781,20 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "in", "final": "glint" },
     "medium": { "start": "dig", "final": "unsigned" },
     "hard": { "start": "ad", "final": "demeanor" }
+  },
+  "2026-09-26": {
+    "easy": { "start": "at", "final": "coast" },
+    "medium": { "start": "ear", "final": "brazen" },
+    "hard": { "start": "ail", "final": "flamingo" }
+  },
+  "2026-09-27": {
+    "easy": { "start": "ah", "final": "watch" },
+    "medium": { "start": "be", "final": "bowler" },
+    "hard": { "start": "sir", "final": "recessive" }
+  },
+  "2026-09-28": {
+    "easy": { "start": "an", "final": "bland" },
+    "medium": { "start": "pa", "final": "placid" },
+    "hard": { "start": "roe", "final": "destroyer" }
   }
 };
