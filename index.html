@@ -563,6 +563,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
           sessionStorage.setItem('letterladder:pendingGuestBackfill', loggedInUsername);
           overlay.remove();
+          // Pull playerStats from Firestore so the streak is available in
+          // localStorage immediately — otherwise getStreak() returns 0 because
+          // the cloud sync hasn't happened yet on this fresh session.
+          try{
+            const { getDoc: gd, getFirestore: gfs, doc: dref } =
+              await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+            const dbFs = gfs(app);
+            const uid = auth.currentUser && auth.currentUser.uid;
+            if(uid){
+              const snap2 = await gd(dref(dbFs, 'playerStats', uid));
+              if(snap2.exists()){
+                const statsKey = `letterladder:${loggedInUsername}:stats`;
+                if(!localStorage.getItem(statsKey)){
+                  localStorage.setItem(statsKey, JSON.stringify(snap2.data()));
+                }
+              }
+            }
+          }catch(e){}
           // Stay on landing page — user should see streak messaging and
           // consciously press Play to start the puzzle. Do NOT auto-navigate.
           renderAccountWidget(auth.currentUser);
