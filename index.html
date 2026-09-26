@@ -285,7 +285,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <img src="og-image.png" alt="" class="brand-logo">
     <div class="play-streak" id="play-streak"></div>
     <div class="play-buttons" id="play-buttons">
-      <!-- filled by JS based on auth state -->
+      <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
     </div>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
@@ -353,6 +353,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
     window.location.href = 'game.html';
   }
+
+  // Wire the initial Play button immediately — before Firebase Auth resolves —
+  // so the first tap always works. Defaults to untimed (correct for guests).
+  // onAuthStateChanged calls renderPlayButtons() to update once auth is known.
+  (function(){
+    const btn = document.getElementById('play-btn-initial');
+    if(btn) btn.addEventListener('click', () => goToGame('untimed'));
+  })();
 
   // ── How to Play popup ──────────────────────────────────────────────────────
   function showHowToPlay(){
