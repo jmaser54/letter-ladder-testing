@@ -2851,13 +2851,6 @@ function buildShareText(){
       const hints = getHintsUsed(tier);
       const hintStr = hints > 0 ? ` ${'💡'.repeat(hints)}` : '';
 
-      const solution = HINTS_SCHEDULE[dateKey] && HINTS_SCHEDULE[dateKey][tier]
-        ? HINTS_SCHEDULE[dateKey][tier].solution : null;
-      const arrows = solution && solution.length > 1
-        ? Array(solution.length - 1).fill('→').join(' ')
-        : '→';
-      const chain = `⬜ ${arrows} ⬜`;
-
       let timePart = '';
       if(timerChoice === 'timed'){
         const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
@@ -2866,7 +2859,7 @@ function buildShareText(){
         }
       }
 
-      lines.push(`✅ ${tierLabels[tier]} ${chain}${timePart}${hintStr}`);
+      lines.push(`✅ ${tierLabels[tier]}${timePart}${hintStr}`);
     } else {
       lines.push(`✖️ ${tierLabels[tier]}`);
     }
