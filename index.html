@@ -249,20 +249,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
   .example-ladders{
-    display: flex; justify-content: center; gap: 28px;
-    margin: 28px auto 20px; padding: 0 16px; max-width: 480px;
+    display: flex; justify-content: center; align-items: flex-start;
+    gap: 20px; margin: 24px auto 32px; padding: 0 12px; max-width: 480px;
   }
   .example-ladder{
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
   }
-  .ex-word{
+  .ex-rung{
     font-family: 'Fraunces', serif; font-weight: 600;
-    font-size: 0.82rem; color: var(--rung);
-    opacity: 0.55; letter-spacing: 0.04em;
-    white-space: nowrap;
+    font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+    background: var(--rung); color: #1B2A41;
+    height: 28px; line-height: 28px;
+    padding: 0 10px; border-radius: 7px;
+    text-align: center; white-space: nowrap;
   }
+  .ex-rung.ex-anchor{ background: var(--amber); }
   @media(max-width: 319px){
-    .example-ladders{ flex-direction: column; align-items: center; gap: 20px; }
+    .example-ladders{ flex-direction: column; align-items: center; }
   }
   footer a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation; }
   footer a:hover{ color: var(--amber); border-color: var(--amber); }
@@ -309,25 +312,25 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <div class="example-ladders">
     <div class="example-ladder">
-      <div class="ex-word">As</div>
-      <div class="ex-word">Say</div>
-      <div class="ex-word">Easy</div>
-      <div class="ex-word">Years</div>
+      <div class="ex-rung ex-anchor">As</div>
+      <div class="ex-rung">Say</div>
+      <div class="ex-rung">Easy</div>
+      <div class="ex-rung ex-anchor">Years</div>
     </div>
     <div class="example-ladder">
-      <div class="ex-word">Dime</div>
-      <div class="ex-word">Mimed</div>
-      <div class="ex-word">Medium</div>
-      <div class="ex-word">Dummies</div>
+      <div class="ex-rung ex-anchor">Dime</div>
+      <div class="ex-rung">Mimed</div>
+      <div class="ex-rung">Medium</div>
+      <div class="ex-rung ex-anchor">Dummies</div>
     </div>
     <div class="example-ladder">
-      <div class="ex-word">Ad</div>
-      <div class="ex-word">Had</div>
-      <div class="ex-word">Head</div>
-      <div class="ex-word">Heard</div>
-      <div class="ex-word">Shared</div>
-      <div class="ex-word">Trashed</div>
-      <div class="ex-word">Thrashed</div>
+      <div class="ex-rung ex-anchor">Ad</div>
+      <div class="ex-rung">Had</div>
+      <div class="ex-rung">Head</div>
+      <div class="ex-rung">Heard</div>
+      <div class="ex-rung">Shared</div>
+      <div class="ex-rung">Trashed</div>
+      <div class="ex-rung ex-anchor">Thrashed</div>
     </div>
   </div>
 
