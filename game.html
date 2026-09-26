@@ -171,7 +171,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     padding: 2px 2px;
   }
   .ladder{
-    display:flex; flex-direction:column; align-items:center; gap: var(--rung-gap, 14px);
+    display:flex; flex-direction:column; align-items:center; gap: var(--rung-gap, 10px);
     position: relative;
     padding: 10px 30px;
     margin: 0 auto;
@@ -211,7 +211,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-family:'Fraunces', serif;
     font-size: var(--rung-font, 1.35rem);
     font-weight:600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.05em;
     background: var(--rung);
     color: #1B2A41;
     height: var(--rung-height, 50px);
@@ -234,6 +234,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   input.rung-input{
     border: none;
     outline: none;
+    box-shadow: 0 0 0 2px var(--amber);
     box-sizing: border-box;
     min-width: 0;
     transform: scaleX(1.06);
@@ -245,9 +246,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
      ladder area above, a puzzle that still doesn't fully fit (rare - only
      the longest puzzles on the smallest screens) simply scrolls within its
      own little area instead of taking over the whole page. */
-  .panel.rungs-md{ --rung-font: 1.15rem; --rung-height: 44px; --rung-minw: 115px; --rung-gap: 10px; }
-  .panel.rungs-lg{ --rung-font: 1rem; --rung-height: 39px; --rung-minw: 100px; --rung-gap: 9px; }
-  .panel.rungs-xl{ --rung-font: 0.9rem; --rung-height: 35px; --rung-minw: 88px; --rung-gap: 8px; }
+  .panel.rungs-md{ --rung-font: 1.15rem; --rung-height: 44px; --rung-minw: 115px; --rung-gap: 6px; }
+  .panel.rungs-lg{ --rung-font: 1rem; --rung-height: 39px; --rung-minw: 100px; --rung-gap: 5px; }
+  .panel.rungs-xl{ --rung-font: 0.9rem; --rung-height: 35px; --rung-minw: 88px; --rung-gap: 4px; }
 
 
   button{
@@ -3220,7 +3221,7 @@ function render(focusInput = false, pendingErrors = null){
     'rungs-xl': { fontPx: 14.4, minWidthPx: 88  },
   };
   const tierCfg = TIER_CONFIG[sizeTier];
-  const letterSpacingPx = tierCfg.fontPx * 0.14; // matches the CSS letter-spacing
+  const letterSpacingPx = tierCfg.fontPx * 0.05; // matches the CSS letter-spacing
   const computedWidthPx = Math.round(Math.max(
     tierCfg.minWidthPx,
     maxWordLen * tierCfg.fontPx * 0.6 + (maxWordLen - 1) * letterSpacingPx + tierCfg.fontPx * 3.4
