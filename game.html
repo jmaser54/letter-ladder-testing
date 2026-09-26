@@ -3000,7 +3000,7 @@ function triggerLadderClimbCelebration(finalWord){
   // full word reappears in the box a short pause after they've all
   // exited, right before the usual winning banner shows.
   const anchorEl = document.getElementById('final-word-rung');
-  if(!anchorEl){ showSummitBanner(); return; } // safety fallback
+  if(!anchorEl){ if(!isArchiveMode) showSummitBanner(); return; } // safety fallback
 
   const rect = anchorEl.getBoundingClientRect();
   const originalText = anchorEl.textContent;
@@ -3062,7 +3062,7 @@ function triggerLadderClimbCelebration(finalWord){
   setTimeout(()=>{
     overlay.remove();
     anchorEl.textContent = originalText;
-    showSummitBanner();
+    if(!isArchiveMode) showSummitBanner();
   }, exitDuration + pauseAfterExit);
 }
 
