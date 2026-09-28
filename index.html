@@ -131,21 +131,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     padding-top: 50px;
     padding-bottom: 40px;
   }
-  .brand-logo{
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: block;
-    margin-bottom: 50px;
-  }
   .play-streak{
     font-family: 'Fraunces', serif;
     font-weight: 700;
     font-size: 1.089rem;
     color: var(--amber);
     text-align: center;
-    margin-top: -26px;
+    margin-top: 0;
     margin-bottom: 14px;
   }
   .play-streak:empty{
@@ -251,9 +243,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
   .example-ladders-panel{
     display: flex; justify-content: center;
-    margin: 6px auto 48px; padding: 14px 18px;
+    margin: 0 auto 36px; padding: 14px 18px;
     max-width: 460px;
     border-radius: 14px;
+  }
+  .brand-logo{
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: block;
+    margin-top: 36px;
   }
   .example-ladders{
     display: flex; justify-content: center; align-items: flex-end;
@@ -292,7 +292,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .brand-row{ font-size: 2.26rem; } /* 2.66rem × 0.85 — proportional scale-down */
     .brand-logo{ width: 64px; height: 64px; }
     .landing-body{ padding-top: 48px; }
-    .brand-logo{ margin-bottom: 30px; }
+    .brand-logo{ margin-top: 20px; }
   }
 </style>
 </head>
@@ -314,40 +314,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </header>
 
   <main class="landing-body">
-    <img src="og-image.png" alt="" class="brand-logo">
+    <div class="example-ladders-panel">
+      <div class="example-ladders">
+        <div class="example-ladder ex-ladder-easy">
+          <div class="ex-rung ex-anchor">As</div>
+          <div class="ex-rung">Say</div>
+          <div class="ex-rung ex-highlight">Easy</div>
+          <div class="ex-rung ex-anchor">Years</div>
+        </div>
+        <div class="example-ladder ex-ladder-medium">
+          <div class="ex-rung ex-anchor">Mid</div>
+          <div class="ex-rung">Dime</div>
+          <div class="ex-rung">Mimed</div>
+          <div class="ex-rung ex-highlight">Medium</div>
+          <div class="ex-rung ex-anchor">Dummies</div>
+        </div>
+        <div class="example-ladder ex-ladder-hard">
+          <div class="ex-rung ex-anchor">Had</div>
+          <div class="ex-rung ex-highlight">Hard</div>
+          <div class="ex-rung ex-empty"></div>
+          <div class="ex-rung ex-empty"></div>
+          <div class="ex-rung">Trashed</div>
+          <div class="ex-rung ex-anchor">Thrashed</div>
+        </div>
+      </div>
+    </div>
     <div class="play-streak" id="play-streak"></div>
     <div class="play-buttons" id="play-buttons">
       <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
     </div>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
+    <img src="og-image.png" alt="" class="brand-logo">
   </main>
-
-  <div class="example-ladders-panel">
-    <div class="example-ladders">
-      <div class="example-ladder ex-ladder-easy">
-        <div class="ex-rung ex-anchor">As</div>
-        <div class="ex-rung">Say</div>
-        <div class="ex-rung ex-highlight">Easy</div>
-        <div class="ex-rung ex-anchor">Years</div>
-      </div>
-      <div class="example-ladder ex-ladder-medium">
-        <div class="ex-rung ex-anchor">Mid</div>
-        <div class="ex-rung">Dime</div>
-        <div class="ex-rung">Mimed</div>
-        <div class="ex-rung ex-highlight">Medium</div>
-        <div class="ex-rung ex-anchor">Dummies</div>
-      </div>
-      <div class="example-ladder ex-ladder-hard">
-        <div class="ex-rung ex-anchor">Had</div>
-        <div class="ex-rung ex-highlight">Hard</div>
-        <div class="ex-rung ex-empty"></div>
-        <div class="ex-rung ex-empty"></div>
-        <div class="ex-rung">Trashed</div>
-        <div class="ex-rung ex-anchor">Thrashed</div>
-      </div>
-    </div>
-  </div>
 
   <footer>
     <div class="footer-nav">
