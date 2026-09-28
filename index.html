@@ -50,7 +50,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   header{ position: relative; text-align:center; flex-shrink:0; padding-bottom: 0; margin-bottom: 0; }
   .brand-row{
     position: relative;
-    font-size: 2.66rem; /* 3.125rem × 0.85 ≈ 2.66rem — 15% smaller than before */
+    font-size: 1.73rem;
   }
   .brand-title-row{
     position: relative;
@@ -59,7 +59,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     justify-content: center;
     width: 100%;
     min-height: 44px;
-    padding: 0 48px; /* keeps title text clear of the 32px icons + ~16px gap each side */
+    padding: 0 52px; /* keeps title clear of icons; slightly more since title is narrower */
   }
   .brand{
     font-family:'Fraunces', serif;
@@ -68,11 +68,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     letter-spacing: -0.01em;
     margin: 0;
     line-height: 1.15;
-    /* Lock to two lines at all screen widths by constraining the max-width
-       to just under the width of "Letter Ladder" on one line at this font
-       size. "Letter" and "Ladder" are similar lengths so they split cleanly. */
-    max-width: 5.5ch; /* ~5.5 characters wide forces the break after "Letter" */
-    word-break: normal;
+    white-space: nowrap; /* always single line at this smaller size */
   }
   .brand .rung-i{ color: var(--ink); }
   .account-widget{
@@ -128,7 +124,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 45px;
+    padding-top: 28px;
     padding-bottom: 40px;
   }
   .brand-logo{
@@ -289,7 +285,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .footer-sep{ color: var(--ink-dim); opacity: 0.5; }
 
   @media(max-width:400px){
-    .brand-row{ font-size: 2.26rem; } /* 2.66rem × 0.85 — proportional scale-down */
+    .brand-row{ font-size: 1.47rem; }
     .brand-logo{ width: 64px; height: 64px; }
     .landing-body{ padding-top: 48px; }
     .brand-logo{ margin-bottom: 30px; }
