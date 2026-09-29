@@ -406,6 +406,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const attrText = DATE_ATTRIBUTIONS[todayKey] || '';
   attrEl.innerHTML = attrText.replace(/\n/g, '<br>');
 
+  // During the NHL event (Sep 29–Oct 3) the two-line attribution makes the
+  // main content taller, so push the ladder panel down to rebalance the gap.
+  const NHL_DATES = ['2026-09-29','2026-09-30','2026-10-01','2026-10-02','2026-10-03'];
+  if(NHL_DATES.includes(todayKey)){
+    const panel = document.querySelector('.example-ladders-panel');
+    if(panel) panel.style.marginTop = '28px';
+  }
+
   // ── navigation helpers ─────────────────────────────────────────────────────
   function goToGame(timerChoice){
     // Set the timer preference before navigating so index.html picks it up
