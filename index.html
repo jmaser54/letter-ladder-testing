@@ -153,7 +153,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     align-items: center;
     gap: 12px;
     width: 100%;
-    max-width: 168px;
+    max-width: 229px;
   }
   .play-btn-full{
     width: 100%;
@@ -395,10 +395,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   const DATE_ATTRIBUTIONS = {
     '2026-09-08': "Today's EASY submitted by Redditor Ray2024",
     '2026-09-26': "Today's HARD submitted by Aly M",
+    '2026-09-29': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-09-30': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-10-01': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-10-02': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-10-03': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
   };
   const todayKey = easternDate().toLocaleDateString('en-CA'); // YYYY-MM-DD in Eastern time
   const attrEl = document.getElementById('play-date-attribution');
-  attrEl.textContent = DATE_ATTRIBUTIONS[todayKey] || '';
+  const attrText = DATE_ATTRIBUTIONS[todayKey] || '';
+  attrEl.innerHTML = attrText.replace(/\n/g, '<br>');
 
   // ── navigation helpers ─────────────────────────────────────────────────────
   function goToGame(timerChoice){
