@@ -364,5 +364,50 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "la", "final": "glaze" },
     "medium": { "start": "dip", "final": "despair" },
     "hard": { "start": "pet", "final": "pottery" }
+  },
+  "2026-10-08": {
+    "easy": { "start": "in", "final": "grind" },
+    "medium": { "start": "sequin", "final": "equations" },
+    "hard": { "start": "pet", "final": "enterprise" }
+  },
+  "2026-10-09": {
+    "easy": { "start": "am", "final": "marry" },
+    "medium": { "start": "lace", "final": "cerebral" },
+    "hard": { "start": "ore", "final": "spectator" }
+  },
+  "2026-10-10": {
+    "easy": { "start": "he", "final": "where" },
+    "medium": { "start": "nor", "final": "dormant" },
+    "hard": { "start": "set", "final": "frigates" }
+  },
+  "2026-10-11": {
+    "easy": { "start": "be", "final": "bread" },
+    "medium": { "start": "ice", "final": "verdict" },
+    "hard": { "start": "us", "final": "suppress" }
+  },
+  "2026-10-12": {
+    "easy": { "start": "do", "final": "wound" },
+    "medium": { "start": "gee", "final": "genesis" },
+    "hard": { "start": "pi", "final": "decipher" }
+  },
+  "2026-10-13": {
+    "easy": { "start": "to", "final": "sport" },
+    "medium": { "start": "gee", "final": "regency" },
+    "hard": { "start": "cost", "final": "costliest" }
+  },
+  "2026-10-14": {
+    "easy": { "start": "ah", "final": "thank" },
+    "medium": { "start": "lit", "final": "flitter" },
+    "hard": { "start": "got", "final": "hangout" }
+  },
+  "2026-10-15": {
+    "easy": { "start": "nod", "final": "rodent" },
+    "medium": { "start": "ices", "final": "compilers" },
+    "hard": { "start": "din", "final": "sedition" }
+  },
+  "2026-10-16": {
+    "easy": { "start": "so", "final": "gowns" },
+    "medium": { "start": "if", "final": "freight" },
+    "hard": { "start": "red", "final": "leisured" }
   }
 };

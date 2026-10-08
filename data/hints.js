@@ -367,5 +367,50 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "la", "final": "glaze", "solution": ["la","lag","gale","glaze"] },
     "medium": { "start": "dip", "final": "despair", "solution": ["dip","drip","rapid","paired","despair"] },
     "hard": { "start": "pet", "final": "pottery", "solution": ["pet","poet","trope","poetry","pottery"] }
+  },
+  "2026-10-08": {
+    "easy": { "start": "in", "final": "grind", "solution": ["in","gin","ding","grind"] },
+    "medium": { "start": "sequin", "final": "equations", "solution": ["sequin","inquest","question","equations"] },
+    "hard": { "start": "pet", "final": "enterprise", "solution": ["pet","pest","steep","pester","present","pretense","represent","enterprise"] }
+  },
+  "2026-10-09": {
+    "easy": { "start": "am", "final": "marry", "solution": ["am","may","army","marry"] },
+    "medium": { "start": "lace", "final": "cerebral", "solution": ["lace","clear","cereal","clearer","cerebral"] },
+    "hard": { "start": "ore", "final": "spectator", "solution": ["ore","rope","spore","poster","spotter","prostate","spectator"] }
+  },
+  "2026-10-10": {
+    "easy": { "start": "he", "final": "where", "solution": ["he","her","here","where"] },
+    "medium": { "start": "nor", "final": "dormant", "solution": ["nor","morn","manor","random","dormant"] },
+    "hard": { "start": "set", "final": "frigates", "solution": ["set","gets","stage","grates","triages","frigates"] }
+  },
+  "2026-10-11": {
+    "easy": { "start": "be", "final": "bread", "solution": ["be","bed","bead","bread"] },
+    "medium": { "start": "ice", "final": "verdict", "solution": ["ice","cite","cited","credit","verdict"] },
+    "hard": { "start": "us", "final": "suppress", "solution": ["us","use","sure","super","purses","suppers","suppress"] }
+  },
+  "2026-10-12": {
+    "easy": { "start": "do", "final": "wound", "solution": ["do","don","down","wound"] },
+    "medium": { "start": "gee", "final": "genesis", "solution": ["gee","gene","genes","seeing","genesis"] },
+    "hard": { "start": "pi", "final": "decipher", "solution": ["pi","pie","pier","price","recipe","pierced","decipher"] }
+  },
+  "2026-10-13": {
+    "easy": { "start": "to", "final": "sport", "solution": ["to","pot","spot","sport"] },
+    "medium": { "start": "gee", "final": "regency", "solution": ["gee","gene","green","energy","regency"] },
+    "hard": { "start": "cost", "final": "costliest", "solution": ["cost","colts","closet","closest","solstice","costliest"] }
+  },
+  "2026-10-14": {
+    "easy": { "start": "ah", "final": "thank", "solution": ["ah","hat","than","thank"] },
+    "medium": { "start": "lit", "final": "flitter", "solution": ["lit","tile","liter","litter","flitter"] },
+    "hard": { "start": "got", "final": "hangout", "solution": ["got","goat","tango","nougat","hangout"] }
+  },
+  "2026-10-15": {
+    "easy": { "start": "nod", "final": "rodent", "solution": ["nod","done","drone","rodent"] },
+    "medium": { "start": "ices", "final": "compilers", "solution": ["ices","spice","splice","polices","complies","compilers"] },
+    "hard": { "start": "din", "final": "sedition", "solution": ["din","dine","indie","iodine","edition","sedition"] }
+  },
+  "2026-10-16": {
+    "easy": { "start": "so", "final": "gowns", "solution": ["so","son","song","gowns"] },
+    "medium": { "start": "if", "final": "freight", "solution": ["if","fit","gift","fight","fright","freight"] },
+    "hard": { "start": "red", "final": "leisured", "solution": ["red","reed","reeds","reside","residue","leisured"] }
   }
 };
