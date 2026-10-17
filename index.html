@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XVRY6X34NX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XVRY6X34NX');
-</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-K8X9ZNZP');</script>
+<!-- End Google Tag Manager -->
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-visual">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Letter Ladder — a daily word puzzle game. Grow words one letter at a time.">
 <title>Letter Ladder</title>
+<link rel="icon" href="og-image.png">
+<link rel="apple-touch-icon" href="og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #1B2A41;
@@ -39,145 +41,126 @@
   }
   .wrap{
     max-width: 560px; margin: 0 auto;
-    min-height: 100vh;
+    min-height: 100svh; /* svh = small viewport height, handles mobile browser chrome correctly */
     display: flex;
     flex-direction: column;
     padding: 20px 16px 12px;
   }
 
-  header{ text-align:center; margin-bottom: 12px; flex-shrink:0; }
+  header{ position: relative; text-align:center; flex-shrink:0; padding-bottom: 0; margin-bottom: 0; }
+  .brand-row{
+    position: relative;
+    font-size: 1.82rem;
+  }
+  .brand-title-row{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 52px; /* keeps title clear of icons; slightly more since title is narrower */
+  }
   .brand{
     font-family:'Fraunces', serif;
     font-weight:700;
-    font-size: 2rem;
+    font-size: inherit;
     letter-spacing: -0.01em;
     margin: 0;
+    line-height: 1.15;
+    white-space: nowrap; /* always single line at this smaller size */
   }
-  .brand .rung-i{ color: var(--amber); }
-  .tagline{ color: var(--ink-dim); font-size: 0.85rem; margin-top: 4px; }
-  .top-links{
-    display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px; margin-top:6px; font-size: 0.8rem;
+  .brand .rung-i{ color: var(--ink); }
+  .account-widget{
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center;
   }
-  .top-links a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); }
-  .top-links a:hover{ color: var(--amber); border-color: var(--amber); }
+  .howto-icon-btn{
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
+    background: none; color: var(--ink-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1rem;
+    touch-action: manipulation; padding: 0; line-height: 1;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .howto-icon-btn:hover{ color: var(--amber); border-color: var(--amber); }
 
-  .date-row{
-    text-align:center; color: var(--ink-dim); font-size: 0.8rem; margin-bottom: 10px;
-    letter-spacing: 0.03em; text-transform: uppercase; flex-shrink:0;
+  /* Account icon and dropdown — identical to game.html */
+  .account-icon-btn{
+    width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation; padding: 0;
   }
+  .account-icon-btn.has-account{
+    background: var(--amber); color: #1B2A41;
+    font-family:'Fraunces', serif; font-weight:700; font-size: 1rem;
+  }
+  .account-icon-btn.is-guest{
+    background: rgba(245,239,224,0.12); color: var(--ink-dim);
+  }
+  .account-icon-btn.is-guest svg{ width: 18px; height: 18px; }
+  .account-dropdown{
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: var(--bg-panel); border-radius: 12px; padding: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45); min-width: 180px; z-index: 200;
+    text-align: left;
+  }
+  .account-dropdown-username{
+    font-weight: 700; font-size: 0.95rem; color: var(--ink);
+    padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(245,239,224,0.1);
+    word-break: break-word;
+  }
+  .account-dropdown a, .account-dropdown button.dropdown-item{
+    display: block; color: var(--ink-dim); text-decoration:none; font-size: 0.88rem;
+    padding: 6px 0; touch-action: manipulation;
+    background: none; border: none; cursor: pointer; width: 100%; text-align: left;
+    font-family: inherit;
+  }
+  .account-dropdown a:hover, .account-dropdown button.dropdown-item:hover{ color: var(--amber); }
 
-  .tabs{
-    display:flex; background: rgba(0,0,0,0.2); border-radius: 999px; padding: 4px; margin-bottom: 14px;
-    flex-shrink:0;
-  }
-  .tab{
-    flex:1; text-align:center; padding: 9px 0; border-radius: 999px; cursor:pointer;
-    font-weight:600; font-size:0.9rem; color: var(--ink-dim); transition: all 0.15s ease;
-    user-select:none;
-  }
-  .tab.active{ background: var(--amber); color: #1B2A41; }
-  .tab .dot{ display:none; }
-
-  .panel{
-    background: var(--bg-panel);
-    border-radius: 18px;
-    padding: 18px 18px 16px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  .landing-body{
+    flex: 1;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    padding-top: 32px;
+    padding-bottom: 22px;
   }
-
-  .level-label{
-    text-align:center; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.12em;
-    color: var(--amber); font-weight:700; margin-bottom: 10px; flex-shrink:0;
+  .brand-logo{
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: block;
+    margin-bottom: 50px;
   }
-
-  .ladder-scroll{
-    /* No longer its own internal scroll region - the whole page scrolls
-       naturally now via the browser's own scrollbar, which handles the
-       on-screen keyboard correctly without any custom viewport math. */
-    padding: 2px 2px;
-  }
-  .ladder{
-    display:flex; flex-direction:column; align-items:center; gap: var(--rung-gap, 10px);
-    position: relative;
-    padding: 10px 30px;
-    margin: 0 auto;
-    width: -webkit-fit-content;
-    width: fit-content;
-  }
-
-  @keyframes fade-away{
-    0%{ opacity:1; }
-    100%{ opacity:0; }
-  }
-  .ladder.fading-out{
-    animation: fade-away 0.92s ease-in forwards;
-  }
-
-  .rung-row{
-    display:grid; grid-template-columns: 22px 1fr 22px; align-items:center; column-gap:12px; width:100%;
-    position: relative;
-  }
-  .rung-row > .rung{ justify-self: center; }
-  .rung-count{ width: 22px; text-align:right; color: var(--ink-dim); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
-  .delete-guess-btn{
-    width: 24px; height: 38px;
-    border: none; background: none;
-    color: #FF5A45;
-    font-size: 1.9rem;
+  .play-streak{
+    font-family: 'Fraunces', serif;
     font-weight: 700;
-    line-height: 1;
-    cursor: pointer;
-    display: flex; align-items:center; justify-content:center;
-    padding: 0;
-    transition: transform 0.1s ease, filter 0.1s ease;
+    font-size: 1.111rem;
+    color: var(--amber);
+    text-align: center;
+    margin-top: -26px;
+    margin-bottom: 14px;
   }
-  .delete-guess-btn:hover{ filter: brightness(1.15); }
-  .delete-guess-btn:active{ transform: scale(0.85); }
-  .rung{
-    font-family:'Fraunces', serif;
-    font-size: var(--rung-font, 1.35rem);
-    font-weight:600;
-    letter-spacing: 0.05em;
-    background: var(--rung);
-    color: #1B2A41;
-    height: var(--rung-height, 50px);
-    line-height: var(--rung-height, 50px);
-    padding: 0 18px;
-    border-radius: 10px;
-    text-align:center;
-    text-transform: uppercase;
-    box-sizing: border-box;
+  .play-streak:empty{
+    display: none;
   }
-  .rung.empty{
-    background: var(--rung-empty);
-    color: var(--ink-dim);
-    border: 1.5px dashed rgba(245,239,224,0.25);
+  .play-buttons{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 229px;
   }
-  .rung.anchor{ background: var(--amber); }
-  .rung.clickable{ cursor: pointer; transition: filter 0.1s ease, transform 0.1s ease; }
-  .rung.clickable:hover{ filter: brightness(1.08); }
-  .rung.clickable:active{ transform: scale(0.97); }
-  input.rung-input{
-    border: none;
-    outline: none;
-    box-shadow: 0 0 0 2px var(--amber);
-    box-sizing: border-box;
-    min-width: 0;
+  .play-btn-full{
+    width: 100%;
+    font-size: 1.116rem;
+    font-weight: 700;
+    padding: 13px 18px;
   }
-
-  /* Ladders get taller the more rungs a puzzle has, so these tiers shrink
-     things down automatically to keep long puzzles more compact - short
-     puzzles stay at full comfortable size. Combined with the scrollable
-     ladder area above, a puzzle that still doesn't fully fit (rare - only
-     the longest puzzles on the smallest screens) simply scrolls within its
-     own little area instead of taking over the whole page. */
-  .panel.rungs-md{ --rung-font: 1.15rem; --rung-height: 44px; --rung-minw: 115px; --rung-gap: 6px; }
-  .panel.rungs-lg{ --rung-font: 1rem; --rung-height: 39px; --rung-minw: 100px; --rung-gap: 5px; }
-  .panel.rungs-xl{ --rung-font: 0.9rem; --rung-height: 35px; --rung-minw: 88px; --rung-gap: 4px; }
-
-
   button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:0.95rem;
     border:none; border-radius:10px; cursor:pointer; padding: 12px 18px;
@@ -187,1189 +170,672 @@
   button:active{ transform: scale(0.97); }
   .btn-primary{ background: var(--amber); color:#1B2A41; }
   .btn-ghost{ background: rgba(245,239,224,0.08); color: var(--ink); }
-  #hint-btn{ display:inline-flex; align-items:center; justify-content:center; padding: 10px 14px; }
 
-  .feedback{ margin-top:12px; text-align:center; font-weight:600; min-height: 24px; flex-shrink:0; }
-  .feedback.win, .feedback.ok{ text-align:center; }
-  .error-list{ list-style:none; margin: 12px 0 0; padding:0; text-align:left; display:inline-block; }
-  .error-list li{ position:relative; padding-left:18px; margin-bottom:6px; font-weight:600; color: var(--red); font-size:0.9rem; }
-  .error-list li::before{ content:"●"; color: var(--red); position:absolute; left:0; font-size:0.6rem; top:5px; }
-  .error-list-wrap{ display:flex; justify-content:center; }
-  .feedback.win{ color: var(--green); }
-  .feedback.error{ color: var(--red); }
-  .feedback.ok{ color: var(--ink-dim); font-weight:500; }
-  .details{ margin-top:4px; text-align:center; font-size:0.8rem; color: var(--red); font-style:italic; }
-
-  .letter-bank{
-    margin-top: 14px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-  .bank-tiles{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    max-width: 100%;
-  }
-  .bank-tile{
-    width: 48px; height: 48px;
-    border: none; border-radius: 10px;
-    background: var(--amber);
-    color: #1B2A41;
-    font-family: 'Fraunces', serif;
-    font-weight: 700;
-    font-size: 1.3rem;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    line-height: 1;
-    cursor: pointer;
-    transition: transform 0.1s ease, opacity 0.15s ease;
-  }
-  .bank-tile:active{ transform: scale(0.9); }
-  .bank-tile.used{
-    background: rgba(245,239,224,0.08);
+  .play-date{
     color: var(--ink-dim);
-    opacity: 0.4;
-    cursor: default;
-  }
-  .bank-controls{
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-    margin-top: 16px;
-  }
-  .bank-ctrl-btn{
-    width: 40px; height: 40px;
-    border: none; border-radius: 10px;
-    background: rgba(245,239,224,0.08);
-    color: var(--ink);
-    font-size: 1.35rem;
-    display: flex; align-items:center; justify-content:center;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-  }
-  .bank-ctrl-btn:active{ transform: scale(0.92); }
-  .bank-ctrl-btn.kb-on{ background: var(--amber); color: #1B2A41; }
-  .bank-ctrl-btn.bank-submit-btn{ background: var(--amber); color: #1B2A41; }
-  .bank-ctrl-btn.bank-group-spacer{ margin-left: 14px; }
-
-  .actions-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:10px; flex-shrink:0; }
-  .hint-display{
-    text-align:center; margin-top:10px; font-size:0.85rem; color: var(--ink-dim);
-    font-style:italic; flex-shrink:0; min-height: 0;
-  }
-  .hint-display .hint-letters{ color: var(--amber); font-style:normal; font-weight:600; letter-spacing:0.04em; }
-  .share-status{ text-align:center; margin-top:8px; font-size:0.8rem; color: var(--blue); font-weight:600; flex-shrink:0; }
-
-  .empty-state{ text-align:center; color: var(--ink-dim); padding: 30px 0; }
-
-  .confirm-overlay{
-    position: fixed; inset: 0; background: rgba(10,16,26,0.6);
-    display: flex; align-items:center; justify-content:center;
-    z-index: 1000; padding: 20px;
-  }
-  .confirm-card{
-    background: var(--bg-panel); border-radius: 16px; padding: 24px 22px;
-    max-width: 340px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  }
-  .confirm-message{ font-size: 1rem; margin-bottom: 20px; text-align:center; }
-  .confirm-actions{ display:flex; gap:10px; justify-content:center; }
-  .confirm-actions button{ flex:1; }
-
-  footer{ text-align:center; margin-top: 8px; color: var(--ink-dim); font-size: 0.7rem; flex-shrink:0; }
-
-  @media (max-width: 420px){
-    .rung{ min-width: calc(var(--rung-minw, 140px) * 0.8); }
-    .brand{ font-size: 1.7rem; }
-  }
-
-  .confetti-piece{
-    position: fixed;
-    top: -12px;
-    width: 8px;
-    height: 14px;
-    opacity: 0.95;
-    pointer-events: none;
-    z-index: 999;
-    animation: confetti-fall linear forwards;
-  }
-  @keyframes confetti-fall{
-    to{ transform: translateY(110vh) rotate(360deg); opacity: 0.4; }
-  }
-
-  .summit-banner{
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: var(--bg-panel);
-    color: var(--amber);
-    padding: 22px 28px;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    text-align: center;
-    font-family: 'Fraunces', serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.92rem;
     font-weight: 700;
-    font-size: 1.15rem;
-    z-index: 1000;
-    max-width: 320px;
-    animation: summit-pop 0.3s ease;
+    letter-spacing: 0.02em;
+    text-align: center;
+    margin-top: 12px;
   }
-  @keyframes summit-pop{
-    from{ transform: translate(-50%, -50%) scale(0.85); opacity: 0; }
-    to{ transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  .play-date-attribution{
+    color: var(--ink-dim);
+    font-size: 0.94rem;  /* 0.88rem × 1.07 — 7% larger */
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* How to Play overlay — identical structure to index.html */
+  .howto-overlay{
+    position:fixed; inset:0; background: rgba(0,0,0,0.7);
+    display:flex; align-items:center; justify-content:center; z-index:500;
+    padding: 16px;
+  }
+  .howto-card{
+    background: var(--bg-panel); border-radius:18px; padding: 28px 24px;
+    max-width:380px; width:100%; position:relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .howto-card h2{ font-family:'Fraunces',serif; margin-top:0; }
+  .howto-card ul{ line-height:1.7; }
+  .howto-close{
+    position:absolute; top:12px; right:12px;
+    background:none; border:none; color:var(--ink-dim); font-size:1.4rem;
+    cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    border-radius:50%; touch-action:manipulation; padding:0;
+  }
+  .howto-close:hover{ background: rgba(245,239,224,0.2); }
+  .howto-example-word{
+    display:inline-block; background: var(--rung-empty);
+    border-radius:6px; padding:1px 7px; font-weight:600; font-size:0.9em;
+  }
+
+  /* Login/create overlay — reused from index.html */
+  .confirm-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    display:flex; align-items:center; justify-content:center; z-index:500; padding:16px;
+  }
+  .leaderboard-prompt-card{
+    background: var(--bg-panel); border-radius:18px; padding: 24px 22px;
+    max-width:340px; width:100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .leaderboard-form-title{
+    font-family:'Fraunces',serif; font-weight:700; font-size:1.1rem;
+    margin-bottom:16px; text-align:center;
+  }
+  .leaderboard-form-field{
+    display:block; width:100%; background: rgba(245,239,224,0.08);
+    border:none; border-radius:10px; padding:11px 14px;
+    color:var(--ink); font-family:inherit; font-size:0.95rem; margin-bottom:10px;
+  }
+  .leaderboard-form-field:focus{ outline: 2px solid var(--amber); }
+  .leaderboard-form-error{
+    color:var(--red); font-size:0.85rem; margin-bottom:10px; min-height:18px; text-align:center;
+  }
+  .leaderboard-form-hint{
+    color:var(--ink-dim); font-size:0.8rem; margin-bottom:12px; text-align:center;
+  }
+  .leaderboard-prompt-actions{ display:flex; flex-direction:column; gap:10px; }
+  .leaderboard-prompt-actions button{ width:100%; }
+  .leaderboard-prompt-title{
+    font-size:1rem; text-align:center; margin:6px 0 20px 0; padding-right:0; font-weight:700;
+  }
+
+  footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
+  .example-ladders-panel{
+    display: flex; justify-content: center;
+    margin: 6px auto 50px; padding: 15px 19px;
+    max-width: 460px;
+    border-radius: 14px;
+  }
+  .example-ladders{
+    display: flex; justify-content: center; align-items: flex-end;
+    gap: 23px; width: 100%;
+  }
+  .example-ladder{
+    display: flex; flex-direction: column-reverse; align-items: center; gap: 5px;
+  }
+  .ex-rung{
+    font-family: 'Fraunces', serif; font-weight: 600;
+    font-size: 0.771rem; letter-spacing: 0.05em; text-transform: uppercase;
+    background: var(--rung); color: #1B2A41;
+    height: 30px; line-height: 30px;
+    padding: 0 11px; border-radius: 7px;
+    text-align: center; white-space: nowrap;
+    width: 100%; box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  }
+  .ex-ladder-easy   { width: 67px;  transform: rotate(-5deg); }
+  .ex-ladder-medium { width: 86px;  transform: rotate(0deg); }
+  .ex-ladder-hard   { width: 96px;  transform: rotate(5deg); }
+  .ex-rung.ex-empty{ background: var(--rung-empty); border: 1.5px dashed rgba(245,239,224,0.25); }
+  .ex-rung.ex-anchor{ background: var(--amber); }
+  @media(max-width: 319px){
+    .example-ladders{ flex-direction: column; align-items: center; }
+  }
+  footer a{ color: var(--ink-dim); text-decoration:none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation; }
+  footer a:hover{ color: var(--amber); border-color: var(--amber); }
+  .footer-attribution{ font-size: 0.72rem; line-height: 1.7; opacity: 0.75; margin-bottom: 10px; }
+  .footer-attribution p{ margin: 0; }
+  .footer-attribution a{ color: var(--ink-dim); border-bottom: 1px dotted rgba(159,179,200,0.5); }
+  .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
+  .footer-sep{ color: var(--ink-dim); opacity: 0.5; }
+
+  @media(max-width:400px){
+    .brand-row{ font-size: 1.55rem; }
+    .brand-logo{ width: 64px; height: 64px; }
+    .landing-body{ padding-top: 48px; }
+    .brand-logo{ margin-bottom: 30px; }
   }
 </style>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-K8X9ZNZP"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
 <div class="wrap">
   <header>
-    <h1 class="brand">Letter Ladder</h1>
-    <div class="tagline">Add one letter, scramble to a new word, climb to the top.</div>
-    <div class="top-links">
-      <a href="about.html">How to play</a>
-      <a href="solutions.html">Yesterday's solution</a>
-      <a href="stats.html">Your stats</a>
-      <a href="contact.html">Contact</a>
+    <div class="brand-row">
+      <div class="brand-title-row">
+        <div class="account-widget" id="account-widget"></div>
+        <h1 class="brand">Letter Ladder</h1>
+        <button type="button" class="howto-icon-btn" id="howto-btn" aria-label="How to play">?</button>
+      </div>
     </div>
   </header>
 
-  <div class="date-row" id="date-row"></div>
+  <main class="landing-body">
+    <img src="og-image.png" alt="" class="brand-logo">
+    <div class="play-streak" id="play-streak"></div>
+    <div class="play-buttons" id="play-buttons">
+      <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
+    </div>
+    <div class="play-date" id="play-date"></div>
+    <div class="play-date-attribution" id="play-date-attribution"></div>
+  </main>
 
-  <div class="tabs" id="tabs">
-    <div class="tab" data-tier="easy">Easy</div>
-    <div class="tab" data-tier="medium">Medium</div>
-    <div class="tab" data-tier="hard">Hard</div>
-  </div>
-
-  <div class="panel" id="panel">
-    <!-- filled by JS -->
+  <div class="example-ladders-panel">
+    <div class="example-ladders">
+      <div class="example-ladder ex-ladder-easy">
+        <div class="ex-rung ex-anchor">As</div>
+        <div class="ex-rung">Say</div>
+        <div class="ex-rung ex-highlight">Easy</div>
+        <div class="ex-rung ex-anchor">Years</div>
+      </div>
+      <div class="example-ladder ex-ladder-medium">
+        <div class="ex-rung ex-anchor">Mid</div>
+        <div class="ex-rung">Dime</div>
+        <div class="ex-rung">Mimed</div>
+        <div class="ex-rung ex-highlight">Medium</div>
+        <div class="ex-rung ex-anchor">Dummies</div>
+      </div>
+      <div class="example-ladder ex-ladder-hard">
+        <div class="ex-rung ex-anchor">Had</div>
+        <div class="ex-rung ex-highlight">Hard</div>
+        <div class="ex-rung ex-empty"></div>
+        <div class="ex-rung ex-empty"></div>
+        <div class="ex-rung">Trashed</div>
+        <div class="ex-rung ex-anchor">Thrashed</div>
+      </div>
+    </div>
   </div>
 
   <footer>
-    Dictionary courtesy of the <a href="https://github.com/dwyl/english-words" target="_blank" style="color:var(--ink-dim)">dwyl/english-words</a> project on GitHub.
+    <div class="footer-nav">
+      <a href="about.html">About</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="contact.html">Contact</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="privacy.html">Privacy Policy</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
+    </div>
   </footer>
 </div>
 
-<!-- Bump the ?v= number below any time you update puzzles.js or the game logic,
-     so returning visitors' browsers are guaranteed to fetch the new version
-     instead of a cached copy. -->
-<script src="data/words.js?v=1"></script>
-<script src="data/puzzles.js?v=1792921800"></script>
-<script src="data/hints.js?v=1792921800"></script>
-<script>
-// ---------- date helpers ----------
-function todayKey(){
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
-}
-function prettyDate(key){
-  const [y,m,d] = key.split('-').map(Number);
-  const dt = new Date(y, m-1, d);
-  return dt.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric' });
-}
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ---------- game logic (ported from the original Flask app.py) ----------
-function counter(str){
-  const c = {};
-  for(const ch of str) c[ch] = (c[ch]||0)+1;
-  return c;
-}
-function timesText(n){
-  if(n === 1) return 'once';
-  if(n === 2) return 'twice';
-  return `${n} times`;
-}
-// Tapping a button while a box is focused would otherwise blur that
-// input first, which triggers commit() and can close/reset the box
-// before this button's own action gets a chance to run. The fix is to
-// run the action directly inside touchend (with preventDefault to stop
-// the blur), not in a separate click listener - preventDefault on a
-// touch event can silently suppress the click that would otherwise
-// follow it, which is what broke this whole class of button on mobile.
-function bindTapAction(el, action){
-  let firedViaTouch = false;
-  el.addEventListener('touchend', (e)=>{
-    e.preventDefault();
-    firedViaTouch = true;
-    action();
-  });
-  el.addEventListener('mousedown', (e)=> e.preventDefault());
-  el.addEventListener('click', ()=>{
-    if(firedViaTouch){ firedViaTouch = false; return; }
-    action();
-  });
-}
-
-function showConfirmModal(message, onConfirm){
-  const overlay = document.createElement('div');
-  overlay.className = 'confirm-overlay';
-  overlay.innerHTML = `
-    <div class="confirm-card">
-      <div class="confirm-message">${message}</div>
-      <div class="confirm-actions">
-        <button type="button" class="btn-ghost confirm-cancel">Cancel</button>
-        <button type="button" class="btn-primary confirm-ok">Confirm</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  function close(){ overlay.remove(); }
-  bindTapAction(overlay.querySelector('.confirm-cancel'), close);
-  overlay.addEventListener('click', (e)=>{ if(e.target === overlay) close(); });
-  bindTapAction(overlay.querySelector('.confirm-ok'), ()=>{
-    close();
-    onConfirm();
-  });
-}
-
-function joinAnd(items){
-  if(items.length === 1) return items[0];
-  if(items.length === 2) return `${items[0]} and ${items[1]}`;
-  return `${items.slice(0,-1).join(', ')}, and ${items[items.length-1]}`;
-}
-function lettersPhrase(letters){
-  return letters.length === 1 ? `the letter ${letters[0]}` : `the letters ${joinAnd(letters)}`;
-}
-function checkGuessLetters(guess, startingWord, finalWord){
-  const problems = [];
-
-  const startingLetters = new Set(startingWord);
-  const missingStarting = [...startingLetters].filter(ch => !guess.includes(ch));
-  if(missingStarting.length > 0){
-    problems.push({ reason:'missing_starting_letters', letters: missingStarting });
-  }
-
-  const guessCounter = counter(guess);
-  const finalCounter = counter(finalWord);
-  const notInFinal = [];
-  const tooMany = [];
-  for(const ch of Object.keys(guessCounter)){
-    const gCount = guessCounter[ch];
-    const fCount = finalCounter[ch] || 0;
-    if(fCount === 0){
-      notInFinal.push(ch);
-    } else if(gCount > fCount){
-      tooMany.push({ ch, fCount });
-    }
-  }
-  if(notInFinal.length > 0){
-    problems.push({ reason:'letter_not_in_final', letters: notInFinal });
-  }
-  if(tooMany.length > 0){
-    problems.push({ reason:'too_many_repeats', details: tooMany });
-  }
-  return problems;
-}
-function isStepValid(word1, word2){
-  if(word2.length !== word1.length + 1){
-    return { valid:false, reason:'wrong_length' };
-  }
-  const counts1 = counter(word1);
-  const counts2 = counter(word2);
-  const missing = [];
-  for(const ch of Object.keys(counts1)){
-    const have = counts2[ch] || 0;
-    if(have < counts1[ch]) missing.push(ch);
-  }
-  if(missing.length > 0){
-    return { valid:false, reason:'missing_letters', letters: missing };
-  }
-  return { valid:true };
-}
-function isValidChain(startingWord, guessesObj, finalWord){
-  const lengths = Object.keys(guessesObj).map(Number).sort((a,b)=>a-b);
-  const allWords = [startingWord, ...lengths.map(l => guessesObj[l]), finalWord];
-  const invalidSteps = [];
-  for(let i=0;i<allWords.length-1;i++){
-    const result = isStepValid(allWords[i], allWords[i+1]);
-    if(!result.valid){
-      invalidSteps.push({ from: allWords[i], to: allWords[i+1], ...result });
-    }
-  }
-  return { valid: invalidSteps.length === 0, invalidSteps };
-}
-
-// ---------- state ----------
-const TIERS = ['easy','medium','hard'];
-// Must match START_DATE in scripts/generate_schedule.py, so the puzzle
-// "day number" shown in shared results matches what the schedule actually
-// uses. Update both together if you ever change the launch date.
-const LAUNCH_DATE_KEY = '2026-07-27';
-const SITE_URL = 'https://jmaser54.github.io/letter-ladder/';
-let activeTier = 'easy';
-let activeLength = null; // which rung (by word length) is currently being typed into
-let lastEnterCommitAt = 0; // guards against iOS sometimes firing two separate
-                            // "Enter was pressed" signals for one keypress
-let lastFeedback = {}; // per-tier: the last shown error, so it survives a
-                        // re-render triggered by opening a different box
-                        // (e.g. the keyboard appearing) instead of vanishing
-let bankState = {}; // per tier: { word, order } - the source word the bank's
-                     // tiles are drawn from, and their current shuffle order
-const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-let keyboardEnabled = isTouchDevice ? (localStorage.getItem('letterladder:keyboardEnabled') === 'true') : true; // bank-first on mobile, always-on on desktop
-const dateKey = todayKey();
-
-function storageKey(tier){ return `letterladder:${dateKey}:${tier}`; }
-function loadGuesses(tier){
-  try{
-    const raw = localStorage.getItem(storageKey(tier));
-    return raw ? JSON.parse(raw) : {};
-  }catch(e){ return {}; }
-}
-function saveGuesses(tier, obj){
-  try{ localStorage.setItem(storageKey(tier), JSON.stringify(obj)); }catch(e){}
-}
-function clearGuesses(tier){
-  try{ localStorage.removeItem(storageKey(tier)); }catch(e){}
-}
-
-// ---------- stats, streaks & score (all local to this device/browser -
-// there are no accounts, so none of this follows you to another device) ----------
-const STATS_KEY = 'letterladder:stats';
-const HINT_PENALTY_PER_USE = 5; // tweak this to make hints cost more/less
-
-function blankStat(){
-  return { played:0, solved:0, currentStreak:0, maxStreak:0, lastSolvedDate:null, score:0 };
-}
-function loadStats(){
-  try{
-    const raw = localStorage.getItem(STATS_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      // guard against a corrupted/partial object from an older version
-      for(const key of ['easy','medium','hard','total']){
-        parsed[key] = Object.assign(blankStat(), parsed[key] || {});
-      }
-      return parsed;
-    }
-  }catch(e){}
-  return { easy: blankStat(), medium: blankStat(), hard: blankStat(), total: blankStat() };
-}
-function saveStats(stats){
-  try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(e){}
-}
-function dateKeyMinusOneDay(key){
-  const [y,m,d] = key.split('-').map(Number);
-  const dt = new Date(y, m-1, d);
-  dt.setDate(dt.getDate()-1);
-  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-}
-function bumpStreak(stat, todayKeyStr){
-  if(stat.lastSolvedDate === todayKeyStr) return; // already counted today, don't double-bump
-  const wasYesterday = stat.lastSolvedDate === dateKeyMinusOneDay(todayKeyStr);
-  stat.currentStreak = wasYesterday ? stat.currentStreak + 1 : 1;
-  stat.maxStreak = Math.max(stat.maxStreak, stat.currentStreak);
-  stat.lastSolvedDate = todayKeyStr;
-}
-
-function markPlayedIfNeeded(tier){
-  const flagKey = `letterladder:${dateKey}:${tier}:playedCounted`;
-  if(localStorage.getItem(flagKey)) return;
-  localStorage.setItem(flagKey, '1');
-  const stats = loadStats();
-  stats[tier].played += 1;
-  stats.total.played += 1;
-  saveStats(stats);
-}
-
-function recordHintUsed(tier){
-  const key = `letterladder:${dateKey}:${tier}:hintsUsed`;
-  const current = parseInt(localStorage.getItem(key) || '0', 10);
-  localStorage.setItem(key, String(current + 1));
-}
-function getHintsUsed(tier){
-  return parseInt(localStorage.getItem(`letterladder:${dateKey}:${tier}:hintsUsed`) || '0', 10);
-}
-
-function getHintInfo(tier, L){
-  try{
-    const raw = localStorage.getItem(`letterladder:${dateKey}:${tier}:hintInfo:${L}`);
-    return raw ? JSON.parse(raw) : { count: 0, letters: null, firstLetter: null };
-  }catch(e){
-    return { count: 0, letters: null, firstLetter: null };
-  }
-}
-function saveHintInfo(tier, L, info){
-  localStorage.setItem(`letterladder:${dateKey}:${tier}:hintInfo:${L}`, JSON.stringify(info));
-}
-
-function getLastHintedLength(tier){
-  const raw = localStorage.getItem(`letterladder:${dateKey}:${tier}:lastHintedLength`);
-  return raw !== null ? Number(raw) : null;
-}
-function setLastHintedLength(tier, L){
-  const key = `letterladder:${dateKey}:${tier}:lastHintedLength`;
-  if(L === null){
-    localStorage.removeItem(key);
-  } else {
-    localStorage.setItem(key, String(L));
-  }
-}
-
-function buildHintDisplayHtml(tier, L){
-  const info = getHintInfo(tier, L);
-  const parts = [];
-  if(info.letters){
-    parts.push(`${L}-letter word uses: <span class="hint-letters">${info.letters}</span>`);
-  }
-  if(info.firstLetter){
-    parts.push(`First letter: <span class="hint-letters">${info.firstLetter}</span>`);
-  }
-  return parts.join('<br>');
-}
-
-function markSolvedIfNeeded(tier, guesses){
-  const flagKey = `letterladder:${dateKey}:${tier}:solvedCounted`;
-  if(localStorage.getItem(flagKey)) return;
-  localStorage.setItem(flagKey, '1');
-
-  const stats = loadStats();
-  const stat = stats[tier];
-  stat.solved += 1;
-  stats.total.solved += 1;
-  bumpStreak(stat, dateKey);
-
-  // Score: reward the length of every word the person actually had to
-  // guess (the start/final words are given to you, so they don't count),
-  // minus a small penalty for each hint used on this specific puzzle.
-  const guessedWords = Object.values(guesses);
-  const basePoints = guessedWords.reduce((sum, w) => sum + w.length, 0);
-  const penalty = getHintsUsed(tier) * HINT_PENALTY_PER_USE;
-  stat.score += Math.max(0, basePoints - penalty);
-  stats.total.score = stats.easy.score + stats.medium.score + stats.hard.score;
-
-  // If this solve completes all three tiers for today, the "total" streak
-  // (a separate concept from the per-tier ones - it tracks consecutive
-  // days you completed EVERY puzzle, tying into the summit celebration)
-  // gets its own bump.
-  if(TIERS.every(isTierComplete)){
-    bumpStreak(stats.total, dateKey);
-  }
-
-  saveStats(stats);
-}
-
-// ---------- rendering ----------
-const panel = document.getElementById('panel');
-document.getElementById('date-row').textContent = prettyDate(dateKey);
-
-function getTodaysPuzzle(tier){
-  const day = PUZZLE_SCHEDULE[dateKey];
-  if(!day) return null;
-  return day[tier] || null;
-}
-
-function computeInitialUsedIndices(order, typedValue){
-  // Best-effort reconstruction for a slot that already has a value when
-  // opened (we don't know which specific tiles were originally tapped,
-  // so this just claims the first N matching instances of each letter).
-  const neededCounts = {};
-  for(const ch of typedValue.toUpperCase()){
-    neededCounts[ch] = (neededCounts[ch] || 0) + 1;
-  }
-  const consumedSoFar = {};
-  const indices = [];
-  order.forEach((letter, i) => {
-    const upper = letter.toUpperCase();
-    consumedSoFar[upper] = consumedSoFar[upper] || 0;
-    if(neededCounts[upper] && consumedSoFar[upper] < neededCounts[upper]){
-      indices.push(i);
-      consumedSoFar[upper]++;
-    }
-  });
-  return indices;
-}
-
-function getBankWord(finalWord, guesses, steps, activeLength){
-  // The bank should show whichever already-filled slot is the "next
-  // fence post up" from wherever you're currently working - since every
-  // valid lower word's letters must be a subset of every valid higher
-  // word's letters, that's always the useful reference regardless of
-  // which slot you're building. Falls back to the final word (the given,
-  // longest reference) if nothing above the active slot is filled yet -
-  // this is what keeps it from prematurely switching to a guess the
-  // moment you finish typing it, before you've moved on to a slot that
-  // actually needs it.
-  const above = steps.filter(L => L > activeLength && guesses[L]).sort((a,b)=>a-b);
-  if(above.length > 0) return guesses[above[0]];
-  return finalWord;
-}
-
-function isTierComplete(tier){
-  const puzzle = getTodaysPuzzle(tier);
-  if(!puzzle) return true; // no puzzle scheduled for this tier today - don't block the celebration on it
-  const steps = [];
-  for(let L = puzzle.start.length+1; L < puzzle.final.length; L++) steps.push(L);
-  const guesses = loadGuesses(tier);
-  if(!steps.every(L => guesses[L])) return false;
-  const { valid } = isValidChain(puzzle.start, guesses, puzzle.final);
-  return valid;
-}
-
-function puzzleDayNumber(){
-  const [ly, lm, ld] = LAUNCH_DATE_KEY.split('-').map(Number);
-  const launch = new Date(ly, lm-1, ld);
-  const [ty, tm, td] = dateKey.split('-').map(Number);
-  const today = new Date(ty, tm-1, td);
-  const diffDays = Math.round((today - launch) / 86400000);
-  return diffDays + 1;
-}
-
-function buildShareText(){
-  const tierLabels = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
-  const lines = [];
-  for(const tier of TIERS){
-    const puzzle = getTodaysPuzzle(tier);
-    if(!puzzle) continue; // nothing scheduled for this tier today, skip it
-    if(isTierComplete(tier)){
-      const hints = getHintsUsed(tier);
-      lines.push(hints > 0
-        ? `${tierLabels[tier]}: ${'💡'.repeat(hints)}`
-        : `${tierLabels[tier]}: ✔️`);
-    } else {
-      lines.push(`${tierLabels[tier]}: —`);
-    }
-  }
-  return `Letter Ladder #${puzzleDayNumber()} 🪜\n\n${lines.join('\n')}\n\n${SITE_URL}`;
-}
-
-function triggerSummitCelebration(){
-  const colors = ['#E8A33D', '#6FBF8B', '#F5EFE0', '#D9705F'];
-  for(let i=0; i<70; i++){
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.left = (Math.random()*100) + 'vw';
-    piece.style.background = colors[Math.floor(Math.random()*colors.length)];
-    piece.style.animationDuration = (2.2 + Math.random()*1.6) + 's';
-    piece.style.animationDelay = (Math.random()*0.4) + 's';
-    document.body.appendChild(piece);
-    setTimeout(()=> piece.remove(), 4200);
-  }
-  const banner = document.createElement('div');
-  banner.className = 'summit-banner';
-  banner.textContent = "Well done! You've reached the summit of today's letter ladder!";
-  document.body.appendChild(banner);
-  setTimeout(()=> banner.remove(), 4000);
-}
-
-function checkAndCelebrateIfAllComplete(){
-  if(!TIERS.every(isTierComplete)) return;
-  const flagKey = `letterladder:${dateKey}:summitShown`;
-  if(localStorage.getItem(flagKey)) return;
-  localStorage.setItem(flagKey, '1');
-  triggerSummitCelebration();
-}
-
-function render(focusInput = false, pendingErrors = null){
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.classList.toggle('active', t.dataset.tier === activeTier);
-  });
-
-  const puzzle = getTodaysPuzzle(activeTier);
-  if(!puzzle){
-    panel.className = 'panel';
-    panel.innerHTML = `<div class="empty-state">No ${activeTier} puzzle scheduled for today yet — check back soon!</div>`;
-    return;
-  }
-
-  const startingWord = puzzle.start;
-  const finalWord = puzzle.final;
-  const steps = [];
-  for(let L = startingWord.length+1; L < finalWord.length; L++) steps.push(L);
-
-  const guesses = loadGuesses(activeTier);
-  const allFilled = steps.every(L => guesses[L]);
-  let feedback = '';
-  let feedbackClass = '';
-  let details = [];
-
-  if(allFilled){
-    // Guarantee "played" is always counted before "solved" ever can be -
-    // this covers puzzles that were already fully filled in from before
-    // stats tracking existed, which would otherwise count as solved
-    // without ever having been marked as played.
-    markPlayedIfNeeded(activeTier);
-    const { valid, invalidSteps } = isValidChain(startingWord, guesses, finalWord);
-    if(valid){
-      feedback = "🎉 You win! Nicely climbed.";
-      feedbackClass = 'win';
-      markSolvedIfNeeded(activeTier, guesses);
-      checkAndCelebrateIfAllComplete();
-    } else {
-      feedback = "❌ Guesses aren't a valid progression.";
-      feedbackClass = 'error';
-      details = invalidSteps.map(s => {
-        if(s.reason === 'missing_letters'){
-          return `"${s.to.toUpperCase()}" is missing the "${s.letters.length === 1 ? s.letters[0].toUpperCase() : joinAnd(s.letters.map(l => l.toUpperCase()))}" from "${s.from.toUpperCase()}".`;
-        }
-        return `"${s.from.toUpperCase()}" → "${s.to.toUpperCase()}" isn't a valid one-letter step.`;
-      });
-    }
-  }
-
-  const isWon = feedbackClass === 'win';
-  // Editing after a win is allowed (clicking a rung + its delete-X reopens
-  // it), so activeLength is no longer force-reset just because isWon is
-  // true - only the actual guess-acceptance/delete logic controls it now.
-
-  if(activeLength === null && !isWon){
-    // Always have a target box selected (without auto-focusing/opening
-    // the keyboard) so the letter bank is ready to use immediately,
-    // instead of requiring an initial tap into a box first.
-    const firstIncomplete = steps.find(L => !guesses[L]);
-    if(firstIncomplete !== undefined) activeLength = firstIncomplete;
-  }
-
-  let feedbackHtml = feedback;
-  let feedbackClassFinal = feedbackClass;
-  if(pendingErrors){
-    feedbackHtml = `<div class="error-list-wrap"><ul class="error-list">${pendingErrors.map(e => `<li>${e}</li>`).join('')}</ul></div>`;
-    feedbackClassFinal = 'error';
-    lastFeedback[activeTier] = { html: feedbackHtml, className: feedbackClassFinal };
-  } else if(feedback !== ''){
-    // A fresh win or invalid-chain result naturally takes priority and
-    // supersedes any older single-guess error.
-    lastFeedback[activeTier] = null;
-  } else if(lastFeedback[activeTier]){
-    // Nothing new to show this render (e.g. we're just opening a
-    // different box to type the next guess) - keep showing whatever was
-    // last displayed instead of letting it silently vanish.
-    feedbackHtml = lastFeedback[activeTier].html;
-    feedbackClassFinal = lastFeedback[activeTier].className;
-  }
-
-  const maxWordLen = finalWord.length; // always the longest word in the puzzle
-
-  const totalRungs = steps.length + 2;
-  let sizeTier = '';
-  if(totalRungs >= 9) sizeTier = 'rungs-xl';
-  else if(totalRungs >= 7) sizeTier = 'rungs-lg';
-  else if(totalRungs >= 5) sizeTier = 'rungs-md';
-
-  // Same font-size/min-width numbers as the CSS tiers below, mirrored here
-  // in plain JS so the box width can be a flat pixel number - no calc()/
-  // var()/max() for the browser to resolve, which is what kept going wrong.
-  const TIER_CONFIG = {
-    '':         { fontPx: 21.6, minWidthPx: 165 },
-    'rungs-md': { fontPx: 18.4, minWidthPx: 115 },
-    'rungs-lg': { fontPx: 16,   minWidthPx: 100 },
-    'rungs-xl': { fontPx: 14.4, minWidthPx: 88  },
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
+    authDomain: "letter-ladder-c6b15.firebaseapp.com",
+    projectId: "letter-ladder-c6b15",
+    storageBucket: "letter-ladder-c6b15.firebasestorage.app",
+    messagingSenderId: "131656230098",
+    appId: "1:131656230098:web:2b752fc4fa953f3557b90b",
   };
-  const tierCfg = TIER_CONFIG[sizeTier];
-  const letterSpacingPx = tierCfg.fontPx * 0.05; // matches the CSS letter-spacing
-  const computedWidthPx = Math.round(Math.max(
-    tierCfg.minWidthPx,
-    maxWordLen * tierCfg.fontPx * 0.6 + (maxWordLen - 1) * letterSpacingPx + tierCfg.fontPx * 3.4
-  ));
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-  function rungBoxStyle(L){
-    // ONE flat pixel width for every rung in this puzzle (based on the
-    // longest word). A short word just naturally occupies less of the
-    // box, centered, while the longest word fills it edge to edge -
-    // that's what gives the pyramid effect, not stretched-out text.
-    return `width:${computedWidthPx}px; max-width:${computedWidthPx}px; min-width:0;`;
+  // ── constants ──────────────────────────────────────────────────────────────
+  const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
+  const TIMER_CHOICE_MADE_KEY = 'letterladder:timerChoiceMade';
+  const BLANK_PERSON_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7"></path></svg>`;
+
+  // ── date display ───────────────────────────────────────────────────────────
+  function easternDate(){
+    // Always use US Eastern time so the displayed date and puzzle match ET midnight
+    const d = new Date();
+    return new Date(d.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  }
+  function todayFormatted(){
+    const d = easternDate();
+    return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  }
+  document.getElementById('play-date').textContent = todayFormatted();
+
+  // Date-specific attributions — keyed by YYYY-MM-DD
+  const DATE_ATTRIBUTIONS = {
+    '2026-09-08': "Today's EASY submitted by Redditor Ray2024",
+    '2026-09-26': "Today's HARD submitted by Aly M",
+    '2026-09-29': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-09-30': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-10-01': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-10-02': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+    '2026-10-03': "🏒 The NHL is back! Team names are hidden in every puzzle from September 29 – October 3.\nRANGER · DEVIL · BRUIN… Can you find them all?",
+  };
+  const todayKey = easternDate().toLocaleDateString('en-CA'); // YYYY-MM-DD in Eastern time
+  const attrEl = document.getElementById('play-date-attribution');
+  const attrText = DATE_ATTRIBUTIONS[todayKey] || '';
+  attrEl.innerHTML = attrText.replace(/\n/g, '<br>');
+
+  // During the NHL event (Sep 29–Oct 3) the two-line attribution makes the
+  // main content taller, so push the ladder panel down to rebalance the gap.
+  const NHL_DATES = ['2026-09-29','2026-09-30','2026-10-01','2026-10-02','2026-10-03'];
+  if(NHL_DATES.includes(todayKey)){
+    const panel = document.querySelector('.example-ladders-panel');
+    if(panel){ panel.style.marginTop = '28px'; panel.style.marginBottom = '28px'; }
   }
 
-  const rungsHtml = [];
-  rungsHtml.push(`<div class="rung-row"><div class="rung-count">${finalWord.length}</div><div class="rung anchor" style="${rungBoxStyle(finalWord.length)}">${finalWord}</div></div>`);
-  for(let i = steps.length-1; i>=0; i--){
-    const L = steps[i];
-    const g = guesses[L];
-    if(activeLength === L){
-      // Only show the delete option here if this specific box already had
-      // a guess in it when it was opened (i.e. you clicked in to replace
-      // or remove an existing entry) - not for a box you're filling in
-      // for the first time.
-      const deleteBtn = g ? `<button type="button" class="delete-guess-btn" data-length="${L}" aria-label="Delete this guess">×</button>` : '';
-      rungsHtml.push(`<div class="rung-row"><div class="rung-count">${L}</div><input type="text" class="rung rung-input" id="rung-input-${L}" data-length="${L}" maxlength="${L}" size="${maxWordLen}" value="${g ? g : ''}" style="${rungBoxStyle(L)}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" inputmode="${keyboardEnabled ? 'text' : 'none'}" ${keyboardEnabled ? '' : 'readonly'}>${deleteBtn}</div>`);
-    } else {
-      const clickableClass = 'clickable';
-      rungsHtml.push(`<div class="rung-row"><div class="rung-count">${L}</div><div class="rung ${g?'':'empty'} ${clickableClass}" data-length="${L}" style="${rungBoxStyle(L)}">${g ? g : '&nbsp;'.repeat(L)}</div></div>`);
+  // ── navigation helpers ─────────────────────────────────────────────────────
+  function goToGame(timerChoice){
+    // Set the timer preference before navigating so index.html picks it up
+    if(timerChoice !== null){
+      localStorage.setItem(TIMER_CHOICE_KEY, timerChoice);
+      localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
     }
+    window.location.href = 'game.html';
   }
-  rungsHtml.push(`<div class="rung-row"><div class="rung-count">${startingWord.length}</div><div class="rung anchor" style="${rungBoxStyle(startingWord.length)}">${startingWord}</div></div>`);
 
-  let bankHtml = '';
-  let extraControlsHtml = '';
-  let kbToggleHtml = '';
-  if(!isWon && activeLength != null){
-    let bankTilesHtml = '';
-    const showBankTiles = !keyboardEnabled || !isTouchDevice;
-    if(showBankTiles){
-      const bankWord = getBankWord(finalWord, guesses, steps, activeLength);
-      if(!bankState[activeTier] || bankState[activeTier].word !== bankWord || bankState[activeTier].forLength !== activeLength){
-        const order = bankWord.split('');
-        bankState[activeTier] = {
-          word: bankWord,
-          order,
-          forLength: activeLength,
-          usedIndices: computeInitialUsedIndices(order, guesses[activeLength] || ''),
-        };
-      }
-      const order = bankState[activeTier].order;
-      const usedSet = new Set(bankState[activeTier].usedIndices);
-      const tilesHtml = order.map((letter, i) =>
-        `<button type="button" class="bank-tile ${usedSet.has(i) ? 'used' : ''}" data-letter="${letter}" data-index="${i}" ${usedSet.has(i) ? 'disabled' : ''}>${letter.toUpperCase()}</button>`
-      ).join('');
-      bankTilesHtml = `<div class="bank-tiles" id="bank-tiles">${tilesHtml}</div>`;
-      const backspaceIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h11a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H9l-7-8 7-8z"></path><line x1="13" y1="9" x2="18" y2="15"></line><line x1="18" y1="9" x2="13" y2="15"></line></svg>`;
-      const submitIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v7a4 4 0 0 1-4 4H4"></path></svg>`;
-      extraControlsHtml = `
-        <button type="button" class="bank-ctrl-btn bank-group-spacer" id="bank-backspace-btn" aria-label="Delete last letter">${backspaceIcon}</button>
-        <button type="button" class="bank-ctrl-btn bank-submit-btn" id="bank-submit-btn" aria-label="Submit guess">${submitIcon}</button>
-      `;
-    }
-    // No keyboard-toggle at all on desktop - a physical keyboard is
-    // always available there, so there's nothing to toggle.
-    if(isTouchDevice){
-      const kbIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"></rect><line x1="6" y1="9.5" x2="6" y2="9.5"></line><line x1="9.5" y1="9.5" x2="9.5" y2="9.5"></line><line x1="13" y1="9.5" x2="13" y2="9.5"></line><line x1="16.5" y1="9.5" x2="16.5" y2="9.5"></line><line x1="19.5" y1="9.5" x2="19.5" y2="9.5"></line><line x1="6" y1="13" x2="6" y2="13"></line><line x1="9.5" y1="13" x2="9.5" y2="13"></line><line x1="13" y1="13" x2="13" y2="13"></line><line x1="16.5" y1="13" x2="16.5" y2="13"></line><line x1="19.5" y1="13" x2="19.5" y2="13"></line><line x1="8" y1="16" x2="16" y2="16"></line></svg>`;
-      kbToggleHtml = `<button type="button" class="bank-ctrl-btn bank-group-spacer ${keyboardEnabled ? 'kb-on' : ''}" id="keyboard-toggle-btn" aria-label="Toggle keyboard">${kbIcon}</button>`;
-    }
-    bankHtml = `
-      <div class="letter-bank" id="letter-bank">
-        ${bankTilesHtml}
+  // Wire the initial Play button immediately — before Firebase Auth resolves —
+  // so the first tap always works. Defaults to untimed (correct for guests).
+  // onAuthStateChanged calls renderPlayButtons() to update once auth is known.
+  (function(){
+    const btn = document.getElementById('play-btn-initial');
+    if(btn) btn.addEventListener('click', () => goToGame('untimed'));
+  })();
+
+  // ── How to Play popup ──────────────────────────────────────────────────────
+  function showHowToPlay(){
+    const overlay = document.createElement('div');
+    overlay.className = 'howto-overlay';
+    overlay.innerHTML = `
+      <div class="howto-card">
+        <button type="button" class="howto-close" aria-label="Close">&times;</button>
+        <h2>How to Play</h2>
+        <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
+        <ul>
+          <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
+          <li>Words can be guessed in any order</li>
+          <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
+          <li>Every word must be a real English word</li>
+        </ul>
+        <p style="margin-top:1em;margin-bottom:0;">New puzzles drop daily at 12am EST.</p>
       </div>
     `;
+    document.body.appendChild(overlay);
+    function close(){ overlay.remove(); }
+    overlay.querySelector('.howto-close').addEventListener('click', close);
+    // Defer backdrop listener so the opening click doesn't immediately close the popup.
+    setTimeout(()=>{
+      overlay.addEventListener('click', e=>{ if(e.target === overlay) close(); });
+    }, 0);
   }
-
-  const trashIcon = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
-  const lightbulbIcon = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path><path d="M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path><path d="M12 3a6.5 6.5 0 0 0-4 11.6c.7.6 1.2 1.5 1.3 2.4h5.4c.1-.9.6-1.8 1.3-2.4A6.5 6.5 0 0 0 12 3z" fill="#F5C842" stroke="#F5C842" stroke-width="1.3" stroke-linejoin="round"></path></svg>`;
-  // Hint always targets the highest unfilled rung. Up to two hints are
-  // allowed per rung (first reveals the letter set, second reveals the
-  // first letter) - once both have been used for this specific target,
-  // there's no third hint to offer, so the button disappears until a
-  // different (not-yet-maxed) rung becomes the target.
-  const unfilledForHint = steps.filter(L => !guesses[L]);
-  const hintTargetLength = unfilledForHint.length > 0 ? Math.max(...unfilledForHint) : null;
-  const hintMaxedForTarget = hintTargetLength !== null && getHintInfo(activeTier, hintTargetLength).count >= 2;
-  const showHintBtn = !isWon && !hintMaxedForTarget;
-  const iconControlsHtml = `
-    <div class="bank-controls">
-      <button class="bank-ctrl-btn" id="clear-btn" type="button" aria-label="Clear guesses">${trashIcon}</button>
-      ${!isWon && activeLength != null ? `<button type="button" class="bank-ctrl-btn" id="shuffle-btn" aria-label="Shuffle letters">🔀</button>` : ''}
-      ${showHintBtn ? `<button class="bank-ctrl-btn" id="hint-btn" type="button" aria-label="Hint">${lightbulbIcon}</button>` : ''}
-      ${!isWon && activeLength != null ? kbToggleHtml : ''}
-      ${!isWon && activeLength != null ? extraControlsHtml : ''}
-    </div>
-  `;
-
-  const anyTierSolvedToday = TIERS.some(tier => getTodaysPuzzle(tier) && isTierComplete(tier));
-
-  panel.className = `panel ${sizeTier}`;
-  panel.innerHTML = `
-    <div class="level-label">${activeTier} puzzle</div>
-    <div class="ladder-scroll" id="ladder-scroll"><div class="ladder">${rungsHtml.join('')}</div></div>
-    <div class="feedback ${feedbackClassFinal}">${feedbackHtml}</div>
-    ${details.map(d=>`<div class="details">${d}</div>`).join('')}
-    ${bankHtml}
-    ${iconControlsHtml}
-    <div class="actions-row">
-      ${anyTierSolvedToday ? `<button class="btn-primary" id="share-btn" type="button">Share results</button>` : ''}
-    </div>
-    <div class="hint-display" id="hint-display"></div>
-    <div class="share-status" id="share-status"></div>
-  `;
-
-  const lastHintedLength = getLastHintedLength(activeTier);
-  if(lastHintedLength !== null){
-    const hd = document.getElementById('hint-display');
-    if(hd) hd.innerHTML = buildHintDisplayHtml(activeTier, lastHintedLength);
-  }
-
-  document.getElementById('clear-btn').addEventListener('click', ()=>{
-    const ladderEl = panel.querySelector('.ladder');
-    if(ladderEl){
-      ladderEl.classList.add('fading-out');
-      setTimeout(()=>{
-        activeLength = null;
-        clearGuesses(activeTier);
-        lastFeedback[activeTier] = null;
-        setLastHintedLength(activeTier, null);
-        bankState[activeTier] = null;
-        render();
-      }, 960);
-    } else {
-      activeLength = null;
-      clearGuesses(activeTier);
-      lastFeedback[activeTier] = null;
-      setLastHintedLength(activeTier, null);
-      bankState[activeTier] = null;
-      render();
-    }
+  // Howto button — handles both touch (prevent double-fire) and desktop click
+  const howtoBtn = document.getElementById('howto-btn');
+  let howtoFiredViaTouch = false;
+  howtoBtn.addEventListener('touchend', (e)=>{
+    e.preventDefault();
+    howtoFiredViaTouch = true;
+    showHowToPlay();
+  });
+  howtoBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    if(howtoFiredViaTouch){ howtoFiredViaTouch = false; return; }
+    showHowToPlay();
   });
 
-  const shareBtn = document.getElementById('share-btn');
-  if(shareBtn){
-    shareBtn.addEventListener('click', async ()=>{
-      const shareText = buildShareText();
-      const statusEl = document.getElementById('share-status');
-      if(navigator.share){
-        try{
-          await navigator.share({ text: shareText });
-        }catch(e){
-          // person cancelled the native share sheet - not an error, do nothing
-        }
-      } else {
-        try{
-          await navigator.clipboard.writeText(shareText);
-          if(statusEl) statusEl.textContent = 'Copied to clipboard!';
-        }catch(e){
-          if(statusEl) statusEl.textContent = shareText;
-        }
-      }
-    });
+  // ── account dropdown ───────────────────────────────────────────────────────
+  function closeDropdown(){
+    const d = document.querySelector('.account-dropdown');
+    if(d) d.remove();
   }
 
-  const shuffleBtn = document.getElementById('shuffle-btn');
-  if(shuffleBtn){
-    bindTapAction(shuffleBtn, ()=>{
-      const order = bankState[activeTier].order;
-      // Fisher-Yates shuffle, in place
-      for(let i = order.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-      render(true);
-    });
-  }
+  function renderAccountWidget(user){
+    const container = document.getElementById('account-widget');
+    const savedUsername = localStorage.getItem('letterladder:accountUsername');
+    const hasAccount = !!(user && !user.isAnonymous && savedUsername);
 
-  const keyboardToggleBtn = document.getElementById('keyboard-toggle-btn');
-  if(keyboardToggleBtn){
-    bindTapAction(keyboardToggleBtn, ()=>{
-      keyboardEnabled = !keyboardEnabled;
-      localStorage.setItem('letterladder:keyboardEnabled', keyboardEnabled ? 'true' : 'false');
-      render(true);
-    });
-  }
-
-  let bankSyncSkip = false; // set true right before an input event we've already handled ourselves (tile tap / backspace), so the live-sync listener doesn't redundantly (or incorrectly) re-diff it
-
-  const bankBackspaceBtn = document.getElementById('bank-backspace-btn');
-  if(bankBackspaceBtn){
-    bindTapAction(bankBackspaceBtn, ()=>{
-      const inputEl = document.getElementById(`rung-input-${activeLength}`);
-      if(inputEl && inputEl.value.length > 0){
-        inputEl.value = inputEl.value.slice(0, -1);
-        if(bankState[activeTier]) bankState[activeTier].usedIndices.pop();
-        bankSyncSkip = true;
-        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    });
-  }
-
-  const bankSubmitBtn = document.getElementById('bank-submit-btn');
-  if(bankSubmitBtn){
-    bindTapAction(bankSubmitBtn, ()=>{
-      tryCommitViaEnter();
-    });
-  }
-
-  panel.querySelectorAll('.bank-tile').forEach(tile => {
-    bindTapAction(tile, ()=>{
-      const inputEl = document.getElementById(`rung-input-${activeLength}`);
-      if(!inputEl) return;
-      if(inputEl.value.length >= Number(inputEl.maxLength)) return; // already full
-      inputEl.value += tile.dataset.letter;
-      // Track the EXACT tile instance tapped, so this specific tile (not
-      // just "a" matching letter) is what shows as used - matters when
-      // there are duplicate letters like the three E's in "generated".
-      if(bankState[activeTier]) bankState[activeTier].usedIndices.push(Number(tile.dataset.index));
-      bankSyncSkip = true;
-      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-  });
-
-  const hintBtn = document.getElementById('hint-btn');
-  if(hintBtn){
-    bindTapAction(hintBtn, ()=>{
-      const hintDisplay = document.getElementById('hint-display');
-      const unfilled = steps.filter(L => !guesses[L]);
-      if(unfilled.length === 0){
-        hintDisplay.innerHTML = `Every rung is already filled in!`;
-        return;
-      }
-      const targetLength = Math.max(...unfilled);
-      const dayHints = (typeof HINTS_SCHEDULE !== 'undefined' && HINTS_SCHEDULE[dateKey]) || null;
-      const tierHint = dayHints ? dayHints[activeTier] : null;
-      const targetWord = tierHint ? tierHint.solution.find(w => w.length === targetLength) : null;
-
-      if(!targetWord){
-        hintDisplay.innerHTML = `No hint available for this puzzle yet`;
-        return;
-      }
-
-      const hintInfo = getHintInfo(activeTier, targetLength);
-      const isSecondHint = hintInfo.count === 1;
-      const confirmMsg = isSecondHint
-        ? "Are you sure you'd like to use a second hint? This one reveals the first letter."
-        : "Are you sure you'd like to use a hint?";
-
-      showConfirmModal(confirmMsg, ()=>{
-        const updatedInfo = { ...hintInfo };
-        if(!isSecondHint){
-          updatedInfo.letters = joinAnd(targetWord.split('').sort().map(ch => ch.toUpperCase()));
-        } else {
-          updatedInfo.firstLetter = targetWord[0].toUpperCase();
-        }
-        updatedInfo.count = (updatedInfo.count || 0) + 1;
-        saveHintInfo(activeTier, targetLength, updatedInfo);
-        setLastHintedLength(activeTier, targetLength);
-        recordHintUsed(activeTier);
-        render(true);
+    if(hasAccount){
+      const initial = savedUsername.trim().charAt(0).toUpperCase();
+      container.innerHTML = `<button type="button" class="account-icon-btn has-account" id="account-icon-btn" aria-label="Account menu">${initial}</button>`;
+      container.querySelector('#account-icon-btn').addEventListener('click', ()=>{
+        if(document.querySelector('.account-dropdown')){ closeDropdown(); return; }
+        const dropdown = document.createElement('div');
+        dropdown.className = 'account-dropdown';
+        dropdown.innerHTML = `
+          <div class="account-dropdown-username">${savedUsername}</div>
+          <a href="leaderboard.html">Leaderboard</a>
+          <a href="past-puzzles.html">Past puzzles</a>
+          <a href="stats.html">Stats</a>
+          <a href="profile.html">Profile</a>
+          <button type="button" class="dropdown-item" id="logout-btn">Log out</button>
+        `;
+        container.appendChild(dropdown);
+        dropdown.querySelector('#logout-btn').addEventListener('click', async ()=>{
+          closeDropdown();
+          await signOut(auth);
+          localStorage.removeItem('letterladder:accountUsername');
+          localStorage.removeItem('letterladder:timerChoiceMade');
+          localStorage.removeItem('letterladder:timerChoice');
+          localStorage.removeItem('letterladder:activeTier');
+          localStorage.removeItem('letterladder:lastViewedDateKey');
+          const guestPrefix = 'letterladder:guest:';
+          const toRemove = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            if(k && k.startsWith(guestPrefix)) toRemove.push(k);
+          }
+          toRemove.forEach(k => localStorage.removeItem(k));
+          window.location.reload();
+        });
+        setTimeout(()=>{
+          document.addEventListener('click', function outside(e){
+            if(!container.contains(e.target)){ closeDropdown(); document.removeEventListener('click', outside); }
+          });
+        }, 0);
       });
-    });
+    } else {
+      container.innerHTML = `<button type="button" class="account-icon-btn is-guest" id="account-icon-btn" aria-label="Create account or log in">${BLANK_PERSON_ICON}</button>`;
+      container.querySelector('#account-icon-btn').addEventListener('click', ()=>{
+        if(document.querySelector('.account-dropdown')){ closeDropdown(); return; }
+        const dropdown = document.createElement('div');
+        dropdown.className = 'account-dropdown';
+        dropdown.innerHTML = `
+          <a href="leaderboard.html">Leaderboard</a>
+          <a href="past-puzzles.html">Past puzzles</a>
+          <a href="#" id="dd-create">Create account</a>
+          <a href="#" id="dd-login">Log in</a>
+        `;
+        container.appendChild(dropdown);
+        dropdown.querySelector('#dd-create').addEventListener('click', e=>{ e.preventDefault(); closeDropdown(); showAuthForm('create'); });
+        dropdown.querySelector('#dd-login').addEventListener('click', e=>{ e.preventDefault(); closeDropdown(); showAuthForm('login'); });
+        setTimeout(()=>{
+          document.addEventListener('click', function outside(e){
+            if(!container.contains(e.target)){ closeDropdown(); document.removeEventListener('click', outside); }
+          });
+        }, 0);
+      });
+    }
   }
 
-  panel.querySelectorAll('.rung.clickable').forEach(el => {
-    bindTapAction(el, ()=>{
-      activeLength = Number(el.dataset.length);
-      render(true);
-    });
-  });
-  panel.querySelectorAll('.delete-guess-btn').forEach(btn => {
-    function doDelete(){
-      const L = Number(btn.dataset.length);
-      const currentGuesses = loadGuesses(activeTier);
-      delete currentGuesses[L];
-      saveGuesses(activeTier, currentGuesses);
-      // Force the letter bank to recompute from scratch - otherwise its
-      // "which tiles are used" tracking stays stuck reflecting the guess
-      // that just got deleted, leaving tiles faded when they should be
-      // available again.
-      bankState[activeTier] = null;
-      // Leave this same box open and focused, now empty, ready to type a
-      // fresh guess right away.
-      activeLength = L;
-      render(true);
-    }
-    // On iOS specifically, blur can fire on the currently-focused input
-    // BEFORE any mousedown/click on this button even happens - preventing
-    // mousedown's default (which worked for other browsers) isn't reliable
-    // there. Handling touchend directly, and preventing default on it,
-    // suppresses the whole synthesized mouse-event sequence (blur,
-    // mousedown, click) that would otherwise follow the tap - so the
-    // delete runs immediately, before any premature re-render can happen.
-    btn.addEventListener('touchend', (e)=>{
-      e.preventDefault();
-      doDelete();
-    });
-    btn.addEventListener('mousedown', (e)=> e.preventDefault());
-    btn.addEventListener('click', (e)=>{
-      // Only reached via an actual mouse click (desktop) - on touch
-      // devices the touchend handler above already ran and prevented
-      // this synthesized click from firing at all, so there's no
-      // double-delete.
-      e.stopPropagation();
-      doDelete();
-    });
-  });
+  // ── auth form (login / create account) ────────────────────────────────────
+  function showAuthForm(mode){
+    const isLogin = mode === 'login';
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="leaderboard-prompt-card">
+        <div class="leaderboard-form-title">${isLogin ? 'Log in' : 'Create account'}</div>
+        <div class="leaderboard-form-error" id="auth-error"></div>
+        <input type="text" class="leaderboard-form-field" id="auth-username" placeholder="Username" autocomplete="username">
+        <input type="password" class="leaderboard-form-field" id="auth-password" placeholder="Password" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
+        ${!isLogin ? `
+          <input type="email" class="leaderboard-form-field" id="auth-email" placeholder="Email (optional)" autocomplete="email">
+          <div class="leaderboard-form-hint">Your email will only be used for password recovery purposes.</div>
+        ` : ''}
+        <div class="leaderboard-prompt-actions">
+          <button type="button" class="btn-primary" id="auth-submit">${isLogin ? 'Log in' : 'Create account'}</button>
+          <button type="button" class="btn-ghost" id="auth-cancel">Cancel</button>
+        </div>
+        ${isLogin ? `<a href="#" id="auth-forgot" style="display:block;text-align:center;margin-top:12px;font-size:0.82rem;color:var(--ink-dim);">Forgot password?</a>` : ''}
+      </div>
+    `;
+    document.body.appendChild(overlay);
 
-  let activeInput = null;
-  if(activeLength != null){
-    activeInput = document.getElementById(`rung-input-${activeLength}`);
-  }
+    overlay.querySelector('#auth-cancel').addEventListener('click', ()=> overlay.remove());
 
-  if(activeInput){
-    if(focusInput){
-      activeInput.focus();
-      activeInput.select();
-    }
+    overlay.querySelector('#auth-submit').addEventListener('click', async ()=>{
+      const errorEl = overlay.querySelector('#auth-error');
+      const username = overlay.querySelector('#auth-username').value.trim();
+      const password = overlay.querySelector('#auth-password').value;
+      errorEl.textContent = '';
+      if(!username || !password){ errorEl.textContent = 'Please fill in both fields.'; return; }
 
-    let lastNonEmptyValue = activeInput.value || '';
-    let committed = false;
-    function commit(viaEnter){
-      if(committed) return;
-      committed = true;
+      // Reuse index.html's LetterLadderAuth if available (same session),
+      // otherwise fall back to direct Firebase calls via a page reload.
+      // Since landing.html is a separate page, we navigate to index.html
+      // with a flag so the user is prompted there. For simplicity and
+      // to avoid duplicating the full auth logic, we pass the credentials
+      // via sessionStorage to index.html which picks them up on load.
+      // Actually the cleaner approach: load index.html which runs the auth
+      // module, and use the existing showAccountForm flow. But since we
+      // want the user fully logged in before reaching the game, we do the
+      // auth directly here using the same Firebase SDK we already imported.
+      try{
+        const { getFirestore, collection, query, where, getDocs, setDoc, doc } =
+          await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+        const { createUserWithEmailAndPassword, signInWithEmailAndPassword } =
+          await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
 
-      const L = activeLength;
-      let liveValue = activeInput.value;
-      // On some iPhones, the field's value can appear to already be
-      // cleared by the moment an Enter-style submit is processed (before
-      // our code gets to read it), which would otherwise look identical
-      // to an abandoned/empty attempt and silently close with no error.
-      // Fall back to the last thing they actually typed in that case.
-      if(viaEnter && (!liveValue || liveValue.trim() === '') && lastNonEmptyValue){
-        liveValue = lastNonEmptyValue;
-      }
-      const raw = liveValue.replace(/\s+/g,'').toLowerCase().slice(0, L);
+        const db = getFirestore(app);
 
-      if(raw === ''){
-        if(pendingErrors){
-          // This box was reopened specifically to show an error (from an
-          // earlier Enter-triggered submit). If it blurs away untouched
-          // before the person retypes anything, don't silently wipe that
-          // error off the screen - keep it visible.
-          activeLength = null;
-          render(false, pendingErrors);
-          return;
+        function normalizeUsername(u){ return u.toLowerCase().trim(); }
+        function usernameToSyntheticEmail(u){ return `${normalizeUsername(u)}@letterladder.user`; }
+
+        async function findPlayerByUsername(u){
+          const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(u)));
+          const snap = await getDocs(q);
+          if(snap.empty) return null;
+          const d = snap.docs[0];
+          return { uid: d.id, ...d.data() };
         }
-        // Nothing typed (or it was cleared) - just close without changing
-        // anything, no error needed for an abandoned/empty attempt.
-        activeLength = null;
-        render();
-        return;
-      }
 
-      markPlayedIfNeeded(activeTier);
-      const errs = [];
-
-      if(raw.length !== L){
-        errs.push(`Guess must be ${L} letters long`);
-      }
-
-      if(!/^[a-z]+$/.test(raw)){
-        errs.push("Guess must be letters only");
-      } else {
-        if(!WORD_SET.has(raw)) errs.push("Not a valid English word");
-        const letterProblems = checkGuessLetters(raw, startingWord, finalWord);
-        for(const problem of letterProblems){
-          if(problem.reason === 'missing_starting_letters'){
-            errs.push(`Guess doesn't include every letter from the bottom word: ${joinAnd(problem.letters.map(l => l.toUpperCase()))}`);
-          } else if(problem.reason === 'letter_not_in_final'){
-            const isPlural = problem.letters.length > 1;
-            errs.push(`Guess uses ${isPlural ? "letters that aren't" : "a letter that isn't"} in the top word: ${joinAnd(problem.letters.map(l => l.toUpperCase()))}`);
-          } else if(problem.reason === 'too_many_repeats'){
-            const parts = problem.details.map(d => `"${d.ch.toUpperCase()}" too many times — it's only in the final word ${timesText(d.fCount)}`);
-            errs.push(`Guess uses ${parts.join('; ')}`);
+        if(isLogin){
+          const player = await findPlayerByUsername(username);
+          const registeredEmail = (player && player.authEmail) || usernameToSyntheticEmail(username);
+          // Save anon UID before signing in so backfill can delete old guest docs
+          if(auth.currentUser && auth.currentUser.isAnonymous){
+            sessionStorage.setItem('letterladder:anonUidForCleanup', auth.currentUser.uid);
           }
-        }
-      }
-
-      if(errs.length > 0){
-        activeInput.value = '';
-        bankState[activeTier] = null;
-        if(viaEnter){
-          // An explicit submit attempt - keep this rung open so they can
-          // fix it right away.
-          render(true, errs);
+          await signInWithEmailAndPassword(auth, registeredEmail, password);
+          const loggedInUsername = player ? player.username : username;
+          localStorage.setItem('letterladder:accountUsername', loggedInUsername);
+          // Migrate guest localStorage keys and signal game.html to backfill
+          // scores/stats — same as the create account path.
+          const guestPrefix = 'letterladder:guest:';
+          const newPrefix = `letterladder:${loggedInUsername}:`;
+          const keysToMigrate = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            if(k && k.startsWith(guestPrefix)) keysToMigrate.push(k);
+          }
+          for(const oldKey of keysToMigrate){
+            const newKey = newPrefix + oldKey.slice(guestPrefix.length);
+            localStorage.setItem(newKey, localStorage.getItem(oldKey));
+          }
+          sessionStorage.setItem('letterladder:pendingGuestBackfill', loggedInUsername);
+          overlay.remove();
+          // Pull playerStats from Firestore so the streak is available in
+          // localStorage immediately — otherwise getStreak() returns 0 because
+          // the cloud sync hasn't happened yet on this fresh session.
+          try{
+            const { getDoc: gd, getFirestore: gfs, doc: dref } =
+              await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+            const dbFs = gfs(app);
+            const uid = auth.currentUser && auth.currentUser.uid;
+            if(uid){
+              const snap2 = await gd(dref(dbFs, 'playerStats', uid));
+              if(snap2.exists()){
+                const statsKey = `letterladder:${loggedInUsername}:stats`;
+                if(!localStorage.getItem(statsKey)){
+                  localStorage.setItem(statsKey, JSON.stringify(snap2.data()));
+                }
+              }
+            }
+          }catch(e){}
+          // Stay on landing page — user should see streak messaging and
+          // consciously press Play to start the puzzle. Do NOT auto-navigate.
+          renderAccountWidget(auth.currentUser);
+          renderPlayButtons(auth.currentUser);
         } else {
-          // Tapped away instead of pressing Enter (this is actually the
-          // common case on mobile, where the keyboard's "Return"/"Go" key
-          // often just blurs the field rather than firing a proper Enter
-          // key event). Still show the error - just don't force focus
-          // back, since they may have deliberately tapped somewhere else.
-          activeLength = null;
-          render(false, errs);
+          // Validate username
+          const BANNED = ['fuck','bitch','bastard','cunt','kike','nigger','nigga','asshole','faggot','.com','.net','.org','.edu','.io','.xyz','gmail'];
+          const lower = username.toLowerCase();
+          if(username.length > 20){ errorEl.textContent = 'Username must be 20 characters or fewer.'; return; }
+          if(username.includes('.')){ errorEl.textContent = 'Usernames cannot contain periods.'; return; }
+          if(BANNED.some(b => lower.includes(b))){ errorEl.textContent = 'Please choose a different username.'; return; }
+          const existing = await findPlayerByUsername(username);
+          if(existing){ errorEl.textContent = 'That username is already taken.'; return; }
+
+          const email = (overlay.querySelector('#auth-email') || {}).value || '';
+          const trimmedEmail = email.trim();
+          const registeredEmail = trimmedEmail || usernameToSyntheticEmail(username);
+          // Save the anonymous UID before account creation so the backfill
+          // can delete the old guest score docs from the leaderboard.
+          if(auth.currentUser && auth.currentUser.isAnonymous){
+            sessionStorage.setItem('letterladder:anonUidForCleanup', auth.currentUser.uid);
+          }
+
+          const cred = await createUserWithEmailAndPassword(auth, registeredEmail, password);
+          const playerDoc = {
+            username: username.trim(),
+            usernameLower: normalizeUsername(username),
+            createdAt: Date.now(),
+            authEmail: registeredEmail,
+          };
+          await setDoc(doc(db, 'players', cred.user.uid), playerDoc);
+          if(trimmedEmail){
+            await setDoc(doc(db, 'playerRecovery', cred.user.uid), { recoveryEmail: trimmedEmail });
+          }
+          localStorage.setItem('letterladder:accountUsername', username.trim());
+
+          // Migrate all guest-scoped localStorage keys to the new account
+          // scope right now, before navigating to the game page. This
+          // transfers today's puzzle progress (guesses, timer state) so
+          // it isn't lost when the account scope changes.
+          const guestPrefix = 'letterladder:guest:';
+          const newPrefix = `letterladder:${username.trim()}:`;
+          const keysToMigrate = [];
+          for(let i = 0; i < localStorage.length; i++){
+            const k = localStorage.key(i);
+            if(k && k.startsWith(guestPrefix)) keysToMigrate.push(k);
+          }
+          for(const oldKey of keysToMigrate){
+            const newKey = newPrefix + oldKey.slice(guestPrefix.length);
+            localStorage.setItem(newKey, localStorage.getItem(oldKey));
+            // Keep the guest key too — game.html's backfill reads it to
+            // know what scores to re-submit under the new account name.
+          }
+
+          // Signal game.html to run the guest→account backfill on load
+          // (stats counting + score re-submission under the real username).
+          sessionStorage.setItem('letterladder:pendingGuestBackfill', username.trim());
+
+          overlay.remove();
+          // Stay on landing page — backfill runs when user navigates to game.html via Play.
+          renderAccountWidget(auth.currentUser);
+          renderPlayButtons(auth.currentUser);
         }
-        return;
-      }
-
-      const newGuesses = loadGuesses(activeTier);
-      newGuesses[L] = raw;
-      saveGuesses(activeTier, newGuesses);
-      lastFeedback[activeTier] = null;
-
-      // No auto-advance - the person always has to click into whichever
-      // box they want to guess next, on purpose.
-      activeLength = null;
-      render();
-    }
-
-    function tryCommitViaEnter(){
-      const now = Date.now();
-      if(now - lastEnterCommitAt < 700) return; // a duplicate signal for the
-                                                 // same keypress - ignore it
-      lastEnterCommitAt = now;
-      commit(true);
-    }
-
-    activeInput.addEventListener('keydown', (e)=>{
-      if(e.key === 'Enter'){ e.preventDefault(); tryCommitViaEnter(); return; }
-      // Only letters that actually appear in the top (final) word can be
-      // typed - this can't guarantee a correct guess, but it stops
-      // obviously impossible letters from ever being entered.
-      if(e.key.length === 1 && /^[a-zA-Z]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey){
-        if(!finalWord.toLowerCase().includes(e.key.toLowerCase())){
-          e.preventDefault();
-        }
+      }catch(err){
+        const msg = err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
+          ? 'Incorrect username or password.'
+          : err.code === 'auth/email-already-in-use'
+          ? 'That username is already taken.'
+          : err.message || 'Something went wrong. Please try again.';
+        overlay.querySelector('#auth-error').textContent = msg;
       }
     });
-    activeInput.addEventListener('input', (e)=>{
-      if(activeInput.value && activeInput.value.trim() !== ''){
-        lastNonEmptyValue = activeInput.value;
-      }
-      // Keep the bank's tiles in sync live, regardless of whether this
-      // keystroke came from the physical keyboard, a tapped tile, or the
-      // on-screen backspace button.
-      if(bankState[activeTier]){
-        const order = bankState[activeTier].order;
-        const arr = bankState[activeTier].usedIndices;
-        if(!bankSyncSkip){
-          // Genuine keyboard-driven change (typed or backspaced directly) -
-          // reconcile the tracked indices to match the new value's length.
-          while(arr.length > activeInput.value.length) arr.pop();
-          while(arr.length < activeInput.value.length){
-            const ch = activeInput.value[arr.length].toLowerCase();
-            const usedSet = new Set(arr);
-            const idx = order.findIndex((letter, i) => letter.toLowerCase() === ch && !usedSet.has(i));
-            if(idx === -1) break;
-            arr.push(idx);
-          }
-        }
-        bankSyncSkip = false;
-        const usedSet = new Set(arr);
-        const tileEls = panel.querySelectorAll('.bank-tile');
-        tileEls.forEach((tileEl) => {
-          const idx = Number(tileEl.dataset.index);
-          if(usedSet.has(idx)){
-            tileEl.classList.add('used');
-            tileEl.disabled = true;
-          } else {
-            tileEl.classList.remove('used');
-            tileEl.disabled = false;
+
+    if(isLogin){
+      overlay.querySelector('#auth-forgot').addEventListener('click', async e=>{
+        e.preventDefault();
+        overlay.remove();
+        // Show a standalone reset form with instructions visible immediately
+        const resetOverlay = document.createElement('div');
+        resetOverlay.className = 'confirm-overlay';
+        resetOverlay.innerHTML = `
+          <div class="leaderboard-prompt-card">
+            <div class="leaderboard-prompt-title">Reset your password</div>
+            <div class="leaderboard-form-hint" style="text-align:center; margin-bottom:10px;">Enter your username to receive a password reset link to the email on file.</div>
+            <div class="leaderboard-form-error" id="reset-error"></div>
+            <input type="text" class="leaderboard-form-field" id="reset-username" placeholder="Username" autocomplete="username">
+            <div class="leaderboard-prompt-actions">
+              <button type="button" class="btn-primary" id="reset-submit">Send reset email</button>
+              <button type="button" class="btn-ghost" id="reset-cancel">Cancel</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(resetOverlay);
+        setTimeout(()=>{ resetOverlay.addEventListener('click', e=>{ if(e.target===resetOverlay) resetOverlay.remove(); }); }, 0);
+        resetOverlay.querySelector('#reset-cancel').addEventListener('click', ()=> resetOverlay.remove());
+        resetOverlay.querySelector('#reset-submit').addEventListener('click', async ()=>{
+          const username = resetOverlay.querySelector('#reset-username').value.trim();
+          const errorEl = resetOverlay.querySelector('#reset-error');
+          if(!username){ errorEl.textContent = 'Please enter your username.'; return; }
+          errorEl.textContent = '';
+          try{
+            const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+            const { getFirestore, collection, query, where, getDocs, doc, getDoc } =
+              await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+            const db2 = getFirestore(app);
+            const q = query(collection(db2, 'players'), where('usernameLower', '==', username.toLowerCase().trim()));
+            const snap = await getDocs(q);
+            if(snap.empty){ errorEl.textContent = 'No recovery email on file for that username.'; return; }
+            const uid = snap.docs[0].id;
+            const recoverySnap = await getDoc(doc(db2, 'playerRecovery', uid));
+            if(!recoverySnap.exists() || !recoverySnap.data().recoveryEmail){
+              errorEl.textContent = 'No recovery email on file for that username.'; return;
+            }
+            await sendPasswordResetEmail(auth, recoverySnap.data().recoveryEmail, {
+              url: 'https://letterladder.io/',
+              handleCodeInApp: false,
+            });
+            const card = resetOverlay.querySelector('.leaderboard-prompt-card');
+            card.innerHTML = `
+              <div class="leaderboard-prompt-title" style="font-weight:bold;">Check your email</div>
+              <div class="leaderboard-form-hint" style="text-align:center;">A reset link is on its way. It may take 5–15 minutes — check your spam folder if you don't see it.</div>
+              <div class="leaderboard-prompt-actions">
+                <button type="button" class="btn-ghost" id="reset-done">Close</button>
+              </div>
+            `;
+            card.querySelector('#reset-done').addEventListener('click', ()=> resetOverlay.remove());
+          }catch(e){
+            resetOverlay.querySelector('#reset-error').textContent = 'Something went wrong. Please try again.';
           }
         });
+      });
+    }
+  }
+
+  // ── play buttons ───────────────────────────────────────────────────────────
+  function getStreak(){
+    const username = localStorage.getItem('letterladder:accountUsername');
+    if(!username) return 0;
+    try{
+      const raw = localStorage.getItem(`letterladder:${username}:stats`);
+      const stats = raw ? JSON.parse(raw) : null;
+      if(!stats || !stats.total) return 0;
+      const cs = stats.total.currentStreak || 0;
+      if(cs === 0) return 0;
+      // Validate liveness — streak only counts if lastSolvedDate is today
+      // or yesterday in ET. Stale values must not be displayed.
+      const lsd = stats.total.lastSolvedDate;
+      if(!lsd) return 0;
+      const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const [y,m,d] = todayET.split('-').map(Number);
+      const yestDt = new Date(y,m-1,d); yestDt.setDate(yestDt.getDate()-1);
+      const yesterdayET = `${yestDt.getFullYear()}-${String(yestDt.getMonth()+1).padStart(2,'0')}-${String(yestDt.getDate()).padStart(2,'0')}`;
+      if(lsd !== todayET && lsd !== yesterdayET) return 0;
+      return cs;
+    }catch(e){ return 0; }
+  }
+
+  function renderPlayButtons(user){
+    const hasAccount = !!(user && !user.isAnonymous && localStorage.getItem('letterladder:accountUsername'));
+    const container = document.getElementById('play-buttons');
+    const streakEl = document.getElementById('play-streak');
+    const streak = hasAccount ? getStreak() : 0;
+    if(streakEl) streakEl.textContent = streak > 0 ? `🔥 ${streak} day streak` : '';
+    container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
+    container.querySelector('#play-btn').addEventListener('click', ()=> {
+      if(hasAccount){
+        goToGame(null);
+      } else {
+        goToGame('untimed');
       }
-      // Mobile keyboards don't always fire a proper keydown for
-      // Return/Go on a plain input - but the 'input' event's inputType
-      // reliably reflects it when they do commit a line break, so this
-      // catches Enter presses that keydown alone might miss. The debounce
-      // above keeps this from double-firing alongside keydown for the
-      // exact same keypress.
-      if(e.inputType === 'insertLineBreak'){ tryCommitViaEnter(); }
     });
-    activeInput.addEventListener('blur', ()=> commit(false));
   }
 
-  const ladderScroll = document.getElementById('ladder-scroll');
-  if(ladderScroll && activeInput){
-    let wasFocused = false;
-    let refocusTimer = null;
-    ladderScroll.addEventListener('touchstart', ()=>{
-      wasFocused = document.activeElement === activeInput;
-    }, { passive: true });
-    ladderScroll.addEventListener('scroll', ()=>{
-      if(!wasFocused) return;
-      clearTimeout(refocusTimer);
-      refocusTimer = setTimeout(()=>{
-        if(document.activeElement !== activeInput){
-          activeInput.focus({ preventScroll: true });
-        }
-      }, 120);
-    }, { passive: true });
-  }
-}
+  // ── auth state ─────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, (user)=>{
+    renderAccountWidget(user);
+    renderPlayButtons(user);
 
-document.getElementById('tabs').addEventListener('click', (e)=>{
-  const tab = e.target.closest('.tab');
-  if(!tab) return;
-  activeTier = tab.dataset.tier;
-  activeLength = null;
-  render();
-});
-
-render();
-
+    // GA4 user_id
+    try{
+      if(user && typeof gtag !== 'undefined'){
+        gtag('config', 'GTM-K8X9ZNZP', { user_id: user.uid });
+      }
+    }catch(e){}
+  });
 </script>
 </body>
 </html>
