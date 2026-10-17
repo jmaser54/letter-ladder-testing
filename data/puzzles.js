@@ -409,5 +409,45 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "so", "final": "gowns" },
     "medium": { "start": "if", "final": "freight" },
     "hard": { "start": "red", "final": "leisured" }
+  },
+  "2026-10-17": {
+    "easy": { "start": "pi", "final": "gripe" },
+    "medium": { "start": "stilt", "final": "splitters" },
+    "hard": { "start": "dig", "final": "diverting" }
+  },
+  "2026-10-18": {
+    "easy": { "start": "to", "final": "tooth" },
+    "medium": { "start": "oh", "final": "howlers" },
+    "hard": { "start": "to", "final": "defrosted" }
+  },
+  "2026-10-19": {
+    "easy": { "start": "on", "final": "coven" },
+    "medium": { "start": "row", "final": "prowled" },
+    "hard": { "start": "peering", "final": "impregnate" }
+  },
+  "2026-10-20": {
+    "easy": { "start": "as", "final": "pages" },
+    "medium": { "start": "motion", "final": "motoring" },
+    "hard": { "start": "us", "final": "stumped" }
+  },
+  "2026-10-21": {
+    "easy": { "start": "pa", "final": "plain" },
+    "medium": { "start": "etched", "final": "rewatched" },
+    "hard": { "start": "raid", "final": "deliberate" }
+  },
+  "2026-10-22": {
+    "easy": { "start": "do", "final": "depot" },
+    "medium": { "start": "fin", "final": "freeing" },
+    "hard": { "start": "all", "final": "mallows" }
+  },
+  "2026-10-23": {
+    "easy": { "start": "to", "final": "boost" },
+    "medium": { "start": "to", "final": "extort" },
+    "hard": { "start": "to", "final": "rotation" }
+  },
+  "2026-10-24": {
+    "easy": { "start": "we", "final": "sewed" },
+    "medium": { "start": "sake", "final": "packets" },
+    "hard": { "start": "act", "final": "secretary" }
   }
 };

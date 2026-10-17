@@ -412,5 +412,45 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "so", "final": "gowns", "solution": ["so","son","song","gowns"] },
     "medium": { "start": "if", "final": "freight", "solution": ["if","fit","gift","fight","fright","freight"] },
     "hard": { "start": "red", "final": "leisured", "solution": ["red","reed","reeds","reside","residue","leisured"] }
+  },
+  "2026-10-17": {
+    "easy": { "start": "pi", "final": "gripe", "solution": ["pi","pig","grip","gripe"] },
+    "medium": { "start": "stilt", "final": "splitters", "solution": ["stilt","titles","spittle","triplets","splitters"] },
+    "hard": { "start": "dig", "final": "diverting", "solution": ["dig","ding","grind","riding","driving","deriving","diverting"] }
+  },
+  "2026-10-18": {
+    "easy": { "start": "to", "final": "tooth", "solution": ["to","hot","hoot","tooth"] },
+    "medium": { "start": "oh", "final": "howlers", "solution": ["oh","hoe","shoe","shore","shower","howlers"] },
+    "hard": { "start": "to", "final": "defrosted", "solution": ["to","rot","fort","frost","foster","frosted","fostered","defrosted"] }
+  },
+  "2026-10-19": {
+    "easy": { "start": "on", "final": "coven", "solution": ["on","con","once","coven"] },
+    "medium": { "start": "row", "final": "prowled", "solution": ["row","wore","power","powder","prowled"] },
+    "hard": { "start": "peering", "final": "impregnate", "solution": ["peering","petering","repeating","impregnate"] }
+  },
+  "2026-10-20": {
+    "easy": { "start": "as", "final": "pages", "solution": ["as","gas","sage","pages"] },
+    "medium": { "start": "motion", "final": "motoring", "solution": ["motion","monitor","motoring"] },
+    "hard": { "start": "us", "final": "stumped", "solution": ["us","sum","must","mutes","septum","stumped"] }
+  },
+  "2026-10-21": {
+    "easy": { "start": "pa", "final": "plain", "solution": ["pa","lap","plan","plain"] },
+    "medium": { "start": "etched", "final": "rewatched", "solution": ["etched","retched","wretched","rewatched"] },
+    "hard": { "start": "raid", "final": "deliberate", "solution": ["raid","aired","redial","trailed","retailed","liberated","deliberate"] }
+  },
+  "2026-10-22": {
+    "easy": { "start": "do", "final": "depot", "solution": ["do","doe","dote","depot"] },
+    "medium": { "start": "fin", "final": "freeing", "solution": ["fin","fine","finer","finger","freeing"] },
+    "hard": { "start": "all", "final": "mallows", "solution": ["all","mall","malls","slalom","mallows"] }
+  },
+  "2026-10-23": {
+    "easy": { "start": "to", "final": "boost", "solution": ["to","too","boot","boost"] },
+    "medium": { "start": "to", "final": "extort", "solution": ["to","rot","tore","otter","extort"] },
+    "hard": { "start": "to", "final": "rotation", "solution": ["to","rot","taro","ratio","ration","oration","rotation"] }
+  },
+  "2026-10-24": {
+    "easy": { "start": "we", "final": "sewed", "solution": ["we","dew","weed","sewed"] },
+    "medium": { "start": "sake", "final": "packets", "solution": ["sake","skate","casket","packets"] },
+    "hard": { "start": "act", "final": "secretary", "solution": ["act","cart","trace","crater","retrace","caterers","secretary"] }
   }
 };
