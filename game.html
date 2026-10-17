@@ -956,8 +956,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
      so returning visitors' browsers are guaranteed to fetch the new version
      instead of a cached copy. -->
 <script src="data/words.js?v=4"></script>
-<script src="data/puzzles.js?v=1787664373"></script>
-<script src="data/hints.js?v=1787664373"></script>
+<script src="data/puzzles.js?v=1792921800"></script>
+<script src="data/hints.js?v=1792921800"></script>
 <script>
 // ---------- date helpers ----------
 function bumpGuessCount(tier, L){
@@ -1409,7 +1409,7 @@ let accountScopeReady = false;
 
 // ---------- optional per-puzzle timer ----------
 const TIMER_CHOICE_KEY = 'letterladder:timerChoice';
-function getTimerChoice(){ return localStorage.getItem(TIMER_CHOICE_KEY) || 'untimed'; }
+function getTimerChoice(){ return localStorage.getItem(TIMER_CHOICE_KEY) || 'timed'; }
 function setTimerChoice(choice){
   localStorage.setItem(TIMER_CHOICE_KEY, choice);
   // Remembers this as the account's usual preference in the cloud, so
@@ -4273,7 +4273,26 @@ let ownerCheckDone = false;
       statsPullPromise = pullStatsFromCloudIfNeeded();
       await statsPullPromise;
       if(localStorage.getItem(TIMER_CHOICE_MADE_KEY)){
+        // TIMER_CHOICE_MADE_KEY is set: local preference is already established.
+        // Re-save to Firestore in case this is a new session.
         setTimerChoice(getTimerChoice());
+      } else if(player && !player.isAnonymous){
+        // TIMER_CHOICE_MADE_KEY is absent but user is logged in (e.g. new device,
+        // cleared cache, or logged out and back in without going through the guest
+        // timer-choice path). Pull the account's saved preference from Firestore
+        // so a returning user who always plays timed doesn't get 'timed' default
+        // only by luck of the new default — we restore their actual saved choice.
+        try{
+          const timerSnap = await window.LetterLadderAuth.getDoc(
+            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'playerStats', player.uid)
+          );
+          const cloudChoice = timerSnap.exists() ? timerSnap.data().timerChoice : null;
+          const validatedChoice = (cloudChoice === 'timed' || cloudChoice === 'untimed') ? cloudChoice : 'timed';
+          localStorage.setItem(TIMER_CHOICE_KEY, validatedChoice);
+          localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
+        }catch(e){
+          // Firestore read failed — leave default in place, will retry next load.
+        }
       }
 
       // ── Step 4: dailyProgress cloud restore (with snapshot validation) ───
