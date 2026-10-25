@@ -452,5 +452,15 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "we", "final": "sewed", "solution": ["we","dew","weed","sewed"] },
     "medium": { "start": "sake", "final": "packets", "solution": ["sake","skate","casket","packets"] },
     "hard": { "start": "act", "final": "secretary", "solution": ["act","cart","trace","crater","retrace","caterers","secretary"] }
+  },
+  "2026-10-25": {
+    "easy": { "start": "ad", "final": "added", "solution": ["ad","dad","dead","added"] },
+    "medium": { "start": "fat", "final": "farther", "solution": ["fat","fate","after","father","farther"] },
+    "hard": { "start": "tat", "final": "startling", "solution": ["tat","stat","start","strait","transit","starting","startling"] }
+  },
+  "2026-10-26": {
+    "easy": { "start": "in", "final": "lines", "solution": ["in","sin","sine","lines"] },
+    "medium": { "start": "tuts", "final": "trumpets", "solution": ["tuts","trust","utters","sputter","trumpets"] },
+    "hard": { "start": "ape", "final": "escapade", "solution": ["ape","peas","spade","spaced","escaped","escapade"] }
   }
 };

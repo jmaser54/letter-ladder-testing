@@ -449,5 +449,15 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "we", "final": "sewed" },
     "medium": { "start": "sake", "final": "packets" },
     "hard": { "start": "act", "final": "secretary" }
+  },
+  "2026-10-25": {
+    "easy": { "start": "ad", "final": "added" },
+    "medium": { "start": "fat", "final": "farther" },
+    "hard": { "start": "tat", "final": "startling" }
+  },
+  "2026-10-26": {
+    "easy": { "start": "in", "final": "lines" },
+    "medium": { "start": "tuts", "final": "trumpets" },
+    "hard": { "start": "ape", "final": "escapade" }
   }
 };
