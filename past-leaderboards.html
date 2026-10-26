@@ -106,6 +106,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }
   }
 
+  // Player-supplied text (e.g. display names) must be escaped before it's
+  // placed into innerHTML, so it always shows as plain text and can never
+  // be interpreted as HTML or script. Duplicated in leaderboard.html.
+  function escapeHtml(value){
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   const tierNames = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
   const tierOrder = { easy: 0, medium: 1, hard: 2 };
 
@@ -149,7 +161,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             const rows = topThree.map((row, i) => `
               <div class="score-row">
                 <div class="score-rank">${i+1}</div>
-                <div class="score-name">${row.displayName || 'Guest'}</div>
+                <div class="score-name">${escapeHtml(row.displayName || 'Guest')}</div>
                 <div class="score-hints">${'💡'.repeat(row.hintsUsed || 0)}</div>
                 <div class="score-time">${formatTime(row.timeMs)}</div>
               </div>
@@ -162,7 +174,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             `;
           }).join('');
         return `
-          <div class="day-card" id="day-${dateKey}">
+          <div class="day-card" id="day-${escapeHtml(dateKey)}">
             <div class="day-date">${prettyDate(dateKey)}</div>
             ${tierSections}
           </div>
