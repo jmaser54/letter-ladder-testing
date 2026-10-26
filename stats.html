@@ -391,8 +391,11 @@ document.getElementById('stats-list').innerHTML =
             const winnerLastSolved = winner.lastSolvedDate || null;
             const streakIsLive = winnerLastSolved === todayET || winnerLastSolved === yesterdayET;
             merged[tier] = {
-              played: winner.played || 0,
-              solved: winner.solved || 0,
+              // played/solved only ever increase: keep the higher of the
+              // two so increments made on another device aren't lost.
+              // Same rule as game.html.
+              played: Math.max(localTier.played || 0, cloudTier.played || 0),
+              solved: Math.max(localTier.solved || 0, cloudTier.solved || 0),
               // Only carry currentStreak if the winner's lastSolvedDate is
               // today or yesterday ET. If not, the streak has broken and
               // must be 0 regardless of what cloud or local stored.

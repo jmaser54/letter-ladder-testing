@@ -4199,7 +4199,7 @@ async function pullStatsFromCloudIfNeeded(){
       const localTier = localStats[tier] || blankStat();
       const cloudTier = cloudStats[tier] || blankStat();
       // Whichever side has the more recent lastSolvedDate wins for
-      // played/solved/lastSolvedDate — but currentStreak is then
+      // lastSolvedDate (played/solved take the higher count, see below) — but currentStreak is then
       // independently validated against today's ET date regardless
       // of which side won. A more-recent lastSolvedDate does NOT
       // grant authority to carry a streak forward.
@@ -4208,8 +4208,12 @@ async function pullStatsFromCloudIfNeeded(){
       const winnerLastSolved = winner.lastSolvedDate || null;
       const streakIsLive = winnerLastSolved === todayET || winnerLastSolved === yesterdayET;
       merged[tier] = {
-        played: winner.played || 0,
-        solved: winner.solved || 0,
+        // played/solved only ever increase, so each side's value is a real
+        // total it has seen; the higher one keeps increments made on the
+        // other device (e.g. a puzzle played there today without a solve,
+        // which doesn't move lastSolvedDate). Same rule as stats.html.
+        played: Math.max(localTier.played || 0, cloudTier.played || 0),
+        solved: Math.max(localTier.solved || 0, cloudTier.solved || 0),
         // currentStreak: take the higher of both sides IF the streak is
         // still live. If neither side's lastSolvedDate is today or
         // yesterday, the streak has broken and must be 0. Each side is

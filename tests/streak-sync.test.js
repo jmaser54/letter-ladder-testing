@@ -63,6 +63,36 @@ module.exports = run('Streak sync', [
     assertEqual(s.total.currentStreak, 6, 'merged total streak');
   }],
 
+  // --- Played/solved counts: never lose increments made on another device ---
+  ['same last-solved date: higher cloud counts are kept (other device played today without solving)', async ({ browser, base }) => {
+    const s = await gameMerge(browser, base, {
+      local: allTiers(stat(2, YESTERDAY, { played: 40, solved: 35 })),
+      cloud: allTiers(stat(2, YESTERDAY, { played: 41, solved: 35 })),
+    });
+    assertEqual([s.total.played, s.total.solved], [41, 35], 'merged played/solved');
+  }],
+  ['newer local solve but higher cloud played count: counts never go down', async ({ browser, base }) => {
+    const s = await gameMerge(browser, base, {
+      local: allTiers(stat(3, TODAY, { played: 40, solved: 36 })),
+      cloud: allTiers(stat(2, YESTERDAY, { played: 42, solved: 35 })),
+    });
+    assertEqual([s.total.played, s.total.solved, s.total.lastSolvedDate, s.total.currentStreak], [42, 36, TODAY, 3], 'merged total');
+  }],
+
+  // --- Stats page merge (stats.html) must agree with the game page ---
+  ['stats page: reported case and counts merge the same way as the game page', async ({ browser, base }) => {
+    const opts = account({
+      local: allTiers(stat(11, OLD, { played: 40, solved: 35 })),
+      cloud: allTiers(stat(1, YESTERDAY, { played: 39, solved: 36 })),
+    });
+    const { ctx, page } = await newPage(browser, opts);
+    await page.goto(base + '/stats.html');
+    await page.waitForFunction(() => !document.getElementById('stats-list').textContent.includes('Loading'), null, { timeout: 10000 });
+    const s = await page.evaluate(() => JSON.parse(localStorage.getItem('letterladder:tester:stats')));
+    assertEqual([s.total.currentStreak, s.total.maxStreak, s.total.played, s.total.solved], [1, 11, 40, 36], 'stats page merged total');
+    await ctx.close();
+  }],
+
   // --- Landing page display (index.html) ---
   ['landing: new device shows the account\'s live cloud streak', async ({ browser, base }) => {
     assertEqual(await landingStreak(browser, base, { local: null, cloud: allTiers(stat(6, YESTERDAY)) }), '🔥 6 day streak', 'landing streak');
