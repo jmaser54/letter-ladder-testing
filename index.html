@@ -424,10 +424,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     window.location.href = 'game.html';
   }
 
-  // Wire the initial Play button immediately — before Firebase Auth resolves —
-  // so the first tap always works. It never writes a timer choice: the game
+  // Wire the Play button immediately — before Firebase Auth resolves — so
+  // the first tap always works. It never writes a timer choice: the game
   // defaults first-time players to timed and keeps any existing preference.
-  // onAuthStateChanged calls renderPlayButtons() to update once auth is known.
+  // This is the only Play button; renderPlayButtons() never replaces it.
   (function(){
     const btn = document.getElementById('play-btn-initial');
     if(btn) btn.addEventListener('click', () => goToGame(null));
@@ -836,9 +836,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     }catch(e){}
   }
 
+  // Updates the streak line once auth is known. The Play button itself is
+  // wired once at page load and deliberately never replaced here: iOS Safari
+  // cancels a tap whose element is removed mid-tap, which made players tap
+  // Play twice when auth finished loading under their finger.
   function renderPlayButtons(user){
     const hasAccount = !!(user && !user.isAnonymous && localStorage.getItem('letterladder:accountUsername'));
-    const container = document.getElementById('play-buttons');
     const streak = hasAccount ? getStreak() : 0;
     setStreakText(streak);
     if(hasAccount){
@@ -846,8 +849,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     } else {
       streakRequestId++; // ignore any in-flight read for a previous user
     }
-    container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
-    container.querySelector('#play-btn').addEventListener('click', ()=> goToGame(null));
   }
 
   // ── auth state ─────────────────────────────────────────────────────────────
