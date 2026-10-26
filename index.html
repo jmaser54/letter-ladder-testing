@@ -425,11 +425,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   // Wire the initial Play button immediately — before Firebase Auth resolves —
-  // so the first tap always works. Defaults to untimed (correct for guests).
+  // so the first tap always works. It never writes a timer choice: the game
+  // defaults first-time players to timed and keeps any existing preference.
   // onAuthStateChanged calls renderPlayButtons() to update once auth is known.
   (function(){
     const btn = document.getElementById('play-btn-initial');
-    if(btn) btn.addEventListener('click', () => goToGame('untimed'));
+    if(btn) btn.addEventListener('click', () => goToGame(null));
   })();
 
   // ── How to Play popup ──────────────────────────────────────────────────────
@@ -815,13 +816,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const streak = hasAccount ? getStreak() : 0;
     if(streakEl) streakEl.textContent = streak > 0 ? `🔥 ${streak} day streak` : '';
     container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
-    container.querySelector('#play-btn').addEventListener('click', ()=> {
-      if(hasAccount){
-        goToGame(null);
-      } else {
-        goToGame('untimed');
-      }
-    });
+    container.querySelector('#play-btn').addEventListener('click', ()=> goToGame(null));
   }
 
   // ── auth state ─────────────────────────────────────────────────────────────
