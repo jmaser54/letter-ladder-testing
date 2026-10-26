@@ -787,34 +787,65 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   // ── play buttons ───────────────────────────────────────────────────────────
+  // Total streak from a stats object, only if still live: lastSolvedDate
+  // must be today or yesterday in ET. Stale values must not be displayed.
+  function liveTotalStreak(stats){
+    if(!stats || !stats.total) return 0;
+    const cs = stats.total.currentStreak || 0;
+    if(cs === 0) return 0;
+    const lsd = stats.total.lastSolvedDate;
+    if(!lsd) return 0;
+    const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const [y,m,d] = todayET.split('-').map(Number);
+    const yestDt = new Date(y,m-1,d); yestDt.setDate(yestDt.getDate()-1);
+    const yesterdayET = `${yestDt.getFullYear()}-${String(yestDt.getMonth()+1).padStart(2,'0')}-${String(yestDt.getDate()).padStart(2,'0')}`;
+    if(lsd !== todayET && lsd !== yesterdayET) return 0;
+    return cs;
+  }
+
   function getStreak(){
     const username = localStorage.getItem('letterladder:accountUsername');
     if(!username) return 0;
     try{
       const raw = localStorage.getItem(`letterladder:${username}:stats`);
-      const stats = raw ? JSON.parse(raw) : null;
-      if(!stats || !stats.total) return 0;
-      const cs = stats.total.currentStreak || 0;
-      if(cs === 0) return 0;
-      // Validate liveness — streak only counts if lastSolvedDate is today
-      // or yesterday in ET. Stale values must not be displayed.
-      const lsd = stats.total.lastSolvedDate;
-      if(!lsd) return 0;
-      const todayET = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
-      const [y,m,d] = todayET.split('-').map(Number);
-      const yestDt = new Date(y,m-1,d); yestDt.setDate(yestDt.getDate()-1);
-      const yesterdayET = `${yestDt.getFullYear()}-${String(yestDt.getMonth()+1).padStart(2,'0')}-${String(yestDt.getDate()).padStart(2,'0')}`;
-      if(lsd !== todayET && lsd !== yesterdayET) return 0;
-      return cs;
+      return liveTotalStreak(raw ? JSON.parse(raw) : null);
     }catch(e){ return 0; }
+  }
+
+  function setStreakText(streak){
+    const streakEl = document.getElementById('play-streak');
+    if(streakEl) streakEl.textContent = streak > 0 ? `🔥 ${streak} day streak` : '';
+  }
+
+  // This device's copy of the stats can be missing or stale (e.g. the
+  // account last played on another device), so also read the account's
+  // cloud stats and show the higher of the two live streaks - the same
+  // rule game.html and stats.html use when merging. Read-only: merging and
+  // saving stays with the game page. Falls back to the local value if the
+  // read fails; stale responses (auth changed meanwhile) are ignored.
+  let streakRequestId = 0;
+  async function showCloudStreak(user, localStreak){
+    const requestId = ++streakRequestId;
+    try{
+      const { getFirestore, doc, getDoc } =
+        await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const snap = await getDoc(doc(getFirestore(app), 'playerStats', user.uid));
+      if(requestId !== streakRequestId) return;
+      const cloudStreak = snap.exists() ? liveTotalStreak(snap.data()) : 0;
+      setStreakText(Math.max(localStreak, cloudStreak));
+    }catch(e){}
   }
 
   function renderPlayButtons(user){
     const hasAccount = !!(user && !user.isAnonymous && localStorage.getItem('letterladder:accountUsername'));
     const container = document.getElementById('play-buttons');
-    const streakEl = document.getElementById('play-streak');
     const streak = hasAccount ? getStreak() : 0;
-    if(streakEl) streakEl.textContent = streak > 0 ? `🔥 ${streak} day streak` : '';
+    setStreakText(streak);
+    if(hasAccount){
+      showCloudStreak(user, streak);
+    } else {
+      streakRequestId++; // ignore any in-flight read for a previous user
+    }
     container.innerHTML = `<button type="button" class="btn-primary play-btn-full" id="play-btn">Play</button>`;
     container.querySelector('#play-btn').addEventListener('click', ()=> goToGame(null));
   }

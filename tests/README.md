@@ -10,6 +10,7 @@ Run from the repository root:
 
 ```
 NODE_PATH=$(npm root -g) node tests/timer-default.test.js
+NODE_PATH=$(npm root -g) node tests/streak-sync.test.js
 ```
 
 Each file prints PASS/FAIL per case and exits non-zero if any case fails.

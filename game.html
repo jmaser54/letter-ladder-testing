@@ -1947,10 +1947,19 @@ function recordLossIfNeeded(tier){
 
   markPlayedIfNeeded(tier);
 
-  if(hasRealAccount()){
-    const stats = loadStats();
-    stats[tier].currentStreak = 0; // explicitly break the streak - this is a loss
-    saveStats(stats);
+  function updateStatsForLoss(){
+    if(hasRealAccount()){
+      const stats = loadStats();
+      stats[tier].currentStreak = 0; // explicitly break the streak - this is a loss
+      saveStats(stats);
+    }
+  }
+  // Same ordering as played/solved updates: wait for the cloud stats pull,
+  // so stale local stats are never uploaded over newer cloud stats.
+  if(statsPullPromise){
+    statsPullPromise.then(updateStatsForLoss).catch(updateStatsForLoss);
+  } else {
+    updateStatsForLoss();
   }
 }
 
@@ -4203,8 +4212,13 @@ async function pullStatsFromCloudIfNeeded(){
         solved: winner.solved || 0,
         // currentStreak: take the higher of both sides IF the streak is
         // still live. If neither side's lastSolvedDate is today or
-        // yesterday, the streak has broken and must be 0.
-        currentStreak: streakIsLive ? Math.max(localTier.currentStreak || 0, cloudTier.currentStreak || 0) : 0,
+        // yesterday, the streak has broken and must be 0. Each side is
+        // clamped first, so a stale (already broken) streak on one device
+        // can never be revived by the other side being live - the same
+        // rule stats.html applies.
+        currentStreak: streakIsLive
+          ? Math.max(clampStreak(localTier).currentStreak || 0, clampStreak(cloudTier).currentStreak || 0)
+          : 0,
         lastSolvedDate: winnerLastSolved,
         maxStreak: Math.max(localTier.maxStreak || 0, cloudTier.maxStreak || 0),
       };
