@@ -462,5 +462,15 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "in", "final": "lines", "solution": ["in","sin","sine","lines"] },
     "medium": { "start": "tuts", "final": "trumpets", "solution": ["tuts","trust","utters","sputter","trumpets"] },
     "hard": { "start": "ape", "final": "escapade", "solution": ["ape","peas","spade","spaced","escaped","escapade"] }
+  },
+  "2026-10-27": {
+    "easy": { "start": "no", "final": "toxin", "solution": ["no","ion","into","toxin"] },
+    "medium": { "start": "rid", "final": "fiddler", "solution": ["rid","dire","dried","riddle","fiddler"] },
+    "hard": { "start": "tire", "final": "remediate", "solution": ["tire","tried","retied","mitered","diameter","remediate"] }
+  },
+  "2026-10-28": {
+    "easy": { "start": "be", "final": "bowel", "solution": ["be","web","blew","bowel"] },
+    "medium": { "start": "bed", "final": "blessed", "solution": ["bed","bled","bleed","bleeds","blessed"] },
+    "hard": { "start": "rave", "final": "wavering", "solution": ["rave","raven","graven","vinegar","wavering"] }
   }
 };

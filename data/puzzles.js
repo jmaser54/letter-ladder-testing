@@ -459,5 +459,15 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "in", "final": "lines" },
     "medium": { "start": "tuts", "final": "trumpets" },
     "hard": { "start": "ape", "final": "escapade" }
+  },
+  "2026-10-27": {
+    "easy": { "start": "no", "final": "toxin" },
+    "medium": { "start": "rid", "final": "fiddler" },
+    "hard": { "start": "tire", "final": "remediate" }
+  },
+  "2026-10-28": {
+    "easy": { "start": "be", "final": "bowel" },
+    "medium": { "start": "bed", "final": "blessed" },
+    "hard": { "start": "rave", "final": "wavering" }
   }
 };
