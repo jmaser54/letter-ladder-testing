@@ -469,5 +469,30 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "be", "final": "bowel" },
     "medium": { "start": "bed", "final": "blessed" },
     "hard": { "start": "rave", "final": "wavering" }
+  },
+  "2026-10-29": {
+    "easy": { "start": "or", "final": "robin" },
+    "medium": { "start": "gene", "final": "evening" },
+    "hard": { "start": "verb", "final": "bereaving" }
+  },
+  "2026-10-30": {
+    "easy": { "start": "at", "final": "taken" },
+    "medium": { "start": "ale", "final": "stealing" },
+    "hard": { "start": "an", "final": "traipsing" }
+  },
+  "2026-10-31": {
+    "easy": { "start": "to", "final": "ghost" },
+    "medium": { "start": "sin", "final": "sinister" },
+    "hard": { "start": "cat", "final": "scariest" }
+  },
+  "2026-11-01": {
+    "easy": { "start": "so", "final": "shown" },
+    "medium": { "start": "car", "final": "charade" },
+    "hard": { "start": "cab", "final": "embrace" }
+  },
+  "2026-11-02": {
+    "easy": { "start": "he", "final": "earth" },
+    "medium": { "start": "do", "final": "ground" },
+    "hard": { "start": "see", "final": "sediment" }
   }
 };

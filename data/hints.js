@@ -472,5 +472,30 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "be", "final": "bowel", "solution": ["be","web","blew","bowel"] },
     "medium": { "start": "bed", "final": "blessed", "solution": ["bed","bled","bleed","bleeds","blessed"] },
     "hard": { "start": "rave", "final": "wavering", "solution": ["rave","raven","graven","vinegar","wavering"] }
+  },
+  "2026-10-29": {
+    "easy": { "start": "or", "final": "robin", "solution": ["or","rob","born","robin"] },
+    "medium": { "start": "gene", "final": "evening", "solution": ["gene","genie","engine","evening"] },
+    "hard": { "start": "verb", "final": "bereaving", "solution": ["verb","brave","beaver","begrave","verbiage","bereaving"] }
+  },
+  "2026-10-30": {
+    "easy": { "start": "at", "final": "taken", "solution": ["at","tan","neat","taken"] },
+    "medium": { "start": "ale", "final": "stealing", "solution": ["ale","lean","glean","angles","tangles","stealing"] },
+    "hard": { "start": "an", "final": "traipsing", "solution": ["an","ran","rang","grain","rating","prating","pirating","traipsing"] }
+  },
+  "2026-10-31": {
+    "easy": { "start": "to", "final": "ghost", "solution": ["to","got","goth","ghost"] },
+    "medium": { "start": "sin", "final": "sinister", "solution": ["sin","tins","tines","steins","sinters","sinister"] },
+    "hard": { "start": "cat", "final": "scariest", "solution": ["cat","cart","carts","racist","raciest","scariest"] }
+  },
+  "2026-11-01": {
+    "easy": { "start": "so", "final": "shown", "solution": ["so","son","snow","shown"] },
+    "medium": { "start": "car", "final": "charade", "solution": ["car","acre","cedar","arcade","charade"] },
+    "hard": { "start": "cab", "final": "embrace", "solution": ["cab","crab","brace","camber","embrace"] }
+  },
+  "2026-11-02": {
+    "easy": { "start": "he", "final": "earth", "solution": ["he","her","hare","earth"] },
+    "medium": { "start": "do", "final": "ground", "solution": ["do","don","undo","round","ground"] },
+    "hard": { "start": "see", "final": "sediment", "solution": ["see","seed","steed","nested","destine","sediment"] }
   }
 };
