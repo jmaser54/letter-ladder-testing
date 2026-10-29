@@ -50,7 +50,42 @@ async function simpleTap(browser, base, opts){
   return navigated;
 }
 
+// A player whose last visit was on an earlier day taps Play once; they must
+// end up on the game (not be bounced back to the landing page by the
+// game's new-day redirect), with the new day starting on Easy.
+async function firstPlayOfNewDay(browser, base, { mobile, signedIn }){
+  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+  const ls = { 'letterladder:lastViewedDateKey': yesterday, 'letterladder:activeTier': 'hard', 'letterladder:howToPlaySeen': '1' };
+  const opts = signedIn ? { ...SIGNED_IN, localStorage: { ...SIGNED_IN.localStorage, ...ls } } : { fake: { user: null }, localStorage: ls };
+  const { ctx, page } = await newPage(browser, { ...opts, mobile });
+  await page.goto(base + '/index.html');
+  await page.waitForFunction(() => window.__FAKE_FB_AUTH_FIRED > 0);
+  if(mobile) await page.tap('.play-btn-full'); else await page.click('.play-btn-full');
+  await page.waitForURL(/game\.html/, { timeout: 3000 }).catch(() => {});
+  await page.waitForTimeout(2000); // long enough for any redirect back
+  const result = { url: page.url().split('/').pop(), tier: await page.evaluate(() => localStorage.getItem('letterladder:activeTier')) };
+  await ctx.close();
+  return result;
+}
+
 module.exports = run('Play button (mobile emulation)', [
+  ['first Play of a new day reaches the game in one tap (iPhone, guest)', async ({ browser, base }) => {
+    assertEqual(await firstPlayOfNewDay(browser, base, { mobile: true, signedIn: false }), { url: 'game.html', tier: 'easy' }, 'after one tap');
+  }],
+  ['first Play of a new day reaches the game in one tap (iPhone, signed in)', async ({ browser, base }) => {
+    assertEqual(await firstPlayOfNewDay(browser, base, { mobile: true, signedIn: true }), { url: 'game.html', tier: 'easy' }, 'after one tap');
+  }],
+  ['first Play of a new day reaches the game in one click (desktop)', async ({ browser, base }) => {
+    assertEqual(await firstPlayOfNewDay(browser, base, { mobile: false, signedIn: false }), { url: 'game.html', tier: 'easy' }, 'after one click');
+  }],
+  ['opening the game directly on a new day still shows the new-day landing page first', async ({ browser, base }) => {
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const { ctx, page } = await newPage(browser, { fake: { user: null }, localStorage: { 'letterladder:lastViewedDateKey': yesterday } });
+    await page.goto(base + '/game.html').catch(() => {});
+    await page.waitForURL(/index\.html/, { timeout: 5000 }).catch(() => {});
+    assertEqual(page.url().split('/').pop(), 'index.html', 'redirected to landing');
+    await ctx.close();
+  }],
   ['guest: Play button is not replaced when auth finishes loading', async ({ browser, base }) => {
     assertEqual(await buttonSurvivesAuth(browser, base, { fake: { user: null } }), true, 'same button element');
   }],

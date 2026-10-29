@@ -421,6 +421,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       localStorage.setItem(TIMER_CHOICE_KEY, timerChoice);
       localStorage.setItem(TIMER_CHOICE_MADE_KEY, '1');
     }
+    // The player has now seen today's landing page, so record today as the
+    // last viewed date (and start a new day on Easy, as game.html's daily
+    // rollover does). Without this, the first Play of each new day was
+    // bounced straight back here by that rollover, so Play needed two taps.
+    // Computed at tap time, in ET, the same way game.html's todayKey() is.
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    if(localStorage.getItem('letterladder:lastViewedDateKey') !== today){
+      localStorage.setItem('letterladder:activeTier', 'easy');
+      localStorage.setItem('letterladder:lastViewedDateKey', today);
+    }
     window.location.href = 'game.html';
   }
 
