@@ -12,6 +12,7 @@ Run from the repository root:
 NODE_PATH=$(npm root -g) node tests/timer-default.test.js
 NODE_PATH=$(npm root -g) node tests/streak-sync.test.js
 NODE_PATH=$(npm root -g) node tests/play-button-tap.test.js
+NODE_PATH=$(npm root -g) node tests/timer-clock-touch.test.js
 ```
 
 Each file prints PASS/FAIL per case and exits non-zero if any case fails.

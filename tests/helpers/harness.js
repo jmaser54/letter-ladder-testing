@@ -74,7 +74,7 @@ const STUBS = {
 };
 
 async function newPage(browser, { fake = {}, localStorage = {}, mobile = false, now } = {}){
-  const ctx = await browser.newContext(mobile ? { ...devices['iPhone 13'] } : { viewport: { width: 1200, height: 900 } });
+  const ctx = await browser.newContext(mobile ? { ...devices[typeof mobile === 'string' ? mobile : 'iPhone 13'] } : { viewport: { width: 1200, height: 900 } });
   await ctx.route(/gstatic\.com\/firebasejs\/[^/]+\/(firebase-[a-z]+\.js)/, route => {
     const name = route.request().url().match(/(firebase-[a-z]+\.js)/)[1];
     route.fulfill({ status: 200, contentType: 'application/javascript', body: STUBS[name] || 'export {}' });

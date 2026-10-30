@@ -1034,9 +1034,44 @@ function timesText(n){
 // the blur), not in a separate click listener - preventDefault on a
 // touch event can silently suppress the click that would otherwise
 // follow it, which is what broke this whole class of button on mobile.
-function bindTapAction(el, action){
+// options.ignoreMovedTouches: treat a touch as a tap only if the finger
+// stayed (nearly) still and the browser didn't cancel it, so scrolling or
+// sliding across the control never triggers it. Used by the timer toggle,
+// where an accidental trigger silently turns the player's timer off.
+function bindTapAction(el, action, options){
   let firedViaTouch = false;
+  const ignoreMovedTouches = !!(options && options.ignoreMovedTouches);
+  const TAP_MOVE_TOLERANCE_PX = 10;
+  let touchStartX = 0, touchStartY = 0, touchMoved = false, suppressClickUntil = 0;
+  if(ignoreMovedTouches){
+    el.addEventListener('touchstart', (e)=>{
+      const t = e.touches[0];
+      touchStartX = t.clientX; touchStartY = t.clientY; touchMoved = false;
+    }, { passive: true });
+    el.addEventListener('touchmove', (e)=>{
+      const t = e.touches[0];
+      if(Math.abs(t.clientX - touchStartX) > TAP_MOVE_TOLERANCE_PX || Math.abs(t.clientY - touchStartY) > TAP_MOVE_TOLERANCE_PX){
+        touchMoved = true;
+      }
+    }, { passive: true });
+    el.addEventListener('touchcancel', ()=>{ touchMoved = true; }, { passive: true });
+  }
   el.addEventListener('touchend', (e)=>{
+    if(ignoreMovedTouches && !touchMoved){
+      // Also compare where the finger lifted: once the browser takes over a
+      // scroll it may stop delivering touchmove to the page entirely.
+      const t = e.changedTouches && e.changedTouches[0];
+      if(t && (Math.abs(t.clientX - touchStartX) > TAP_MOVE_TOLERANCE_PX || Math.abs(t.clientY - touchStartY) > TAP_MOVE_TOLERANCE_PX)){
+        touchMoved = true;
+      }
+    }
+    if(ignoreMovedTouches && touchMoved){
+      // A scroll/slide, not a tap. Also swallow any click the browser might
+      // still synthesize for this touch (it arrives right after touchend),
+      // so it can't trigger the action either.
+      suppressClickUntil = Date.now() + 800;
+      return;
+    }
     e.preventDefault();
     firedViaTouch = true;
     action();
@@ -1044,6 +1079,7 @@ function bindTapAction(el, action){
   el.addEventListener('mousedown', (e)=> e.preventDefault());
   el.addEventListener('click', ()=>{
     if(firedViaTouch){ firedViaTouch = false; return; }
+    if(ignoreMovedTouches && Date.now() < suppressClickUntil) return;
     action();
   });
 }
@@ -1514,7 +1550,7 @@ function renderTimerWidget(){
     bindTapAction(widget.querySelector('.timer-widget-btn'), ()=>{
       setTimerChoice('untimed');
       render();
-    });
+    }, { ignoreMovedTouches: true });
   } else {
     // Inactive — grayed clock + toggle switch labeled "Off"
     widget.innerHTML = `
@@ -1531,7 +1567,7 @@ function renderTimerWidget(){
       setTimerChoice('timed');
       startTimerIfNeeded(activeTier);
       render();
-    });
+    }, { ignoreMovedTouches: true });
   }
 }
 
