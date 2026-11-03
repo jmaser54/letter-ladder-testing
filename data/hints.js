@@ -497,5 +497,25 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "he", "final": "earth", "solution": ["he","her","hare","earth"] },
     "medium": { "start": "do", "final": "ground", "solution": ["do","don","undo","round","ground"] },
     "hard": { "start": "see", "final": "sediment", "solution": ["see","seed","steed","nested","destine","sediment"] }
+  },
+  "2026-11-03": {
+    "easy": { "start": "be", "final": "derby", "solution": ["be","bed","bred","derby"] },
+    "medium": { "start": "id", "final": "retired", "solution": ["id","die","diet","tired","retied","retired"] },
+    "hard": { "start": "nut", "final": "indenture", "solution": ["nut","tune","unite","untied","untried","reunited","indenture"] }
+  },
+  "2026-11-04": {
+    "easy": { "start": "it", "final": "tribe", "solution": ["it","bit","bite","tribe"] },
+    "medium": { "start": "den", "final": "riddance", "solution": ["den","dean","dance","danced","candied","riddance"] },
+    "hard": { "start": "lie", "final": "believed", "solution": ["lie","bile","belie","edible","bedevil","believed"] }
+  },
+  "2026-11-05": {
+    "easy": { "start": "re", "final": "brace", "solution": ["re","ear","bear","brace"] },
+    "medium": { "start": "she", "final": "porches", "solution": ["she","hose","horse","chores","porches"] },
+    "hard": { "start": "rut", "final": "butterfly", "solution": ["rut","true","utter","turtle","flutter","fluttery","butterfly"] }
+  },
+  "2026-11-06": {
+    "easy": { "start": "on", "final": "grown", "solution": ["on","own","gown","grown"] },
+    "medium": { "start": "sir", "final": "diaries", "solution": ["sir","airs","raids","raised","diaries"] },
+    "hard": { "start": "door", "final": "comported", "solution": ["door","rodeo","rooted","motored","promoted","comported"] }
   }
 };

@@ -494,5 +494,25 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "he", "final": "earth" },
     "medium": { "start": "do", "final": "ground" },
     "hard": { "start": "see", "final": "sediment" }
+  },
+  "2026-11-03": {
+    "easy": { "start": "be", "final": "derby" },
+    "medium": { "start": "id", "final": "retired" },
+    "hard": { "start": "nut", "final": "indenture" }
+  },
+  "2026-11-04": {
+    "easy": { "start": "it", "final": "tribe" },
+    "medium": { "start": "den", "final": "riddance" },
+    "hard": { "start": "lie", "final": "believed" }
+  },
+  "2026-11-05": {
+    "easy": { "start": "re", "final": "brace" },
+    "medium": { "start": "she", "final": "porches" },
+    "hard": { "start": "rut", "final": "butterfly" }
+  },
+  "2026-11-06": {
+    "easy": { "start": "on", "final": "grown" },
+    "medium": { "start": "sir", "final": "diaries" },
+    "hard": { "start": "door", "final": "comported" }
   }
 };
