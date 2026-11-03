@@ -53,8 +53,12 @@ const STUBS = {
     export const getFirestore = () => ({});
     export const doc = (db, col, id) => ({ path: col + '/' + id });
     export const collection = (db, col) => ({ col });
-    export const where = () => ({}); export const orderBy = () => ({}); export const limit = () => ({});
-    export const query = (c) => c;
+    // Queries run against the stored docs of that collection: '==' filters,
+    // orderBy and limit are honoured (enough for the pages under test).
+    export const where = (field, op, value) => ({ where: { field, op, value } });
+    export const orderBy = (field, dir) => ({ orderBy: { field, dir: dir || 'asc' } });
+    export const limit = (n) => ({ limit: n });
+    export const query = (c, ...constraints) => ({ col: c.col, constraints });
     async function read(ref){
       await wait();
       if(cfg().failReads) throw new Error('fake network failure');
@@ -63,7 +67,19 @@ const STUBS = {
     }
     export const getDoc = read;
     export const getDocFromServer = read;
-    export async function getDocs(){ await wait(); return { empty: true, docs: [], forEach(){} }; }
+    export async function getDocs(q){
+      await wait();
+      if(cfg().failReads) throw new Error('fake network failure');
+      const cs = (q && q.constraints) || [];
+      let rows = Object.entries(store())
+        .filter(([path]) => q && q.col && path.startsWith(q.col + '/') && path.split('/').length === 2)
+        .map(([path, data]) => ({ id: path.split('/')[1], data: clone(data) }));
+      for(const c of cs) if(c.where && c.where.op === '==') rows = rows.filter(r => r.data[c.where.field] === c.where.value);
+      for(const c of cs) if(c.orderBy) rows.sort((a, b) => (a.data[c.orderBy.field] > b.data[c.orderBy.field] ? 1 : -1) * (c.orderBy.dir === 'desc' ? -1 : 1));
+      for(const c of cs) if(c.limit) rows = rows.slice(0, c.limit);
+      const docs = rows.map(r => ({ id: r.id, data: () => r.data, ref: { path: q.col + '/' + r.id } }));
+      return { empty: docs.length === 0, docs, size: docs.length, forEach(fn){ docs.forEach(fn); } };
+    }
     export async function setDoc(ref, data, opts){
       writes().push({ path: ref.path, data: clone(data), merge: !!(opts && opts.merge), at: Date.now() });
       store()[ref.path] = (opts && opts.merge) ? Object.assign({}, store()[ref.path] || {}, clone(data)) : clone(data);
