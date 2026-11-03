@@ -90,24 +90,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     margin: 0;
     line-height: 1.1;
   }
-  .brand-logo{
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: block;
-  }
-  /* Logo row: logo centered, timer right-aligned on the same row */
-  .brand-logo-row{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    position: relative;
-    padding-bottom: 0;
-    gap: 0;
-  }
-  /* Anchor for timer + hint indicator — sits right side of the logo row */
+  /* Anchor for timer + hint indicator — sits right side of the title row */
   .timer-widget-anchor{
     position: absolute; right: 0; top: 0; bottom: 0;
     display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
@@ -117,9 +100,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     /* sits just below the vertically-centered timer button without moving it */
   }
   .brand .rung-i{ color: var(--amber); }
-  /* ? how-to-play icon — top right, matching landing page exactly */
+  /* ? how-to-play icon — top left, just right of the 32px account button */
   .howto-icon-btn{
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    position: absolute; left: 40px; top: 50%; transform: translateY(-50%);
     width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
     background: none; color: var(--ink-dim); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -571,7 +554,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   @media (max-width: 420px){
     .rung{ min-width: calc(var(--rung-minw, 140px) * 0.8); }
     .brand-row{ font-size: 1.6rem; }
-    .brand-logo{ width: 42px; height: 42px; }
     .timer-widget-btn{ font-size: 0.85rem; }
   }
   .confetti-piece{
@@ -919,9 +901,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="account-widget" id="account-widget"></div>
         <h1 class="brand">Letter Ladder</h1>
         <button type="button" class="howto-icon-btn" id="howto-icon-btn" aria-label="How to play">?</button>
-      </div>
-      <div class="brand-logo-row">
-        <img src="og-image.png" alt="" class="brand-logo">
         <div class="timer-widget-anchor">
           <div class="timer-widget" id="timer-widget"></div>
         </div>
