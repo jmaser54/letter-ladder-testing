@@ -533,7 +533,7 @@ const PUZZLE_SCHEDULE = {
   "2026-11-10": {
     "easy": { "start": "ex", "final": "relax" },
     "medium": { "start": "opt", "final": "exploit" },
-    "hard": { "start": "mad", "final": "exclaimed" }
+    "hard": { "start": "red", "final": "excreted" }
   },
   "2026-11-11": {
     "easy": { "start": "sir", "final": "misery" },

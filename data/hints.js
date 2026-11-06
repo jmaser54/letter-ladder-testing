@@ -536,7 +536,7 @@ const HINTS_SCHEDULE = {
   "2026-11-10": {
     "easy": { "start": "ex", "final": "relax", "solution": ["ex","axe","axle","relax"] },
     "medium": { "start": "opt", "final": "exploit", "solution": ["opt","plot","pilot","polite","exploit"] },
-    "hard": { "start": "mad", "final": "exclaimed", "solution": ["mad","dame","medal","calmed","medical","climaxed","exclaimed"] }
+    "hard": { "start": "red", "final": "excreted", "solution": ["red","reed","creed","recede","erected","excreted"] }
   },
   "2026-11-11": {
     "easy": { "start": "sir", "final": "misery", "solution": ["sir","rims","miser","misery"] },
