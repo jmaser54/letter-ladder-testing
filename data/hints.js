@@ -517,5 +517,30 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "on", "final": "grown", "solution": ["on","own","gown","grown"] },
     "medium": { "start": "sir", "final": "diaries", "solution": ["sir","airs","raids","raised","diaries"] },
     "hard": { "start": "door", "final": "comported", "solution": ["door","rodeo","rooted","motored","promoted","comported"] }
+  },
+  "2026-11-07": {
+    "easy": { "start": "ef", "final": "fleet", "solution": ["ef","fee","feet","fleet"] },
+    "medium": { "start": "bag", "final": "gambler", "solution": ["bag","brag","barge","garble","gambler"] },
+    "hard": { "start": "rent", "final": "traversing", "solution": ["rent","inter","retain","trainer","restrain","serrating","traversing"] }
+  },
+  "2026-11-08": {
+    "easy": { "start": "pa", "final": "sharp", "solution": ["pa","rap","harp","sharp"] },
+    "medium": { "start": "rep", "final": "protect", "solution": ["rep","rope","trope","potter","protect"] },
+    "hard": { "start": "ire", "final": "pointier", "solution": ["ire","tire","inter","orient","pointer","pointier"] }
+  },
+  "2026-11-09": {
+    "easy": { "start": "en", "final": "unwed", "solution": ["en","den","dune","unwed"] },
+    "medium": { "start": "sit", "final": "unspilt", "solution": ["sit","list","split","splint","unspilt"] },
+    "hard": { "start": "die", "final": "discovery", "solution": ["die","dive","video","voiced","divorce","discover","discovery"] }
+  },
+  "2026-11-10": {
+    "easy": { "start": "ex", "final": "relax", "solution": ["ex","axe","axle","relax"] },
+    "medium": { "start": "opt", "final": "exploit", "solution": ["opt","plot","pilot","polite","exploit"] },
+    "hard": { "start": "mad", "final": "exclaimed", "solution": ["mad","dame","medal","calmed","medical","climaxed","exclaimed"] }
+  },
+  "2026-11-11": {
+    "easy": { "start": "sir", "final": "misery", "solution": ["sir","rims","miser","misery"] },
+    "medium": { "start": "sip", "final": "despair", "solution": ["sip","pies","spire","praise","despair"] },
+    "hard": { "start": "deer", "final": "depression", "solution": ["deer","reeds","sender","senders","spenders","dispenser","depression"] }
   }
 };

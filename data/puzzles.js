@@ -514,5 +514,30 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "on", "final": "grown" },
     "medium": { "start": "sir", "final": "diaries" },
     "hard": { "start": "door", "final": "comported" }
+  },
+  "2026-11-07": {
+    "easy": { "start": "ef", "final": "fleet" },
+    "medium": { "start": "bag", "final": "gambler" },
+    "hard": { "start": "rent", "final": "traversing" }
+  },
+  "2026-11-08": {
+    "easy": { "start": "pa", "final": "sharp" },
+    "medium": { "start": "rep", "final": "protect" },
+    "hard": { "start": "ire", "final": "pointier" }
+  },
+  "2026-11-09": {
+    "easy": { "start": "en", "final": "unwed" },
+    "medium": { "start": "sit", "final": "unspilt" },
+    "hard": { "start": "die", "final": "discovery" }
+  },
+  "2026-11-10": {
+    "easy": { "start": "ex", "final": "relax" },
+    "medium": { "start": "opt", "final": "exploit" },
+    "hard": { "start": "mad", "final": "exclaimed" }
+  },
+  "2026-11-11": {
+    "easy": { "start": "sir", "final": "misery" },
+    "medium": { "start": "sip", "final": "despair" },
+    "hard": { "start": "deer", "final": "depression" }
   }
 };
