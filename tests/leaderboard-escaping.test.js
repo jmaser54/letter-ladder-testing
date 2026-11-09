@@ -60,7 +60,9 @@ async function assertNothingInjected(page, dialogs, containerSel){
 
 async function tierRows(page, cardSel){
   return page.$$eval(`${cardSel} .tier-row`, tiers => tiers.map(t => [
-    t.querySelector('.tier-label').textContent.trim(),
+    // Difficulty name only (past leaderboards also append "  (START → FINAL)",
+    // covered by past-leaderboards-puzzles.test.js).
+    t.querySelector('.tier-label').textContent.split(' ')[0].trim(),
     [...t.querySelectorAll('.score-row')].map(r => [...r.children].map(c => c.textContent.trim())),
   ]));
 }

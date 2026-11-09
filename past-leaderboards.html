@@ -64,6 +64,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </div>
 
+<!-- Start/final words per date and tier, shown next to each difficulty label.
+     Keep the ?v= number in step with game.html when puzzles.js is updated. -->
+<script src="data/puzzles.js?v=1793974992"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -166,9 +169,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <div class="score-time">${formatTime(row.timeMs)}</div>
               </div>
             `).join('');
+            // That day's puzzle for this tier, e.g. "EASY  (EN → UNWED)"
+            // (the label's CSS uppercases it). Omitted if there's no data.
+            const day = (typeof PUZZLE_SCHEDULE !== 'undefined') ? PUZZLE_SCHEDULE[dateKey] : null;
+            const puzzle = day && day[tier];
+            const puzzleText = puzzle ? `&nbsp; (${escapeHtml(puzzle.start)} → ${escapeHtml(puzzle.final)})` : '';
             return `
               <div class="tier-row">
-                <div class="tier-label">${tierNames[tier]}</div>
+                <div class="tier-label">${tierNames[tier]}${puzzleText}</div>
                 ${rows}
               </div>
             `;
