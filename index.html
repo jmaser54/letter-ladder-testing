@@ -13,6 +13,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Letter Ladder — a daily word puzzle game. Grow words one letter at a time.">
 <title>Letter Ladder</title>
+<meta property="og:title" content="Letter Ladder">
+<meta property="og:description" content="A daily word puzzle - add one letter, scramble to a new word, climb to the top.">
+<meta property="og:image" content="https://letterladder.io/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="700">
+<meta property="og:image:height" content="700">
+<meta property="og:url" content="https://letterladder.io/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Letter Ladder">
+<meta name="twitter:description" content="A daily word puzzle - add one letter, scramble to a new word, climb to the top.">
+<meta name="twitter:image" content="https://letterladder.io/og-image.png">
 <link rel="icon" href="og-image.png">
 <link rel="apple-touch-icon" href="og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -171,6 +183,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .btn-primary{ background: var(--amber); color:#1B2A41; }
   .btn-ghost{ background: rgba(245,239,224,0.08); color: var(--ink); }
 
+  .past-puzzles-link{
+    margin-top: 12px; font-size: 0.88rem; color: var(--ink-dim); text-align: center;
+    text-decoration: none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation;
+  }
+  .past-puzzles-link:hover{ color: var(--amber); border-color: var(--amber); }
+  .landing-intro{ color: var(--ink-dim); font-size: 0.92rem; text-align: center; margin: 10px 0 0; }
   .play-date{
     color: var(--ink-dim);
     font-family: 'Inter', system-ui, sans-serif;
@@ -316,8 +334,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="play-buttons" id="play-buttons">
       <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
     </div>
+    <a href="past-puzzles.html" class="past-puzzles-link" id="past-puzzles-link">Missed a day? Play past puzzles<span id="past-puzzles-count"></span></a>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
+    <p class="landing-intro">Add one letter, scramble to a new word, climb to the top.</p>
   </main>
 
   <div class="example-ladders-panel">
@@ -359,6 +379,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </footer>
 </div>
 
+<!-- Past-puzzle count for the "Missed a day?" link. Keep the ?v= number in
+     step with game.html when puzzles.js is updated. -->
+<script src="data/puzzles.js?v=1793974992"></script>
+<script>
+  (function(){
+    try{
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      const n = Object.keys(PUZZLE_SCHEDULE).filter(k => k < today)
+        .reduce((total, k) => total + Object.keys(PUZZLE_SCHEDULE[k]).length, 0);
+      if(n > 0) document.getElementById('past-puzzles-count').textContent = ` — ${n} puzzles`;
+    }catch(e){}
+  })();
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -460,6 +493,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <li>Every word must be a real English word</li>
         </ul>
         <p style="margin-top:1em;margin-bottom:0;">New puzzles drop daily at 12am EST.</p>
+        <p style="margin:0.8em 0 0;"><a href="how-to-play.html" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Read the full rules</a></p>
       </div>
     `;
     document.body.appendChild(overlay);

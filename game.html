@@ -372,7 +372,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-style:italic; flex-shrink:0; min-height: 0;
   }
   .hint-display .hint-letters{ color: var(--amber); font-style:normal; font-weight:600; letter-spacing:0.04em; }
-  .share-status{ text-align:center; margin-top:8px; font-size:0.8rem; color: var(--blue); font-weight:600; flex-shrink:0; }
+  /* Share modal (after each finished puzzle): reuses .howto-card, .btn-primary and .btn-ghost */
+  .share-preview{ white-space:pre-wrap; word-break:break-word; font-family:'Inter',sans-serif; font-size:0.9rem; line-height:1.5; background: rgba(245,239,224,0.06); border-radius:10px; padding:12px 14px; margin:0 0 16px; text-align:left; color: var(--ink); }
+  .share-modal-share{ width:100%; font-size:1.116rem; font-weight:700; padding:13px 18px; } /* same size as the Play button */
+  .share-modal-status{ text-align:center; min-height:1.2em; margin:8px 0; font-size:0.85rem; color: var(--blue); font-weight:600; }
 
   .view-solution-link{
     display:table; margin: 20px auto 8px auto;
@@ -2483,6 +2486,8 @@ function markSolvedIfNeeded(tier, guesses){
     showLeaderboardPromptIfNeeded(tier);
   }
 
+  scheduleShareModal();
+
   scheduleDailyProgressSync(); // updates the timestamp if this genuinely changed anything
   clearTimeout(dailyProgressSyncTimeout);
   syncDailyProgressToCloud(); // then sync immediately rather than waiting on the debounce
@@ -2838,31 +2843,102 @@ function formatDurationForShare(ms){
   }
 }
 
+// Spoiler-free share text: date, one line per puzzle finished today (time
+// if timed, hints used), streak for signed-in players, tracked link.
+const SHARE_LINK = 'letterladder.io/?utm_source=share&utm_medium=social&utm_campaign=share_results';
 function buildShareText(){
   const tierLabels = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
-  const lines = [];
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const dateLabel = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const lines = [`Letter Ladder — ${dateLabel}`];
   const timerChoice = getTimerChoice();
+  let anyTime = false;
   for(const tier of TIERS){
-    const puzzle = getTodaysPuzzle(tier);
-    if(!puzzle) continue;
-    if(isTierGenuinelyWon(tier)){
-      const hints = getHintsUsed(tier);
-      const hintStr = hints > 0 ? ` ${'💡'.repeat(hints)}` : '';
-
-      let timePart = '';
-      if(timerChoice === 'timed'){
-        const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
-        if(frozenElapsed !== null){
-          timePart = ` ${formatDurationForShare(Number(frozenElapsed))}`;
-        }
+    if(!getTodaysPuzzle(tier) || !isTierGenuinelyWon(tier)) continue; // only puzzles actually finished
+    let result = 'solved';
+    if(timerChoice === 'timed'){
+      const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
+      if(frozenElapsed !== null){
+        result = formatDurationForShare(Number(frozenElapsed));
+        anyTime = true;
       }
-
-      lines.push(`✅ ${tierLabels[tier]}${timePart}${hintStr}`);
-    } else {
-      lines.push(`✖️ ${tierLabels[tier]}`);
     }
+    const hints = getHintsUsed(tier);
+    const hintPart = hints > 0 ? ` (${hints} hint${hints === 1 ? '' : 's'})` : '';
+    lines.push(`${tierLabels[tier]}: ${result}${hintPart}`);
   }
-  return `Letter Ladder #${puzzleDayNumber()} 🪜\n\n${lines.join('\n')}\n\n${SITE_URL}`;
+  if(hasRealAccount()){
+    const total = loadStats().total;
+    const live = total.lastSolvedDate === todayKey() || total.lastSolvedDate === dateKeyMinusOneDay(todayKey());
+    const streak = live ? (total.currentStreak || 0) : 0;
+    if(streak > 0) lines.push(`🔥 Streak: ${streak} day${streak === 1 ? '' : 's'}`);
+  }
+  lines.push(SHARE_LINK);
+  lines.push(anyTime ? 'Can you beat my time?' : 'Can you solve it?');
+  return lines.join('\n');
+}
+
+// Shown once after each puzzle is finished: a preview of the exact share
+// text, a Share Results button (native share sheet on touch devices,
+// otherwise copy), Next puzzle and Close.
+let ladderCelebrationActive = false;
+let shareModalAfterCelebration = false;
+function scheduleShareModal(){
+  // Let the win confetti start first; if this solve completed all three
+  // puzzles, wait for the ladder-climb celebration to finish.
+  setTimeout(() => {
+    if(ladderCelebrationActive){ shareModalAfterCelebration = true; return; }
+    showShareModal();
+  }, 900);
+}
+function showShareModal(){
+  if(isArchiveMode || document.querySelector('.share-modal-overlay')) return;
+  const shareText = buildShareText();
+  const nextTier = { easy: 'medium', medium: 'hard' }[activeTier];
+  const overlay = document.createElement('div');
+  overlay.className = 'howto-overlay share-modal-overlay';
+  overlay.innerHTML = `
+    <div class="howto-card share-modal-card" role="dialog" aria-label="Share results">
+      <button type="button" class="howto-close" aria-label="Close">&times;</button>
+      <h2>Share your results</h2>
+      <pre class="share-preview"></pre>
+      <button type="button" class="btn-primary share-modal-share">Share Results</button>
+      <div class="share-modal-status" aria-live="polite"></div>
+      <div class="confirm-actions">
+        ${nextTier ? '<button type="button" class="btn-ghost share-modal-next">Next puzzle</button>' : ''}
+        <button type="button" class="btn-ghost share-modal-close">Close</button>
+      </div>
+    </div>
+  `;
+  overlay.querySelector('.share-preview').textContent = shareText; // the exact text that gets shared
+  document.body.appendChild(overlay);
+  function close(){ overlay.remove(); }
+  bindTapAction(overlay.querySelector('.howto-close'), close);
+  bindTapAction(overlay.querySelector('.share-modal-close'), close);
+  const nextBtn = overlay.querySelector('.share-modal-next');
+  if(nextBtn) bindTapAction(nextBtn, () => { close(); switchToTier(nextTier); });
+  bindTapAction(overlay.querySelector('.share-modal-share'), async () => {
+    const statusEl = overlay.querySelector('.share-modal-status');
+    if(isTouchDevice && navigator.share){
+      try{ await navigator.share({ text: shareText }); }catch(e){ /* share sheet cancelled */ }
+      return;
+    }
+    try{
+      await navigator.clipboard.writeText(shareText);
+      statusEl.textContent = 'Copied!';
+    }catch(e){
+      statusEl.textContent = 'Copy the text above to share it.';
+    }
+  });
+  setTimeout(() => {
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) close(); });
+  }, 0);
+}
+
+// "Missed a day?" link: count of puzzles from days before today.
+function pastPuzzleCount(){
+  const today = todayKey();
+  return Object.keys(PUZZLE_SCHEDULE).filter(k => k < today).reduce((n, k) => n + Object.keys(PUZZLE_SCHEDULE[k]).length, 0);
 }
 
 async function buildShareImage(){
@@ -2992,6 +3068,7 @@ function triggerLadderClimbCelebration(finalWord){
   // exited, right before the usual winning banner shows.
   const anchorEl = document.getElementById('final-word-rung');
   if(!anchorEl){ if(!isArchiveMode) showSummitBanner(); return; } // safety fallback
+  ladderCelebrationActive = true; // the share modal waits until this finishes
 
   const rect = anchorEl.getBoundingClientRect();
   const originalText = anchorEl.textContent;
@@ -3054,6 +3131,8 @@ function triggerLadderClimbCelebration(finalWord){
     overlay.remove();
     anchorEl.textContent = originalText;
     if(!isArchiveMode) showSummitBanner();
+    ladderCelebrationActive = false;
+    if(shareModalAfterCelebration){ shareModalAfterCelebration = false; showShareModal(); }
   }, exitDuration + pauseAfterExit);
 }
 
@@ -3327,7 +3406,6 @@ function render(focusInput = false, pendingErrors = null){
     </div>
   `;
 
-  const anyTierSolvedToday = TIERS.some(tier => getTodaysPuzzle(tier) && isTierComplete(tier));
 
   panel.className = `panel ${sizeTier}`;
   // Replacing the panel's contents destroys the currently focused input.
@@ -3345,15 +3423,13 @@ function render(focusInput = false, pendingErrors = null){
     <div class="actions-row" style="justify-content:center;">
       ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button" style="font-size:1.19rem;padding:13px 23px;">Next puzzle</button>` : ''}
     </div>
-    ${isWon && anyTierSolvedToday ? `<div style="text-align:center;margin:6px 0 10px;"><a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a></div>` : ''}
+    ${isWon ? `<div style="text-align:center;margin:6px 0 10px;"><a href="past-puzzles.html" id="past-puzzles-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Missed a day? Play past puzzles — ${pastPuzzleCount()} puzzles</a></div>` : ''}
     ${bankHtml}
     ${primaryActionsHtml}
     ${`<div class="actions-row" style="flex-direction:column;align-items:center;gap:10px;">
       ${activeLength != null ? kbToggleHtml : ''}
-      ${!isWon && anyTierSolvedToday ? `<a href="#" id="share-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Share results</a>` : ''}
     </div>`}
     <a href="#" id="solution-link" class="view-solution-link">View solution</a>
-    <div class="share-status" id="share-status"></div>
   `;
   suppressBlurCommit = false;
 
@@ -3387,34 +3463,6 @@ function render(focusInput = false, pendingErrors = null){
           render();
         }
       });
-    });
-  }
-
-  const shareBtn = document.getElementById('share-link');
-  if(shareBtn){
-    shareBtn.addEventListener('click', async (e)=>{
-      e.preventDefault();
-      const shareText = buildShareText();
-      const statusEl = document.getElementById('share-status');
-
-      // Text-only share - bundling the image in alongside the text
-      // resulted in both showing up together in the native share sheet
-      // (e.g. a Messages share getting the image attachment AND the text
-      // caption at once), which felt redundant rather than helpful.
-      if(navigator.share){
-        try{
-          await navigator.share({ text: shareText });
-        }catch(e){
-          // person cancelled the native share sheet - not an error, do nothing
-        }
-      } else {
-        try{
-          await navigator.clipboard.writeText(shareText);
-          if(statusEl) statusEl.textContent = 'Copied to clipboard!';
-        }catch(e){
-          if(statusEl) statusEl.textContent = shareText;
-        }
-      }
     });
   }
 
@@ -4058,6 +4106,7 @@ function showHowToPlayPopup(){
         <li>Every word must be a real English word</li>
       </ul>
       <p style="margin-top:1em;margin-bottom:0;">New puzzles drop daily at 12am EST.</p>
+      <p style="margin:0.8em 0 0;"><a href="how-to-play.html" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Read the full rules</a></p>
     </div>
   `;
   document.body.appendChild(overlay);
