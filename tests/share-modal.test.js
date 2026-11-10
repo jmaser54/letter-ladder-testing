@@ -66,8 +66,14 @@ const modalInfo = page => page.evaluate(() => {
   return {
     wordmark: q('.sm-wordmark').innerText.replace(/\s+/g, ' '),
     pill: q('.sm-pill').innerText, time: q('.sm-big-time').textContent, challenge: q('.sm-challenge').textContent,
-    date: q('.sm-date').textContent, top: [...document.querySelectorAll('.sm-card-top span')].map(s => s.textContent),
-    rungs: [...document.querySelectorAll('.sm-rung')].map(r => [r.querySelector('.sm-rung-num').textContent, [...r.querySelectorAll('.sm-tile')].map(t => t.textContent).join('')]),
+    date: q('.sm-date').textContent, cardText: q('.sm-card-body').textContent.replace(/\s+/g, ''),
+    rungs: [...document.querySelectorAll('.sm-rung')].map(r => [...r.querySelectorAll('.sm-tile')].map(t => t.textContent).join('')),
+    // Clean card: no top row or rung numbers; widest row centred, all rows share its left edge.
+    layout: (() => { const body = q('.sm-card-body').getBoundingClientRect(), lad = q('.sm-ladder').getBoundingClientRect(), cs = getComputedStyle(q('.sm-card-body'));
+      const inner = [body.left + parseFloat(cs.paddingLeft), body.right - parseFloat(cs.paddingRight)];
+      return { topRow: !!q('.sm-card-top'), numbers: !!q('.sm-rung-num'), centred: Math.abs((lad.left + lad.right) / 2 - (inner[0] + inner[1]) / 2) <= 1,
+        sameLeft: new Set([...document.querySelectorAll('.sm-rung')].map(r => Math.round(r.getBoundingClientRect().left))).size === 1,
+        fits: [...document.querySelectorAll('.sm-tile')].every(t => { const b = t.getBoundingClientRect(); return b.left >= inner[0] - 0.5 && b.right <= inner[1] + 0.5; }) }; })(),
     play: q('.sm-play-bar').textContent.trim(), buttons: [...document.querySelectorAll('.sm-btn')].map(b => b.textContent.trim()),
     hasClose: !!q('.sm-close-x'), logo: q('.sm-logo').getAttribute('src'), allText: q('.sm-modal').textContent,
   };
@@ -79,9 +85,10 @@ module.exports = run('Share modal (Variant B)', [
     await solveActive(page, 'easy');
     await waitModal(page);
     const m = await modalInfo(page);
-    assertEqual([m.wordmark, m.pill, m.challenge, m.date, m.top, m.logo, m.hasClose], ['LETTER LADDER', 'EASY', 'Can you beat my time?', 'Friday, Oct 30, 2026', ['OCT 30, 2026', 'NO HINTS USED'], 'og-image.png', true], 'header, result, card top');
+    assertEqual([m.wordmark, m.pill, m.challenge, m.date, m.logo, m.hasClose], ['LETTER LADDER', 'EASY', 'Can you beat my time?', 'Friday, Oct 30, 2026', 'og-image.png', true], 'header and result block (long date stays above the card)');
+    assertEqual([m.layout, m.cardText.includes('OCT30'), m.cardText.includes('HINT')], [{ topRow: false, numbers: false, centred: true, sameLeft: true, fits: true }, false, false], 'clean card: no date, hints or rung numbers; ladder centred');
     assertEqual(/^\d+\.\ds$|^\d+m \d+s$/.test(m.time), true, `big time "${m.time}"`);
-    assertEqual(m.rungs, [['4', '?????'], ['3', '✓✓✓✓'], ['2', '✓✓✓'], ['1', 'AT']], 'ladder: hidden end word, check rungs, start word');
+    assertEqual(m.rungs, ['?????', '✓✓✓✓', '✓✓✓', 'AT'], 'ladder: hidden end word, check rungs, start word');
     assertEqual([m.play, m.buttons], ['Play at letterladder.io →', ['Share my result', 'Copy text', 'Next puzzle →']], 'play bar and buttons');
     assertEqual(['TAKEN', 'NEAT', 'TAN'].some(w => m.allText.toUpperCase().includes(w)), false, 'no answers or end word in the modal');
     await ctx.close();
@@ -137,7 +144,17 @@ module.exports = run('Share modal (Variant B)', [
     const out = process.env.SHARE_CARD_OUT;
     if(out) require('fs').writeFileSync(out, Buffer.from(dataUrl.split(',')[1], 'base64'));
     const size = await page.evaluate(src => new Promise(r => { const i = new Image(); i.onload = () => r([i.width, i.height]); i.src = src; }), dataUrl);
-    assertEqual(size[0] === 1032 && size[1] > 600, true, `image size ${size}`);
+    // Clean card: no long date, no top row. Hard 2026-10-30 = 8 rows of 25px tiles:
+    // 3 × (header/result 168 + card padding 14 + ladder 235 + 13 + play bar 48 + 18).
+    assertEqual(size, [1032, 1488], 'image size (shorter: date and top row gone)');
+    // The amber "?" row (the widest) is centred in the card (card spans x 18-326).
+    const span = await page.evaluate(src => new Promise(r => { const i = new Image(); i.onload = () => {
+      const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const g = c.getContext('2d'); g.drawImage(i, 0, 0);
+      const y = Math.round((168 + 14 + 12.5) * 3), row = g.getImageData(0, y, i.width, 1).data; let L = -1, R = -1;
+      for(let x = 0; x < i.width; x++){ const [rr, gg, bb] = [row[x * 4], row[x * 4 + 1], row[x * 4 + 2]]; if(Math.abs(rr - 232) < 12 && Math.abs(gg - 163) < 12 && Math.abs(bb - 61) < 12){ if(L < 0) L = x; R = x; } }
+      r([L, R]); }; i.src = src; }), dataUrl);
+    const off = (span[0] + span[1]) / 2 - 172 * 3;
+    assertEqual(span[0] > 18 * 3 && span[1] < 326 * 3 && Math.abs(off) <= 3, true, `"?" row ${span} is inside the card and centred (off by ${off}px)`);
     await ctx.close();
   }],
   ['Next puzzle → goes to the next difficulty; × and the backdrop close the modal', async ({ browser, base }) => {
@@ -152,11 +169,11 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual(await modalOpen(r.page), false, 'after ×');
     await r.ctx.close();
   }],
-  ['hints and untimed: "2 HINTS USED", "Solved", "Can you solve it?"', async ({ browser, base }) => {
+  ['hints and untimed: card shows no hints line; text keeps "(2 hints)"; "Solved", "Can you solve it?"', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base, { timer: 'untimed', hints: { easy: 2 } });
     await solveActive(page, 'easy'); await waitModal(page);
     const m = await modalInfo(page);
-    assertEqual([m.time, m.challenge, m.top[1]], ['Solved', 'Can you solve it?', '2 HINTS USED'], 'modal');
+    assertEqual([m.time, m.challenge, m.cardText.includes('HINT')], ['Solved', 'Can you solve it?', false], 'modal');
     assertEqual((await page.evaluate(() => buildShareText())).split('\n').slice(1, 2), ['Easy: solved (2 hints)'], 'text');
     await ctx.close();
   }],
@@ -167,7 +184,8 @@ module.exports = run('Share modal (Variant B)', [
     await solveActive(page, 'hard');
     await waitModal(page, 22000);
     const m = await modalInfo(page);
-    assertEqual([m.buttons, m.rungs[0][1], m.rungs[m.rungs.length - 1][1]], [['Share my result', 'Copy text'], '?????????', 'AN'], 'buttons and ladder ends');
+    assertEqual([m.buttons, m.rungs[0], m.rungs[m.rungs.length - 1]], [['Share my result', 'Copy text'], '?????????', 'AN'], 'buttons and ladder ends');
+    assertEqual(m.layout, { topRow: false, numbers: false, centred: true, sameLeft: true, fits: true }, 'long ladder centred, nothing cut off');
     const fits = await page.$eval('.sm-ladder', el => el.scrollWidth <= el.clientWidth + 1);
     assertEqual(fits, true, 'ladder fits the card width');
     await ctx.close();
