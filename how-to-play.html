@@ -81,10 +81,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div class="panel">
     <h2>The rules in more detail</h2>
     <ul>
-      <li>Each rung is one letter longer than the one below it, and uses all of its letters plus one new letter. For example, <span class="howto-example-word">cat</span> → <span class="howto-example-word">cart</span>, and <span class="howto-example-word">cart</span> → <span class="howto-example-word">cater</span>.</li>
       <li>A full ladder might climb <span class="howto-example-word">air</span> → <span class="howto-example-word">hair</span> → <span class="howto-example-word">chair</span> → <span class="howto-example-word">chairs</span> → <span class="howto-example-word">cashier</span> → <span class="howto-example-word">archives</span>.</li>
-      <li>There are three puzzles every day. Easy usually climbs from a 2-letter word to a 5-letter word, Medium usually from a 3-letter word to a 7-letter word, and Hard usually from a 3-letter word up to about 9 letters.</li>
-      <li>Words can go in any order: fill in whichever rung you can see first.</li>
       <li>Stuck? Each rung allows up to two hints. The first shows the letters in that rung's word; the second shows its first letter. If you're playing timed, each hint adds 3 minutes to your time.</li>
     </ul>
   </div>
@@ -99,7 +96,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <p>The timer is optional: turn it on or off with the clock at the top right of the game. Each rung allows up to two hints (first its letters, then its first letter), and in timed mode each hint adds 3 minutes. Timed solves can appear on the daily leaderboard.</p>
   </div>
 
-  <p><a href="game.html">Play today's puzzle</a> · <a href="past-puzzles.html">Play past puzzles</a></p>
+  <p><a href="game.html?play=today">Play today's puzzle</a> · <a href="past-puzzles.html">Play past puzzles</a></p>
 </div>
+<!-- Site footer (same links and look as index.html / game.html) -->
+<style>
+  .site-footer{ text-align:center; margin: 32px auto 0; padding-bottom: 8px; color: #9FB3C8; font-family: 'Inter', system-ui, sans-serif; }
+  .site-footer .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
+  .site-footer a{ color: #9FB3C8; text-decoration: none; border-bottom: 1px dotted #9FB3C8; touch-action: manipulation; }
+  .site-footer a:hover{ color: #E8A33D; border-color: #E8A33D; }
+  .site-footer .footer-sep{ color: #9FB3C8; opacity: 0.5; }
+</style>
+<footer class="site-footer">
+    <div class="footer-nav">
+      <a href="about.html">About</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="contact.html">Contact</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="privacy.html">Privacy Policy</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="leaderboard.html">Leaderboard</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener">Facebook</a>
+    </div>
+</footer>
 </body>
 </html>

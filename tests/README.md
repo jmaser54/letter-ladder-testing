@@ -18,6 +18,7 @@ NODE_PATH=$(npm root -g) node tests/feedback-messages.test.js
 NODE_PATH=$(npm root -g) node tests/past-leaderboards-puzzles.test.js
 NODE_PATH=$(npm root -g) node tests/share-modal.test.js
 NODE_PATH=$(npm root -g) node tests/static-pages.test.js
+NODE_PATH=$(npm root -g) node tests/post-solve.test.js
 ```
 
 Each file prints PASS/FAIL per case and exits non-zero if any case fails.

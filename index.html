@@ -185,9 +185,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   .past-puzzles-link{
     margin-top: 12px; font-size: 0.88rem; color: var(--ink-dim); text-align: center;
-    text-decoration: none; border-bottom: 1px dotted var(--ink-dim); touch-action: manipulation;
+    text-decoration: none; touch-action: manipulation; /* no underline on the landing page */
   }
-  .past-puzzles-link:hover{ color: var(--amber); border-color: var(--amber); }
+  .past-puzzles-link:hover{ color: var(--amber); }
   .landing-intro{ color: var(--ink-dim); font-size: 0.92rem; text-align: center; margin: 10px 0 0; }
   .play-date{
     color: var(--ink-dim);
@@ -334,9 +334,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="play-buttons" id="play-buttons">
       <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
     </div>
-    <a href="past-puzzles.html" class="past-puzzles-link" id="past-puzzles-link">Missed a day? Play past puzzles<span id="past-puzzles-count"></span></a>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
+    <a href="past-puzzles.html" class="past-puzzles-link" id="past-puzzles-link">Missed a day? Play <span id="past-puzzles-count"></span>past puzzles here</a>
     <p class="landing-intro">Add one letter, scramble to a new word, climb to the top.</p>
   </main>
 
@@ -374,7 +374,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <span class="footer-sep">&middot;</span>
       <a href="privacy.html">Privacy Policy</a>
       <span class="footer-sep">&middot;</span>
+      <a href="leaderboard.html">Leaderboard</a>
+      <span class="footer-sep">&middot;</span>
       <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
+      <span class="footer-sep">&middot;</span>
+      <a href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener">Facebook</a>
     </div>
   </footer>
 </div>
@@ -388,7 +392,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
       const n = Object.keys(PUZZLE_SCHEDULE).filter(k => k < today)
         .reduce((total, k) => total + Object.keys(PUZZLE_SCHEDULE[k]).length, 0);
-      if(n > 0) document.getElementById('past-puzzles-count').textContent = ` — ${n} puzzles`;
+      if(n > 0) document.getElementById('past-puzzles-count').textContent = `${n} `;
     }catch(e){}
   })();
 </script>

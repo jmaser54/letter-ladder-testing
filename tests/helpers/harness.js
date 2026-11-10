@@ -34,12 +34,21 @@ const STUBS = {
     const auth = { currentUser: null };
     const mkUser = u => u ? Object.assign({ email: null, reload: async () => {} }, u) : null;
     export const getAuth = () => auth;
+    // Like Firebase: listeners get the initial state once auth has loaded,
+    // and again whenever the signed-in user changes (e.g. anonymous sign-in).
+    const listeners = [];
+    let initialized = false;
+    const notify = () => { window.__FAKE_FB_AUTH_FIRED = (window.__FAKE_FB_AUTH_FIRED || 0) + 1; listeners.forEach(cb => cb(auth.currentUser)); };
     export function onAuthStateChanged(a, cb){
-      setTimeout(() => { auth.currentUser = mkUser(cfg().user); window.__FAKE_FB_AUTH_FIRED = (window.__FAKE_FB_AUTH_FIRED || 0) + 1; cb(auth.currentUser); }, cfg().authDelayMs || 0);
+      listeners.push(cb);
+      if(initialized){ setTimeout(() => cb(auth.currentUser), 0); }
+      else if(listeners.length === 1){
+        setTimeout(() => { auth.currentUser = mkUser(cfg().user); initialized = true; notify(); }, cfg().authDelayMs || 0);
+      }
       return () => {};
     }
-    export async function signOut(){ auth.currentUser = null; }
-    export async function signInAnonymously(){ auth.currentUser = mkUser({ uid: 'anon1', isAnonymous: true }); return { user: auth.currentUser }; }
+    export async function signOut(){ auth.currentUser = null; notify(); }
+    export async function signInAnonymously(){ auth.currentUser = mkUser({ uid: 'anon1', isAnonymous: true }); setTimeout(notify, 0); return { user: auth.currentUser }; }
     export async function signInWithEmailAndPassword(){ throw Object.assign(new Error('fake'), { code: 'auth/invalid-credential' }); }
     export async function createUserWithEmailAndPassword(){ throw Object.assign(new Error('fake'), { code: 'auth/operation-not-allowed' }); }
     export async function sendPasswordResetEmail(){}
