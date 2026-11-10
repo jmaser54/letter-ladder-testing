@@ -26,6 +26,7 @@ function hasSocialTags(html){
   return ['og:title', 'og:description', 'og:image', 'og:url', 'twitter:card', 'twitter:title', 'twitter:image']
     .filter(t => !html.includes(`"${t}"`)) ;
 }
+const innerHeightOk = (h, bottom) => h - bottom >= 56;
 const headOf = html => html.slice(0, html.indexOf('</head>'));
 
 module.exports = run('Static pages', [
@@ -116,6 +117,31 @@ module.exports = run('Static pages', [
     for(const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && f !== 'migrate.html')){
       const html = raw(f).replace(/const colors = \[[^\]]*\]/, ''); // confetti colours are intentional
       assertEqual(/#6fbf8b|var\(--green\)|:\s*green\b|#5b9bd5|#f5c842|#ff5a45|#e27272/i.test(html), false, `${f} has no stray green/blue/yellow/off-red`);
+    }
+  }],
+  ['homepage: "?" button sits left, next to the account icon, exactly where the game page has it; title centred', async ({ browser, base }) => {
+    for(const device of [false, 'iPhone 13', 'Pixel 7']){
+      const { ctx, page } = await newPage(browser, { fake: { user: null }, localStorage: { 'letterladder:howToPlaySeen': '1', 'letterladder:timerChoiceMade': '1', 'letterladder:lastViewedDateKey': '2026-11-10' }, mobile: device, now: NOW });
+      const pos = {};
+      for(const f of ['index.html', 'game.html']){
+        await page.goto(base + '/' + f); await page.waitForTimeout(f === 'game.html' ? 1200 : 600);
+        pos[f] = await page.evaluate(() => { const b = s => document.querySelector(s).getBoundingClientRect(); const q = b('.howto-icon-btn'), a = b('.account-icon-btn'), h = b('h1'), hd = b('header');
+          return { left: Math.round(q.left), right: Math.round(q.right), clear: q.left >= a.right, titleOff: Math.round((h.left + h.right) / 2 - (hd.left + hd.right) / 2) }; });
+      }
+      const where = device || 'desktop';
+      assertEqual([pos['index.html'].left, pos['index.html'].right], [pos['game.html'].left, pos['game.html'].right], `same horizontal spot as the game page (${where})`);
+      assertEqual([pos['index.html'].clear, Math.abs(pos['index.html'].titleOff) <= 1], [true, true], `no overlap with the account icon, title centred (${where})`);
+      await ctx.close();
+    }
+  }],
+  ['homepage on a phone: About / Contact / Privacy stay clear of the browser\'s bottom bar when the page fits', async ({ browser, base }) => {
+    for(const h of [750, 844, 932]){
+      const { ctx, page } = await newPage(browser, { fake: { user: null }, localStorage: { 'letterladder:howToPlaySeen': '1' }, mobile: 'iPhone 13', now: NOW });
+      await page.setViewportSize({ width: 390, height: h });
+      await page.goto(base + '/index.html'); await page.waitForTimeout(600);
+      const r = await page.evaluate(() => ({ bottom: document.querySelector('footer .footer-secondary').getBoundingClientRect().bottom, attr: !!document.getElementById('play-date-attribution') }));
+      assertEqual([innerHeightOk(h, r.bottom), r.attr], [true, true], `footer row ends ${Math.round(h - r.bottom)}px above the bottom of a 390x${h} window (needs ≥ 56px); date note still on the page`);
+      await ctx.close();
     }
   }],
   ['past-puzzles.html: intro has the live count', async ({ browser, base }) => {

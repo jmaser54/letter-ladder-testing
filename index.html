@@ -93,7 +93,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex; align-items: center;
   }
   .howto-icon-btn{
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    position: absolute; left: 43px; top: 50%; transform: translateY(-50%); /* same spot as the game pages: right of the account icon */
     width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink-dim);
     background: none; color: var(--ink-dim); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -272,7 +272,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
   .example-ladders-panel{
     display: flex; justify-content: center;
-    margin: 6px auto 32px; padding: 15px 19px;
+    margin: 6px auto 18px; padding: 15px 19px; /* small bottom gap keeps the footer clear of Safari's bottom bar */
     max-width: 460px;
     border-radius: 14px;
   }
@@ -318,6 +318,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   footer .footer-row a:hover{ color:#E8A33D; border-color:#E8A33D; }
   footer .footer-row .footer-sep{ color:#9FB3C8; opacity:0.5; }
 
+  /* Phones: Safari's bottom bar floats over the last ~60px of the window, so
+     keep the footer clear of it even when the page fits the screen exactly. */
+  @media (max-width: 600px) and (pointer: coarse){
+    .wrap{ padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+  }
   @media(max-width:400px){
     .brand-row{ font-size: 1.55rem; }
     .brand-logo{ width: 64px; height: 64px; }
