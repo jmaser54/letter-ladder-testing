@@ -93,6 +93,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </div>
 <!-- Site footer (same links and look as index.html / game.html) -->
 <style>
+  /* Short pages: the background gradient fills the whole window instead of repeating below the content. */
+  html{ background: #142132; }
+  body{ min-height: 100vh; box-sizing: border-box; }
   .site-footer{ text-align:center; margin: 32px auto 0; padding-bottom: 8px; color: #9FB3C8; font-family: 'Inter', system-ui, sans-serif; }
   .site-footer .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
   .site-footer a{ color: #9FB3C8; text-decoration: none; border-bottom: 1px dotted #9FB3C8; touch-action: manipulation; }
@@ -124,5 +127,31 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <a href="privacy.html">Privacy Policy</a>
     </div>
 </footer>
+<script>
+// Tall desktop screens: keep the footer at the bottom of the window instead
+// of floating mid-page. Phones and short pages are left exactly as they are.
+(function(){
+  var f = document.querySelector('.site-footer');
+  if(!f) return;
+  var base = parseFloat(getComputedStyle(f).marginTop) || 0;
+  var b = document.body, PAD = 16;
+  function place(){
+    f.style.marginTop = base + 'px';
+    b.style.paddingBottom = '';
+    if(window.innerWidth < 768) return;
+    var cs = getComputedStyle(b);
+    var footerBottom = f.getBoundingClientRect().bottom + window.scrollY;
+    var gap = window.innerHeight - (footerBottom + PAD + (parseFloat(cs.marginBottom) || 0));
+    if(gap > 0){ b.style.paddingBottom = PAD + 'px'; f.style.marginTop = (base + gap) + 'px'; }
+  }
+  window.addEventListener('resize', place);
+  window.addEventListener('load', place);
+  if(window.ResizeObserver){
+    var ro = new ResizeObserver(function(){ requestAnimationFrame(place); });
+    Array.prototype.forEach.call(document.body.children, function(el){ if(el !== f && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') ro.observe(el); });
+  }
+  place();
+})();
+</script>
 </body>
 </html>

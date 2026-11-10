@@ -38,9 +38,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .stat-card.total{ border: 1.5px solid rgba(232,163,61,0.35); }
   .stat-title{ font-family:'Fraunces',serif; font-weight:700; font-size:1.02rem; margin-bottom:9px; display:flex; align-items:center; gap:8px; }
   .stat-title .tier-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
-  .tier-dot.easy{ background:#6FBF8B; }
-  .tier-dot.medium{ background:#E8A33D; }
-  .tier-dot.hard{ background:#D9705F; }
+  /* Difficulty dots: amber, getting stronger with difficulty (brand palette only). */
+  .tier-dot.easy{ background:rgba(232,163,61,0.35); }
+  .tier-dot.medium{ background:rgba(232,163,61,0.65); }
+  .tier-dot.hard{ background:#E8A33D; }
   .tier-dot.total{ background:#F5EFE0; }
 
   .stat-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
@@ -442,6 +443,9 @@ document.getElementById('stats-list').innerHTML =
 </script>
 <!-- Site footer (same links and look as index.html / game.html) -->
 <style>
+  /* Short pages: the background gradient fills the whole window instead of repeating below the content. */
+  html{ background: #142132; }
+  body{ min-height: 100vh; box-sizing: border-box; }
   .site-footer{ text-align:center; margin: 32px auto 0; padding-bottom: 8px; color: #9FB3C8; font-family: 'Inter', system-ui, sans-serif; }
   .site-footer .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
   .site-footer a{ color: #9FB3C8; text-decoration: none; border-bottom: 1px dotted #9FB3C8; touch-action: manipulation; }
@@ -473,5 +477,31 @@ document.getElementById('stats-list').innerHTML =
       <a href="privacy.html">Privacy Policy</a>
     </div>
 </footer>
+<script>
+// Tall desktop screens: keep the footer at the bottom of the window instead
+// of floating mid-page. Phones and short pages are left exactly as they are.
+(function(){
+  var f = document.querySelector('.site-footer');
+  if(!f) return;
+  var base = parseFloat(getComputedStyle(f).marginTop) || 0;
+  var b = document.body, PAD = 16;
+  function place(){
+    f.style.marginTop = base + 'px';
+    b.style.paddingBottom = '';
+    if(window.innerWidth < 768) return;
+    var cs = getComputedStyle(b);
+    var footerBottom = f.getBoundingClientRect().bottom + window.scrollY;
+    var gap = window.innerHeight - (footerBottom + PAD + (parseFloat(cs.marginBottom) || 0));
+    if(gap > 0){ b.style.paddingBottom = PAD + 'px'; f.style.marginTop = (base + gap) + 'px'; }
+  }
+  window.addEventListener('resize', place);
+  window.addEventListener('load', place);
+  if(window.ResizeObserver){
+    var ro = new ResizeObserver(function(){ requestAnimationFrame(place); });
+    Array.prototype.forEach.call(document.body.children, function(el){ if(el !== f && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') ro.observe(el); });
+  }
+  place();
+})();
+</script>
 </body>
 </html>

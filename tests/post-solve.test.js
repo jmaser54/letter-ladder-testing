@@ -84,6 +84,9 @@ module.exports = run('Game page post-solve and loading', [
     await page.waitForFunction(() => /ranked #\d+/.test((document.getElementById('leaderboard-rank-text') || {}).textContent || ''), null, { timeout: 5000 });
     const r = await page.evaluate(() => ({ text: document.getElementById('leaderboard-rank-text').textContent, block: document.getElementById('leaderboard-rank').textContent, link: document.getElementById('leaderboard-rank-link').textContent, href: document.getElementById('leaderboard-rank-link').getAttribute('href') }));
     assertEqual([/^Completed in [\d.]+s — ranked #3 on today's Easy$/.test(r.text), r.link, r.href, r.block.includes('·')], [true, 'View leaderboard', 'leaderboard.html', false], `rank line "${r.text}"`);
+    const st = await page.evaluate(() => { const t = document.getElementById('leaderboard-rank-text'), time = t.querySelector('.leaderboard-rank-time'), cs = getComputedStyle(t);
+      return { weight: cs.fontWeight, style: cs.fontStyle, color: cs.color, time: time && time.textContent, timeColor: time && getComputedStyle(time).color, linkWeight: getComputedStyle(document.getElementById('leaderboard-rank-link')).fontWeight }; });
+    assertEqual([st.weight, st.style, st.color, /^[\d.]+s$/.test(st.time), st.timeColor, st.linkWeight], ['700', 'italic', 'rgb(245, 239, 224)', true, 'rgb(232, 163, 61)', '400'], 'result line bold italic, time in amber, View leaderboard unchanged');
     await ctx.close();
   }],
   ['rank lookup fails: still "Completed in …" with View leaderboard below, never a dangling "·"', async ({ browser, base: b }) => {

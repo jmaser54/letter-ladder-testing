@@ -46,8 +46,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     --ink-dim: #9FB3C8;
     --amber: #E8A33D;
     --red: #D9705F;
-    --blue: #5B9BD5;
-    --green: #6FBF8B;
   }
   *{box-sizing:border-box;}
   html, body{ height: 100%; }
@@ -182,7 +180,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .delete-guess-btn{
     width: 24px; height: 38px;
     border: none; background: none;
-    color: #FF5A45;
+    color: var(--red);
     font-size: 1.9rem;
     font-weight: 700;
     line-height: 1;
@@ -260,7 +258,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .feedback.ok{ color: var(--ink-dim); font-weight:500; }
 
   .letter-bank{
-    margin-top: 14px;
+    margin-top: 10px;
     margin-bottom: 14px;
     display: flex;
     flex-direction: column;
@@ -374,6 +372,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     text-align:center; margin-top:6px; margin-bottom:8px; font-size:0.85rem; color: var(--ink-dim);
     font-style:italic; flex-shrink:0; min-height: 0;
   }
+  .hint-display:empty{ margin-top: 0; margin-bottom: 0; } /* no hint showing: no gap */
   .hint-display .hint-letters{ color: var(--amber); font-style:normal; font-weight:600; letter-spacing:0.04em; }
   /* Share modal — Variant B (share-modal-redesign.html), classes prefixed sm- */
   .sm-scrim{ position:fixed; inset:0; z-index:1000; background:rgba(20,33,50,.66); display:flex; align-items:center; justify-content:center; padding:18px 14px; }
@@ -418,15 +417,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   @media (prefers-reduced-motion: reduce){ .sm-toast{ transition:none } }
 
   .view-solution-link{
-    display:table; margin: 20px auto 8px auto;
+    display:table; margin: 12px auto 8px auto;
     font-size:0.88rem; color: var(--ink-dim); text-decoration:none;
     border-bottom: 1px dotted var(--ink-dim);
     touch-action: manipulation;
   }
   .view-solution-link:hover{ color: var(--amber); border-color: var(--amber); }
+  @media (min-width: 768px){ .wrap > footer{ margin-top: auto; padding-top: 12px; } }
   .share-results-link{ margin: 14px auto 4px auto; }
   .leaderboard-rank{ text-align:center; margin: 4px 0 18px; font-size:0.88rem; color: var(--ink-dim); }
-  .leaderboard-rank-text{ color: var(--ink); font-size:0.95rem; }
+  .leaderboard-rank-text{ color: var(--ink); font-size:0.95rem; font-weight: 700; font-style: italic; }
+  .leaderboard-rank-time{ color: var(--amber); }
   .leaderboard-rank-link{ margin-top: 14px; }
   .leaderboard-rank-link a{ color: var(--ink-dim); text-decoration:none; border-bottom:1px dotted var(--ink-dim); touch-action: manipulation; }
   .leaderboard-rank-link a:hover{ color: var(--amber); border-color: var(--amber); }
@@ -471,7 +472,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(245,239,224,0.15);
     background: rgba(245,239,224,0.06); color: var(--ink); font-size: 0.95rem;
   }
-  .leaderboard-form-error{ color: #E27272; font-size: 0.82rem; margin-bottom: 10px; min-height: 1.1em; }
+  .leaderboard-form-error{ color: var(--red); font-size: 0.82rem; margin-bottom: 10px; min-height: 1.1em; }
   .leaderboard-form-hint{ color: var(--ink-dim); font-size: 0.76rem; margin: -6px 0 12px 0; }
 
   .howto-overlay{
@@ -3078,7 +3079,7 @@ function shareResultLines(){
     const streak = live ? (total.currentStreak || 0) : 0;
     if(streak > 0) lines.push(`🔥 Streak: ${streak} day${streak === 1 ? '' : 's'}`);
   }
-  lines.push(anyTime ? 'Can you beat my times?' : 'Can you solve it?');
+  lines.push(anyTime ? 'Can you beat my time?' : 'Can you solve it?');
   return lines;
 }
 // Text for Copy text / clipboard: ends with the clean link.
@@ -3159,7 +3160,7 @@ function showShareModal(tier){
             <span class="sm-pill">${data.tierLabel}</span>
             <span class="sm-big-time">${timeHtml}</span>
           </div>
-          <div class="sm-challenge">${data.time ? 'Can you beat <span>my times</span>?' : 'Can you <span>solve it</span>?'}</div>
+          <div class="sm-challenge">${data.time ? 'Can you beat <span>my time</span>?' : 'Can you <span>solve it</span>?'}</div>
           <div class="sm-date">${data.longDate}</div>
         </div>
       </div>
@@ -3274,7 +3275,7 @@ async function buildShareCardImage(data){
   ctx.fillStyle = '#F5EFE0'; ctx.font = '700 29px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.fillText(timeText, x + pillW + 10, y + 26);
   // Challenge (amber emphasis) and date
   y += 29 + 7 + 14;
-  const parts = data.time ? [['Can you beat ', '#F5EFE0'], ['my times', '#E8A33D'], ['?', '#F5EFE0']] : [['Can you ', '#F5EFE0'], ['solve it', '#E8A33D'], ['?', '#F5EFE0']];
+  const parts = data.time ? [['Can you beat ', '#F5EFE0'], ['my time', '#E8A33D'], ['?', '#F5EFE0']] : [['Can you ', '#F5EFE0'], ['solve it', '#E8A33D'], ['?', '#F5EFE0']];
   ctx.font = '700 15px Archivo, sans-serif';
   const cw = parts.reduce((w, [t]) => w + ctx.measureText(t).width, 0);
   x = (W - cw) / 2;
@@ -3330,9 +3331,10 @@ function fillLeaderboardRank(){
   function show(rank){
     const el = document.getElementById('leaderboard-rank-text');
     if(!el || activeTier !== tier) return;
-    el.textContent = rank
-      ? `Completed in ${formatDurationForShare(myTime)} — ranked #${rank} on today's ${label}`
-      : `Completed in ${formatDurationForShare(myTime)}`;
+    const timeHtml = `<span class="leaderboard-rank-time">${formatDurationForShare(myTime)}</span>`;
+    el.innerHTML = rank
+      ? `Completed in ${timeHtml} — ranked #${rank} on today's ${label}`
+      : `Completed in ${timeHtml}`;
   }
   if(leaderboardRankCache[key]) return show(leaderboardRankCache[key]);
   show(null);
@@ -3758,7 +3760,7 @@ function render(focusInput = false, pendingErrors = null){
   rungsHtml.push(`<div class="rung-row"><div class="rung-count">${startingWord.length}</div><div class="rung anchor" style="${rungBoxStyle(startingWord.length)}">${startingWord}</div></div>`);
 
   const trashIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
-  const lightbulbIcon = `<svg width="26" height="26" viewBox="0 0 24 24"><path d="M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path><path d="M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path><path d="M12 3a6.5 6.5 0 0 0-4 11.6c.7.6 1.2 1.5 1.3 2.4h5.4c.1-.9.6-1.8 1.3-2.4A6.5 6.5 0 0 0 12 3z" fill="#F5C842" stroke="#F5C842" stroke-width="1.3" stroke-linejoin="round"></path></svg>`;
+  const lightbulbIcon = `<svg width="26" height="26" viewBox="0 0 24 24"><path d="M9 21h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path><path d="M10 18h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"></path><path d="M12 3a6.5 6.5 0 0 0-4 11.6c.7.6 1.2 1.5 1.3 2.4h5.4c.1-.9.6-1.8 1.3-2.4A6.5 6.5 0 0 0 12 3z" fill="#E8A33D" stroke="#E8A33D" stroke-width="1.3" stroke-linejoin="round"></path></svg>`;
   // Hint targets whichever box the player currently has open - falls
   // back to the highest unfilled rung only if nothing's actively
   // selected (or the active one happens to already be filled). Up to

@@ -96,6 +96,28 @@ module.exports = run('Static pages', [
       await ctx.close();
     }
   }],
+  ['homepage: tagline is bold; signed-in streak line sits between Play and the date', async ({ browser, base }) => {
+    for(const device of [false, 'iPhone 13']){
+      const { ctx, page } = await newPage(browser, { fake: { user: { uid: 'u1', isAnonymous: false } , docs: { 'players/u1': { username: 'Jeff' } } }, localStorage: { 'letterladder:accountUsername': 'Jeff', 'letterladder:howToPlaySeen': '1' }, mobile: device, now: NOW });
+      await page.goto(base + '/index.html'); await page.waitForTimeout(800);
+      await page.evaluate(() => { document.getElementById('play-streak').textContent = '🔥 5 day streak'; });
+      const r = await page.evaluate(() => { const b = s => document.querySelector(s).getBoundingClientRect();
+        return { weight: getComputedStyle(document.querySelector('.landing-intro')).fontWeight, play: [b('#play-buttons').top, b('#play-buttons').bottom], streak: [b('#play-streak').top, b('#play-streak').bottom], date: b('#play-date').top }; });
+      assertEqual(r.weight, '700', 'tagline bold');
+      assertEqual([r.streak[0] >= r.play[1] + 10, r.date >= r.streak[1]], [true, true], `streak below Play, above the date (${device || 'desktop'}): ${JSON.stringify(r)}`);
+      await ctx.close();
+    }
+  }],
+  ['colours: Past Puzzles Play buttons are amber, and no green is used outside the game\'s confetti', async ({ browser, base }) => {
+    const { ctx, page } = await newPage(browser, { now: NOW });
+    await page.goto(base + '/past-puzzles.html'); await page.waitForTimeout(300);
+    assertEqual(await page.$eval('.play-btn', a => [getComputedStyle(a).backgroundColor, getComputedStyle(a).color]), ['rgb(232, 163, 61)', 'rgb(27, 42, 65)'], 'Play button amber with navy text');
+    await ctx.close();
+    for(const f of fs.readdirSync(ROOT).filter(f => f.endsWith('.html') && f !== 'migrate.html')){
+      const html = raw(f).replace(/const colors = \[[^\]]*\]/, ''); // confetti colours are intentional
+      assertEqual(/#6fbf8b|var\(--green\)|:\s*green\b|#5b9bd5|#f5c842|#ff5a45|#e27272/i.test(html), false, `${f} has no stray green/blue/yellow/off-red`);
+    }
+  }],
   ['past-puzzles.html: intro has the live count', async ({ browser, base }) => {
     const { ctx, page } = await newPage(browser, { now: NOW });
     await page.goto(base + '/past-puzzles.html'); await page.waitForTimeout(300);
@@ -120,7 +142,12 @@ module.exports = run('Static pages', [
               fits: row.scrollWidth <= row.clientWidth + 1, off: Math.abs((first.left - rb.left) - (rb.right - last.right)),
               color: getComputedStyle(links[0]).color, size: parseFloat(getComputedStyle(links[0]).fontSize) };
           };
-          return { rows: 2, top: info(rows[0]), bottom: info(rows[1]), below: rows[1].getBoundingClientRect().top >= rows[0].getBoundingClientRect().bottom - 1, visible: getComputedStyle(rows[0].closest('footer')).visibility };
+          const footer = rows[0].closest('footer'), fb = footer.getBoundingClientRect();
+          const plain = [...footer.querySelectorAll('a')].every(a => getComputedStyle(a).backgroundColor === 'rgba(0, 0, 0, 0)');
+          // Nothing else on the page sits beside or below the footer.
+          const others = [...document.body.querySelectorAll('body > *:not(footer):not(script):not(style):not(noscript)')].filter(e => e.offsetParent !== null && getComputedStyle(e).position !== 'fixed' && !e.contains(footer));
+          const below = others.every(e => e.getBoundingClientRect().bottom <= fb.top + 1);
+          return { rows: 2, top: info(rows[0]), bottom: info(rows[1]), below: rows[1].getBoundingClientRect().top >= rows[0].getBoundingClientRect().bottom - 1, visible: getComputedStyle(footer).visibility, plain, footerLast: below };
         });
         const where = `${f} (${device || 'desktop'})`;
         assertEqual(r.rows, 2, `two footer rows on ${where}`);
@@ -129,6 +156,7 @@ module.exports = run('Static pages', [
         assertEqual([r.top.oneLine, r.top.fits, r.bottom.oneLine, r.bottom.fits, r.below, r.visible], [true, true, true, true, true, 'visible'], `each row on one line, top above bottom on ${where}`);
         assertEqual([r.top.color, r.bottom.color, r.bottom.size < r.top.size], ['rgb(245, 239, 224)', 'rgb(159, 179, 200)', true], `top row cream, bottom row smaller and dim on ${where}`);
         assertEqual(r.top.off <= 2 && r.bottom.off <= 2, true, `rows centred on ${where} (${r.top.off}px, ${r.bottom.off}px)`);
+        assertEqual([r.plain, r.footerLast], [true, true], `footer links are plain text links and the footer is below the page content on ${where}`);
       }
       await ctx.close();
     }

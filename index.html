@@ -47,8 +47,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     --ink-dim: #9FB3C8;
     --amber: #E8A33D;
     --red: #D9705F;
-    --blue: #5B9BD5;
-    --green: #6FBF8B;
   }
   *{box-sizing:border-box;}
   html, body{ height: 100%; }
@@ -143,7 +141,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 32px;
+    padding-top: 24px;
     padding-bottom: 22px;
   }
   .brand-logo{
@@ -152,7 +150,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-radius: 50%;
     flex-shrink: 0;
     display: block;
-    margin-bottom: 50px;
+    margin-bottom: 16px;
   }
   .play-streak{
     font-family: 'Fraunces', serif;
@@ -160,8 +158,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     font-size: 1.111rem;
     color: var(--amber);
     text-align: center;
-    margin-top: -26px;
-    margin-bottom: 14px;
+    margin-top: 14px;   /* sits below the Play button */
+    margin-bottom: 0;
   }
   .play-streak:empty{
     display: none;
@@ -196,8 +194,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   }
   .past-puzzles-link:hover{ color: var(--amber); }
   /* Tagline sits directly under the logo, above Play (and above the streak line when there is one). */
-  .landing-intro{ color: var(--ink-dim); font-size: 0.92rem; text-align: center; margin: -26px 0 22px; }
-  .landing-intro + .play-streak{ margin-top: 0; }
+  .landing-intro{ color: var(--ink-dim); font-size: 0.92rem; font-weight: 700; text-align: center; margin: 0 0 18px; }
   .play-date{
     color: var(--ink-dim);
     font-family: 'Inter', system-ui, sans-serif;
@@ -275,7 +272,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   footer{ text-align:center; margin-top: 12px; color: var(--ink-dim); flex-shrink:0; padding-bottom: 8px; }
   .example-ladders-panel{
     display: flex; justify-content: center;
-    margin: 6px auto 50px; padding: 15px 19px;
+    margin: 6px auto 32px; padding: 15px 19px;
     max-width: 460px;
     border-radius: 14px;
   }
@@ -324,8 +321,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   @media(max-width:400px){
     .brand-row{ font-size: 1.55rem; }
     .brand-logo{ width: 64px; height: 64px; }
-    .landing-body{ padding-top: 48px; }
-    .brand-logo{ margin-bottom: 30px; }
+    .landing-body{ padding-top: 32px; }
+    .brand-logo{ margin-bottom: 14px; }
   }
 </style>
 </head>
@@ -349,10 +346,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <main class="landing-body">
     <img src="og-image.png" alt="" class="brand-logo">
     <p class="landing-intro">Add one letter, scramble to a new word, climb to the top.</p>
-    <div class="play-streak" id="play-streak"></div>
     <div class="play-buttons" id="play-buttons">
       <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
     </div>
+    <div class="play-streak" id="play-streak"></div>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
     <a href="past-puzzles.html" class="past-puzzles-link" id="past-puzzles-link">Missed a day? Play <span id="past-puzzles-count"></span>past puzzles here</a>
