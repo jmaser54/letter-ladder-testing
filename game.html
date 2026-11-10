@@ -740,7 +740,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, collection, doc, setDoc, getDoc, getDocFromServer, addDoc, deleteDoc,
-    query, where, orderBy, limit, getDocs
+    query, where, orderBy, limit, getDocs, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -863,6 +863,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       // recoveryEmail is no longer stored on this doc.
       const registeredEmail = (player && player.authEmail) || usernameToSyntheticEmail(username);
       const cred = await signInWithEmailAndPassword(auth, registeredEmail, password);
+      // Accounts whose players doc went missing get it recreated here, so
+      // their leaderboard setting has a real document behind it.
+      try{ await ensurePlayerDoc(cred.user, (player && player.username) || username.trim()); }catch(e){ console.error('[leaderboard] could not check/backfill players doc on sign-in:', e); }
       return { success: true, uid: cred.user.uid, username: (player && player.username) || username.trim() };
     }catch(error){
       return { success: false, error: friendlyAuthError(error) };
@@ -914,6 +917,82 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     localStorage.removeItem('letterladder:lastViewedDateKey');
   }
 
+  // ── Leaderboard visibility: one source of truth ──────────────────────
+  // A signed-in player's times are public unless they turned the profile
+  // toggle off (players/{uid}.leaderboardVisible === false). A missing
+  // players doc means "never opted out" - it is recreated here (same
+  // fields createAccount writes, plus leaderboardVisible: true). The game
+  // page and profile.html both use this rule, so the toggle always shows
+  // what the next solve will be filed as.
+  const LB_PREF_KEY = uid => `letterladder:leaderboardVisible:${uid}`;
+  async function ensurePlayerDoc(user, usernameHint){
+    if(!user || user.isAnonymous) return { status: 'skipped' };
+    const ref = doc(db, 'players', user.uid);
+    const snap = await getDocFromServer(ref);          // throws on network/rules failure
+    if(snap.exists()) return { status: 'exists', data: snap.data() };
+    const username = (usernameHint || '').trim();
+    if(!username){
+      console.error('[leaderboard] players doc is missing and no username is known on this device - not recreated', user.uid);
+      return { status: 'missing' };
+    }
+    const created = Date.parse(user.metadata && user.metadata.creationTime);
+    const data = {
+      username,
+      usernameLower: normalizeUsername(username),
+      createdAt: Number.isFinite(created) ? created : Date.now(),
+      authEmail: user.email || usernameToSyntheticEmail(username),
+      leaderboardVisible: true,
+    };
+    await setDoc(ref, data, { merge: true });
+    console.warn(`[leaderboard] players doc for "${username}" was missing - recreated with leaderboardVisible: true`);
+    return { status: 'backfilled', data };
+  }
+  // Decides `visible` for a signed-in player's new leaderboard entry.
+  async function leaderboardVisibilityFor(user, usernameHint){
+    let lastError = null;
+    for(let attempt = 0; attempt < 2; attempt++){      // one retry
+      try{
+        const r = await ensurePlayerDoc(user, usernameHint);
+        if(r.status === 'exists'){
+          const visible = r.data.leaderboardVisible !== false;
+          try{ localStorage.setItem(LB_PREF_KEY(user.uid), String(visible)); }catch(e){}
+          return { visible, reason: visible ? 'players doc read' : 'players doc read - player turned the leaderboard toggle off' };
+        }
+        if(r.status === 'backfilled'){
+          try{ localStorage.setItem(LB_PREF_KEY(user.uid), 'true'); }catch(e){}
+          return { visible: true, reason: 'players doc was missing - backfilled' };
+        }
+        return { visible: true, reason: 'players doc missing and could not be backfilled - default visible' };
+      }catch(e){ lastError = e; }
+    }
+    // Read failed twice: use the setting last seen on this device (so an
+    // opted-out player stays hidden), otherwise the default - visible.
+    let cached = null;
+    try{ cached = localStorage.getItem(LB_PREF_KEY(user.uid)); }catch(e){}
+    if(cached !== null){
+      console.error(`[leaderboard] players doc read FAILED after retry - entry written visible=${cached} (last known setting on this device)`, lastError);
+      return { visible: cached === 'true', reason: 'read failed after retry - used last known setting' };
+    }
+    console.error('[leaderboard] players doc read FAILED after retry - entry written VISIBLE (default)', lastError);
+    return { visible: true, reason: 'read failed after retry - default visible' };
+  }
+  // Once a day per account: republish any hidden entries of a player who
+  // never opted out (repairs entries filed hidden by the old default).
+  async function repairHiddenEntries(user, usernameHint){
+    if(!user || user.isAnonymous) return null;
+    const pref = await leaderboardVisibilityFor(user, usernameHint);
+    if(!pref.visible) return { republished: 0, reason: 'player opted out' };
+    const snap = await getDocs(query(collection(db, 'leaderboardEntries'), where('uid', '==', user.uid), where('visible', '==', false)));
+    const hidden = snap.docs;
+    for(let i = 0; i < hidden.length; i += 499){
+      const batch = writeBatch(db);
+      hidden.slice(i, i + 499).forEach(d => batch.update(d.ref, { visible: true }));
+      await batch.commit();
+    }
+    if(hidden.length) console.warn(`[leaderboard] republished ${hidden.length} hidden entr${hidden.length === 1 ? 'y' : 'ies'} (player never opted out)`);
+    return { republished: hidden.length, reason: pref.reason };
+  }
+
   // Writes one completed-puzzle score as a new document, structured so
   // the leaderboard display (a later phase) can query "every score for
   // this exact puzzle date + tier, sorted fastest first."
@@ -949,6 +1028,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     getCurrentUser: () => auth.currentUser,
     onAuthReady: (callback) => onAuthStateChanged(auth, callback),
     db, doc, setDoc, getDoc, getDocFromServer, deleteDoc, collection, query, where, orderBy, limit, getDocs,
+    ensurePlayerDoc, leaderboardVisibilityFor, repairHiddenEntries,
   };
 </script>
 </head>
@@ -2447,8 +2527,9 @@ async function submitCurrentScore(tier, displayName, forceIfElapsed = false){
   // Submit if: display toggle is timed, OR forceIfElapsed=true and a real elapsed time exists.
   // Never submit a 0 or null time — that's always a bug.
   const shouldSubmit = (timerChoice === 'timed' || (forceIfElapsed && timeMs !== null && timeMs > 0));
-  if(!shouldSubmit) return;
-  if(!timeMs || timeMs === 0) return;
+  const lbWhere = `${tier} ${dateKey}`;
+  if(!shouldSubmit){ console.info(`[leaderboard] ${lbWhere}: not submitted - timer is off`); return; }
+  if(!timeMs || timeMs === 0){ console.error(`[leaderboard] ${lbWhere}: not submitted - no recorded time`); return; }
 
   const hintsUsed = getHintsUsed(tier);
   const user = window.LetterLadderAuth.getCurrentUser();
@@ -2461,40 +2542,32 @@ async function submitCurrentScore(tier, displayName, forceIfElapsed = false){
   await window.LetterLadderAuth.submitScore({ date: dateKey, tier, timeMs, hintsUsed, displayName });
 
   // Also write to the leaderboardEntries display layer (timed only)
-  if(uid && window.LetterLadderAuth.setDoc && window.LetterLadderAuth.doc && window.LetterLadderAuth.db){
+  if(!uid){
+    console.error(`[leaderboard] ${lbWhere}: entry NOT written - not signed in to Firebase${isGuest && displayName !== 'Guest' ? ` (this device remembers account "${displayName}" but its sign-in has ended; the time is submitted when they sign in again)` : ''}`);
+    return;
+  }
+  if(window.LetterLadderAuth.setDoc && window.LetterLadderAuth.doc && window.LetterLadderAuth.db){
+    const entryRef = window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'leaderboardEntries', `${uid}_${dateKey}_${tier}`);
+    let visible = true, reason = 'guest (guests are shown by default)';
     try{
-      // Default to NOT visible — safe failure mode for a privacy setting.
-      // Only show publicly if we can positively confirm the user has opted in.
-      let visible = false;
-      if(isGuest){
-        // Guests have no profile toggle — always show their times publicly
-        visible = true;
-      } else {
-        try{
-          // Use getDocFromServer (not getDoc) to bypass the Firestore SDK cache.
-          // If we used the cached version, a recently-changed toggle preference
-          // might not be reflected yet, causing scores to be written with the
-          // wrong visibility. This is a privacy-critical read.
-          const playerSnap = await window.LetterLadderAuth.getDocFromServer(
-            window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'players', uid)
-          );
-          if(playerSnap.exists()){
-            visible = playerSnap.data().leaderboardVisible !== false;
-          }
-          // If doc doesn't exist: visible stays false (safe default)
-        }catch(e){
-          // Read failed — keep visible=false (safe default)
-          console.error('Could not read leaderboard preference, defaulting to hidden:', e);
-        }
+      if(!isGuest){
+        // Signed-in player: visible unless they turned the profile toggle
+        // off. Missing players doc → recreated first; read failure → retry,
+        // then last known setting, then visible (logged loudly).
+        ({ visible, reason } = await window.LetterLadderAuth.leaderboardVisibilityFor(user, displayName));
       }
-      const entryId = `${uid}_${dateKey}_${tier}`;
-      await window.LetterLadderAuth.setDoc(
-        window.LetterLadderAuth.doc(window.LetterLadderAuth.db, 'leaderboardEntries', entryId),
-        { ...scoreData, visible, createdAt: Date.now() },
-        { merge: false }
-      );
+      // One entry per player per puzzle: the first solve of the day is the
+      // one on the board (times are locked), so never try to replace it.
+      const existing = await window.LetterLadderAuth.getDoc(entryRef).catch(() => null);
+      if(existing && existing.exists()){
+        const prev = existing.data();
+        console.info(`[leaderboard] ${lbWhere}: entry NOT written - already on the board with ${formatDurationForShare(prev.timeMs)} (visible=${prev.visible}); the first solve of the day counts`);
+        return;
+      }
+      await window.LetterLadderAuth.setDoc(entryRef, { ...scoreData, visible, createdAt: Date.now() }, { merge: false });
+      console.info(`[leaderboard] ${lbWhere}: entry written for "${displayName}" - ${formatDurationForShare(timeMs)}, visible=${visible} (${reason})`);
     }catch(e){
-      console.error('Failed to write leaderboardEntries:', e);
+      console.error(`[leaderboard] ${lbWhere}: entry write FAILED for "${displayName}" (visible=${visible}, ${reason}):`, e);
     }
   }
 }
@@ -2512,6 +2585,7 @@ function showLeaderboardPromptIfNeeded(tier){
   if(hasRealAccount() || isRealFirebaseUser){
     const username = savedUsername || (isRealFirebaseUser ? currentUser.displayName : null);
     if(username) submitCurrentScore(tier, username);
+    else console.error(`[leaderboard] ${tier} ${dateKey}: not submitted - signed in but no username is known on this device`);
     return;
   }
   // Guests automatically play as guest and submit — no popup.
@@ -4679,6 +4753,15 @@ let ownerCheckDone = false;
               localStorage.setItem('letterladder:accountUsername', authoritativeUsername);
               accountScope = authoritativeUsername;
             }
+          }
+          // Leaderboard health check, once a day per account (in the
+          // background): recreate a missing players doc, and republish
+          // entries filed hidden for a player who never opted out.
+          const repairKey = `letterladder:leaderboardRepairChecked:${player.uid}`;
+          if(localStorage.getItem(repairKey) !== todayKey()){
+            window.LetterLadderAuth.repairHiddenEntries(player, localStorage.getItem('letterladder:accountUsername'))
+              .then(() => localStorage.setItem(repairKey, todayKey()))
+              .catch(e => console.error('[leaderboard] daily check failed:', e));
           }
         }catch(e){
           // Firestore read failed — fall back to localStorage username.

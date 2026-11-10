@@ -25,14 +25,17 @@ function startServer(){
 }
 
 // Fake Firebase modules. State comes from window.__FAKE_FB (set per test via
-// an init script): { user, authDelayMs, readDelayMs, failReads, docs }.
-// Every Firestore write is recorded in window.__FAKE_FB_WRITES.
+// an init script): { user, authDelayMs, readDelayMs, failReads, docs,
+// failReadPaths: { 'players/uid': n } (fail the next n single-doc reads) }.
+// Every Firestore write is recorded in window.__FAKE_FB_WRITES. Like the
+// real rules, an existing leaderboardEntries doc can't be replaced by a
+// full setDoc (only its fields updated).
 const STUBS = {
   'firebase-app.js': `export const initializeApp = () => ({});`,
   'firebase-auth.js': `
     const cfg = () => window.__FAKE_FB || {};
     const auth = { currentUser: null };
-    const mkUser = u => u ? Object.assign({ email: null, reload: async () => {} }, u) : null;
+    const mkUser = u => u ? Object.assign({ email: null, metadata: { creationTime: 'Mon, 08 Sep 2026 05:22:20 GMT' }, reload: async () => {} }, u) : null;
     export const getAuth = () => auth;
     // Like Firebase: listeners get the initial state once auth has loaded,
     // and again whenever the signed-in user changes (e.g. anonymous sign-in).
@@ -52,11 +55,16 @@ const STUBS = {
     export async function signInWithEmailAndPassword(){ throw Object.assign(new Error('fake'), { code: 'auth/invalid-credential' }); }
     export async function createUserWithEmailAndPassword(){ throw Object.assign(new Error('fake'), { code: 'auth/operation-not-allowed' }); }
     export async function sendPasswordResetEmail(){}
+    export async function updatePassword(){}
+    export async function verifyBeforeUpdateEmail(){}
+    export async function deleteUser(){}
   `,
   'firebase-firestore.js': `
     const cfg = () => window.__FAKE_FB || {};
     const store = () => (window.__FAKE_FB.docs = window.__FAKE_FB.docs || {});
     const writes = () => (window.__FAKE_FB_WRITES = window.__FAKE_FB_WRITES || []);
+    // Persist the fake database across page loads in this tab, like Firestore.
+    const persist = () => { try{ const c = JSON.parse(sessionStorage.getItem('__fake_fb') || '{}'); c.docs = store(); sessionStorage.setItem('__fake_fb', JSON.stringify(c)); }catch(e){} };
     const wait = () => new Promise(r => setTimeout(r, cfg().readDelayMs || 0));
     const clone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
     export const getFirestore = () => ({});
@@ -71,6 +79,8 @@ const STUBS = {
     async function read(ref){
       await wait();
       if(cfg().failReads) throw new Error('fake network failure');
+      const fp = cfg().failReadPaths;
+      if(fp && fp[ref.path] > 0){ fp[ref.path]--; throw new Error('fake read failure for ' + ref.path); }
       const d = clone(store()[ref.path]);
       return { exists: () => d !== undefined, data: () => d, id: ref.path.split('/')[1] };
     }
@@ -90,11 +100,20 @@ const STUBS = {
       return { empty: docs.length === 0, docs, size: docs.length, forEach(fn){ docs.forEach(fn); } };
     }
     export async function setDoc(ref, data, opts){
+      if(ref.path.startsWith('leaderboardEntries/') && store()[ref.path] !== undefined && !(opts && opts.merge)){
+        throw Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
+      }
       writes().push({ path: ref.path, data: clone(data), merge: !!(opts && opts.merge), at: Date.now() });
       store()[ref.path] = (opts && opts.merge) ? Object.assign({}, store()[ref.path] || {}, clone(data)) : clone(data);
+      persist();
     }
     export async function addDoc(c, data){ writes().push({ path: c.col + '/(new)', data: clone(data) }); return { id: 'x' }; }
-    export async function deleteDoc(ref){ writes().push({ path: ref.path, deleted: true }); }
+    export async function deleteDoc(ref){ writes().push({ path: ref.path, deleted: true }); delete store()[ref.path]; persist(); }
+    export function writeBatch(){
+      const ops = [];
+      return { update(ref, data){ ops.push([ref, data]); }, set(ref, data, o){ ops.push([ref, data, o]); },
+        async commit(){ for(const [ref, data] of ops){ writes().push({ path: ref.path, data: clone(data), merge: true, batch: true }); store()[ref.path] = Object.assign({}, store()[ref.path] || {}, clone(data)); } persist(); } };
+    }
   `,
 };
 

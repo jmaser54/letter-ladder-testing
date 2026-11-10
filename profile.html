@@ -46,6 +46,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .vis-toggle[aria-pressed="false"]{
     background: rgba(159,179,200,0.25);
   }
+  /* Until the stored setting has loaded: neutral and not clickable. */
+  .vis-toggle:not([aria-pressed]){ background: rgba(159,179,200,0.25); opacity: 0.5; cursor: default; }
+  .vis-toggle:not([aria-pressed]) .vis-toggle-thumb{ transform: translateX(10px); }
   .vis-toggle-thumb{
     width: 20px; height: 20px; border-radius: 50%;
     background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
@@ -101,7 +104,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -172,7 +175,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <div>
             <div style="font-family:'Fraunces',serif; font-size:1.05rem; font-weight:700; color:var(--ink);">Publicly display my times on leaderboards</div>
           </div>
-          <button type="button" id="leaderboard-vis-toggle" class="vis-toggle" aria-pressed="true" aria-label="Toggle leaderboard visibility">
+          <button type="button" id="leaderboard-vis-toggle" class="vis-toggle" disabled aria-label="Toggle leaderboard visibility">
             <span class="vis-toggle-thumb"></span>
           </button>
         </div>
@@ -246,15 +249,50 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     // ── Leaderboard visibility toggle ──────────────────────────────────────
     const visToggle = document.getElementById('leaderboard-vis-toggle');
     if(visToggle && user && !user.isAnonymous){
-      // Read current visibility from players doc (default true if absent)
-      let currentlyVisible = true;
-      try{
-        const playerSnap = await getDoc(doc(db, 'players', user.uid));
-        if(playerSnap.exists() && playerSnap.data().leaderboardVisible === false){
-          currentlyVisible = false;
+      // Same rule as the game page (game.html leaderboardVisibilityFor):
+      // visible unless players/{uid}.leaderboardVisible === false. A missing
+      // players doc is recreated first (leaderboardVisible: true), so the
+      // toggle never shows a state that has no document behind it. If the
+      // setting can't be read, the toggle is disabled - never guessed.
+      const LB_PREF_KEY = `letterladder:leaderboardVisible:${user.uid}`;
+      const playerRef = doc(db, 'players', user.uid);
+      async function readStoredVisibility(){
+        let lastError = null;
+        for(let attempt = 0; attempt < 2; attempt++){
+          try{
+            const snap = await getDocFromServer(playerRef);
+            if(snap.exists()) return snap.data().leaderboardVisible !== false;
+            const name = (localStorage.getItem('letterladder:accountUsername') || '').trim();
+            if(!name) return true; // nothing to rebuild the doc from; same default the game uses
+            const lower = name.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+            const created = Date.parse(user.metadata && user.metadata.creationTime);
+            await setDoc(playerRef, { username: name, usernameLower: lower, createdAt: Number.isFinite(created) ? created : Date.now(),
+              authEmail: user.email || `${lower}@players.letterladder.io`, leaderboardVisible: true }, { merge: true });
+            console.warn(`[leaderboard] players doc for "${name}" was missing - recreated with leaderboardVisible: true`);
+            return true;
+          }catch(e){ lastError = e; }
         }
-      }catch(e){}
-      visToggle.setAttribute('aria-pressed', String(currentlyVisible));
+        throw lastError;
+      }
+      const visHelp = visToggle.closest('.profile-card');
+      function showVisError(text){
+        let el = document.getElementById('leaderboard-vis-error');
+        if(!el){ el = document.createElement('div'); el.id = 'leaderboard-vis-error'; el.className = 'form-message is-error'; el.style.marginTop = '10px'; visHelp.appendChild(el); }
+        el.textContent = text;
+      }
+      let currentlyVisible;
+      try{
+        currentlyVisible = await readStoredVisibility();
+        try{ localStorage.setItem(LB_PREF_KEY, String(currentlyVisible)); }catch(e){}
+        visToggle.setAttribute('aria-pressed', String(currentlyVisible));
+        visToggle.disabled = false;
+      }catch(e){
+        console.error('[leaderboard] could not read the leaderboard setting:', e);
+        visToggle.disabled = true;
+        visToggle.removeAttribute('aria-pressed');
+        showVisError("Couldn't load this setting right now - refresh the page to try again.");
+        return;
+      }
 
       visToggle.addEventListener('click', async ()=>{
         const nowVisible = visToggle.getAttribute('aria-pressed') !== 'true';
@@ -280,6 +318,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
               await batch.commit();
             }
           }
+          console.info(`[leaderboard] setting saved: visible=${nowVisible}; ${snap.size} entr${snap.size === 1 ? 'y' : 'ies'} updated`);
+          // Show what is actually stored now (not just what was clicked).
+          const stored = await readStoredVisibility();
+          visToggle.setAttribute('aria-pressed', String(stored));
+          try{ localStorage.setItem(LB_PREF_KEY, String(stored)); }catch(e){}
         }catch(e){
           console.error('Failed to update leaderboard visibility:', e);
           visToggle.setAttribute('aria-pressed', String(!nowVisible));

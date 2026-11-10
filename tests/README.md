@@ -14,6 +14,7 @@ NODE_PATH=$(npm root -g) node tests/streak-sync.test.js
 NODE_PATH=$(npm root -g) node tests/play-button-tap.test.js
 NODE_PATH=$(npm root -g) node tests/timer-clock-touch.test.js
 NODE_PATH=$(npm root -g) node tests/leaderboard-escaping.test.js
+NODE_PATH=$(npm root -g) node tests/leaderboard-visibility.test.js
 NODE_PATH=$(npm root -g) node tests/feedback-messages.test.js
 NODE_PATH=$(npm root -g) node tests/past-leaderboards-puzzles.test.js
 NODE_PATH=$(npm root -g) node tests/share-modal.test.js
