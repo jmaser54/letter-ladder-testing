@@ -59,7 +59,8 @@ async function solveActive(page, tier){
 }
 
 const modalOpen = page => page.$('.sm-scrim').then(Boolean);
-async function waitModal(page, ms = 4000){ await page.waitForSelector('.sm-scrim', { timeout: ms }); await page.waitForTimeout(150); }
+// The modal follows the celebration (confetti lasts up to ~4.2s) by ~1.2s.
+async function waitModal(page, ms = 9000){ await page.waitForSelector('.sm-scrim', { timeout: ms }); await page.waitForTimeout(150); }
 const modalInfo = page => page.evaluate(() => {
   const q = s => document.querySelector(s);
   return {
@@ -78,7 +79,7 @@ module.exports = run('Share modal (Variant B)', [
     await solveActive(page, 'easy');
     await waitModal(page);
     const m = await modalInfo(page);
-    assertEqual([m.wordmark, m.pill, m.challenge, m.date, m.top, m.logo, m.hasClose], ['LETTER LADDER', 'EASY', 'Can you beat my time?', 'Friday, Oct 30, 2026', ['OCT 30, 2026', 'NO HINTS USED'], 'og-image.png', true], 'header, result, card top');
+    assertEqual([m.wordmark, m.pill, m.challenge, m.date, m.top, m.logo, m.hasClose], ['LETTER LADDER', 'EASY', 'Can you beat my times?', 'Friday, Oct 30, 2026', ['OCT 30, 2026', 'NO HINTS USED'], 'og-image.png', true], 'header, result, card top');
     assertEqual(/^\d+\.\ds$|^\d+m \d+s$/.test(m.time), true, `big time "${m.time}"`);
     assertEqual(m.rungs, [['4', '?????'], ['3', '✓✓✓✓'], ['2', '✓✓✓'], ['1', 'AT']], 'ladder: hidden end word, check rungs, start word');
     assertEqual([m.play, m.buttons], ['Play at letterladder.io →', ['Share my result', 'Copy text', 'Next puzzle →']], 'play bar and buttons');
@@ -108,7 +109,7 @@ module.exports = run('Share modal (Variant B)', [
     await page.click('.sm-copy-btn'); await page.waitForTimeout(300);
     const text = await page.evaluate(() => navigator.clipboard.readText());
     const lines = text.split('\n');
-    assertEqual([lines[0], lines[lines.length - 2], lines[lines.length - 1], text.includes('utm_')], ['Letter Ladder — Oct 30, 2026', 'Can you beat my time?', 'letterladder.io', false], 'copied text');
+    assertEqual([lines[0], lines[lines.length - 2], lines[lines.length - 1], text.includes('utm_')], ['Letter Ladder — Oct 30, 2026', 'Can you beat my times?', 'letterladder.io', false], 'copied text');
     assertEqual(await page.textContent('.sm-toast'), 'Copied — paste it anywhere', 'toast');
     await ctx.close();
   }],
@@ -124,7 +125,7 @@ module.exports = run('Share modal (Variant B)', [
     await page.tap('.sm-share-btn'); await page.waitForFunction(() => window.__shared, null, { timeout: 8000 });
     const shared = await page.evaluate(() => window.__shared);
     assertEqual([shared.files.length, shared.files[0].type, shared.files[0].size > 5000, shared.url], [1, 'image/png', true, 'https://letterladder.io/s/'], 'image file and short link');
-    assertEqual([shared.text.includes('utm_'), shared.text.split('\n').pop()], [false, 'Can you beat my time?'], 'text has no long URL');
+    assertEqual([shared.text.includes('utm_'), shared.text.split('\n').pop()], [false, 'Can you beat my times?'], 'text has no long URL');
     await ctx.close();
   }],
   ['the image card matches the modal and is saved for review', async ({ browser, base }) => {
@@ -164,19 +165,36 @@ module.exports = run('Share modal (Variant B)', [
     await page.evaluate(() => localStorage.setItem('letterladder:keyboardEnabled', 'true'));
     await page.reload(); await page.waitForFunction(() => accountScopeReady === true); await page.waitForTimeout(300);
     await solveActive(page, 'hard');
-    await waitModal(page, 14000);
+    await waitModal(page, 22000);
     const m = await modalInfo(page);
     assertEqual([m.buttons, m.rungs[0][1], m.rungs[m.rungs.length - 1][1]], [['Share my result', 'Copy text'], '?????????', 'AN'], 'buttons and ladder ends');
     const fits = await page.$eval('.sm-ladder', el => el.scrollWidth <= el.clientWidth + 1);
     assertEqual(fits, true, 'ladder fits the card width');
     await ctx.close();
   }],
-  ['completing all three: waits for the ladder celebration, then appears', async ({ browser, base }) => {
+  ['timing: opens ~1.2s after the last confetti piece has landed (1st/2nd puzzle)', async ({ browser, base }) => {
+    const { ctx, page } = await openGame(browser, base);
+    await page.evaluate(() => { const orig = showShareModal; window.showShareModal = showShareModal = function(t){ window.__modalAt = Date.now(); window.__celebrationEnd = celebrationEndsAt; return orig(t); }; });
+    await solveActive(page, 'easy'); await waitModal(page);
+    const t = await page.evaluate(() => ({ gap: window.__modalAt - window.__celebrationEnd, confettiEnd: window.__celebrationEnd }));
+    assertEqual(t.confettiEnd > 0 && t.gap >= 1100 && t.gap <= 1500, true, `modal ${t.gap}ms after the confetti finished`);
+    await ctx.close();
+  }],
+  ['timing: completing all three waits for the ladder climb and its banner, then ~1.2s', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base, { tier: 'hard', solved: ['easy', 'medium'] });
+    await page.evaluate(() => {
+      new MutationObserver(() => {
+        if(document.querySelector('.ladder-climb-overlay')) window.__climbSeen = true;
+        if(document.querySelector('.summit-banner')) window.__bannerSeen = true;
+        if(window.__bannerSeen && !document.querySelector('.summit-banner') && !window.__bannerGoneAt) window.__bannerGoneAt = Date.now();
+        if(document.querySelector('.sm-scrim') && !window.__modalAt){ window.__modalAt = Date.now(); window.__overlap = !!(document.querySelector('.summit-banner') || document.querySelector('.ladder-climb-overlay')); }
+      }).observe(document.body, { childList: true, subtree: true });
+    });
     await solveActive(page, 'hard');
-    await page.waitForTimeout(2000);
-    assertEqual(await modalOpen(page), false, 'not shown during the celebration');
-    await waitModal(page, 12000);
+    await waitModal(page, 22000);
+    const t = await page.evaluate(() => ({ climb: !!window.__climbSeen, banner: !!window.__bannerSeen, overlap: window.__overlap, gap: window.__modalAt - window.__bannerGoneAt }));
+    assertEqual([t.climb, t.banner, t.overlap], [true, true, false], 'climb + banner first, modal never on top of them');
+    assertEqual(t.gap >= 1100 && t.gap <= 1500, true, `modal ${t.gap}ms after the celebration ended`);
     assertEqual((await modalInfo(page)).pill, 'HARD', 'shown afterwards for Hard');
     await ctx.close();
   }],

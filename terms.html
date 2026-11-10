@@ -98,20 +98,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   .site-footer a{ color: #9FB3C8; text-decoration: none; border-bottom: 1px dotted #9FB3C8; touch-action: manipulation; }
   .site-footer a:hover{ color: #E8A33D; border-color: #E8A33D; }
   .site-footer .footer-sep{ color: #9FB3C8; opacity: 0.5; }
+  /* Footer: two deliberate rows - Leaderboard + social icons (cream), then About/Contact/Privacy (smaller, dim). */
+  footer .footer-row{ display:flex; justify-content:center; align-items:center; flex-wrap:nowrap; white-space:nowrap; }
+  footer .footer-primary{ font-size:0.95rem; gap:0 8px; margin-bottom:6px; }
+  footer .footer-primary a{ color:#F5EFE0; border-bottom:1px dotted rgba(245,239,224,0.6); }
+  footer .footer-primary a.footer-icon{ border-bottom:none; display:inline-flex; padding:6px; }
+  footer .footer-secondary{ font-size:0.78rem; gap:0 4px; }
+  footer .footer-secondary a{ color:#9FB3C8; border-bottom:1px dotted #9FB3C8; }
+  footer .footer-row a:hover{ color:#E8A33D; border-color:#E8A33D; }
+  footer .footer-row .footer-sep{ color:#9FB3C8; opacity:0.5; }
 </style>
 <footer class="site-footer">
-    <div class="footer-nav">
+    <div class="footer-row footer-primary">
+      <a href="leaderboard.html">Leaderboard</a>
+      <span class="footer-sep">&middot;</span>
+      <a class="footer-icon" href="https://www.instagram.com/letterladder" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+      <span class="footer-sep">&middot;</span>
+      <a class="footer-icon" href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M12 1a11 11 0 1 0 0 22a11 11 0 1 0 0-22zM13.6 23V14.4h2.6l.45-3.1H13.6V9.5c0-.9.3-1.6 1.6-1.6h1.6V5.2c-.3 0-1.2-.12-2.3-.12-2.3 0-3.9 1.4-3.9 4v2.2H8V14.4h2.6V23z"/></svg></a>
+    </div>
+    <div class="footer-row footer-secondary">
       <a href="about.html">About</a>
       <span class="footer-sep">&middot;</span>
       <a href="contact.html">Contact</a>
       <span class="footer-sep">&middot;</span>
       <a href="privacy.html">Privacy Policy</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="leaderboard.html">Leaderboard</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener">Facebook</a>
     </div>
 </footer>
 </body>

@@ -12,12 +12,16 @@ const NOW = new Date('2026-11-10T12:00:00-05:00');
 const sched = {}; vm.runInNewContext(raw('data/puzzles.js') + ';this.S=PUZZLE_SCHEDULE;', sched);
 const PAST_COUNT = Object.keys(sched.S).filter(k => k < '2026-11-10').reduce((n, k) => n + Object.keys(sched.S[k]).length, 0);
 
+// The How to Play rules, verbatim (the "Words can be guessed in any order"
+// bullet was removed everywhere in v3).
 const MODAL_TEXT = [
   'Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.',
-  'Words can be guessed in any order',
+  'For example, not could become tone, note, or torn',
+  'A letter can repeat — lead could become ladle by adding a second "L"',
   'Every word must be a real English word',
   'New puzzles drop daily at 12am EST.',
 ];
+const REMOVED_TEXT = ['Words can be guessed in any order', 'any order'];
 function hasSocialTags(html){
   return ['og:title', 'og:description', 'og:image', 'og:url', 'twitter:card', 'twitter:title', 'twitter:image']
     .filter(t => !html.includes(`"${t}"`)) ;
@@ -39,7 +43,7 @@ module.exports = run('Static pages', [
   }],
   ['how-to-play.html: removed lines and difficulty ranges are gone', async () => {
     const html = raw('how-to-play.html').replace(/<[^>]+>/g, '');
-    for(const t of ['cart → cater', 'cat → cart', 'three puzzles every day', 'Words can go in any order', 'fill in whichever rung', '3 to 6', '4 to 7', '5 to 8', 'letters long', 'Golden Ladder', 'HELP at the bottom', 'midnight your time', '7-day streak period'])
+    for(const t of [...REMOVED_TEXT, 'cart → cater', 'cat → cart', 'three puzzles every day', 'Words can go in any order', 'fill in whichever rung', '3 to 6', '4 to 7', '5 to 8', 'letters long', 'Golden Ladder', 'HELP at the bottom', 'midnight your time', '7-day streak period'])
       assertEqual(html.includes(t), false, `does not contain "${t}"`);
     assertEqual(raw('how-to-play.html').includes('href="game.html?play=today"'), true, '"Play today\'s puzzle" opens today\'s game');
   }],
@@ -71,23 +75,24 @@ module.exports = run('Static pages', [
       await ctx.close();
     }
   }],
-  ['homepage: "Missed a day?" link below the date, no underline, tagline under it, live count', async ({ browser, base }) => {
-    for(const [device, now] of [[false, NOW], ['Pixel 7', NOW], [false, new Date('2026-11-04T12:00:00-05:00')]]){
+  ['homepage: logo → tagline → Play → date → note → "Missed a day?" (no underline, live count)', async ({ browser, base }) => {
+    for(const [device, now] of [[false, NOW], ['Pixel 7', NOW], ['iPhone SE', NOW], [false, new Date('2026-11-04T12:00:00-05:00')], ['Pixel 7', new Date('2026-10-01T12:00:00-04:00')]]){
       const { ctx, page } = await newPage(browser, { fake: { user: null }, mobile: device, now });
       await page.goto(base + '/index.html'); await page.waitForTimeout(600);
       const r = await page.evaluate(() => {
         const box = s => document.querySelector(s).getBoundingClientRect();
         const a = document.getElementById('past-puzzles-link'), cs = getComputedStyle(a);
-        const attr = document.getElementById('play-date-attribution');
         return { text: a.textContent.trim(), href: a.getAttribute('href'), line: cs.textDecorationLine, border: cs.borderBottomStyle,
-          attr: attr.textContent, linkTop: box('#past-puzzles-link').top, dateBottom: box('#play-date').bottom, attrBottom: box('#play-date-attribution').bottom,
-          introTop: box('.landing-intro').top, linkBottom: box('#past-puzzles-link').bottom };
+          attr: document.getElementById('play-date-attribution').textContent, intro: document.querySelector('.landing-intro').textContent,
+          order: ['.brand-logo', '.landing-intro', '#play-buttons', '#play-date', '#play-date-attribution', '#past-puzzles-link'].map(s => [Math.round(box(s).top), Math.round(box(s).bottom)]) };
       });
       const label = `${device || 'desktop'}${r.attr ? ' with attribution' : ''}`;
       const past = Object.keys(sched.S).filter(k => k < now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' })).reduce((n, k) => n + Object.keys(sched.S[k]).length, 0);
-      assertEqual([r.text, r.href, r.line, r.border], [`Missed a day? Play ${past} past puzzles here`, 'past-puzzles.html', 'none', 'none'], `link on ${label}`);
-      assertEqual(r.linkTop >= r.dateBottom && r.linkTop >= r.attrBottom - 1, true, `link below the date and attribution, not overlapping (${label})`);
-      assertEqual(r.introTop >= r.linkBottom, true, `tagline below the link (${label})`);
+      assertEqual([r.text, r.href, r.line, r.border, r.intro], [`Missed a day? Play ${past} past puzzles here`, 'past-puzzles.html', 'none', 'none', 'Add one letter, scramble to a new word, climb to the top.'], `text on ${label}`);
+      for(let i = 1; i < r.order.length; i++){
+        if(i === 4 && !r.attr) continue; // empty attribution has no height
+        assertEqual(r.order[i][0] >= r.order[i - 1][1] - 1, true, `${['logo', 'tagline', 'Play', 'date', 'note', 'missed-a-day'][i]} sits below the previous item without overlapping (${label}): ${JSON.stringify(r.order)}`);
+      }
       await ctx.close();
     }
   }],
@@ -97,25 +102,33 @@ module.exports = run('Static pages', [
     assertEqual(await page.textContent('.intro'), `Missed a day? Play ${PAST_COUNT} past puzzles here`, 'intro');
     await ctx.close();
   }],
-  ['site footer on every page: links centred, Leaderboard, Instagram then Facebook', async ({ browser, base }) => {
+  ['site footer on every page: two rows, each on one line - Leaderboard + Instagram/Facebook icons, then About · Contact · Privacy Policy', async ({ browser, base }) => {
     const pages = ['index.html', 'game.html', 'how-to-play.html', 'past-puzzles.html', 'about.html', 'contact.html', 'contact-sent.html', 'privacy.html', 'terms.html', 'solutions.html', 'leaderboard.html', 'past-leaderboards.html', 'stats.html', 'profile.html'];
-    const want = ['About', 'Contact', 'Privacy Policy', 'Leaderboard', 'Instagram', 'Facebook'];
-    for(const device of [false, 'Pixel 7']){
+    for(const device of [false, 'Pixel 7', 'iPhone SE']){
       const { ctx, page } = await newPage(browser, { fake: { user: null }, localStorage: { 'letterladder:howToPlaySeen': '1', 'letterladder:timerChoiceMade': '1', 'letterladder:timerChoice': 'timed' }, mobile: device, now: NOW });
       for(const f of pages){
         await page.goto(base + '/' + f); await page.waitForTimeout(f === 'game.html' ? 1200 : 400);
         assertEqual(page.url().endsWith(f), true, `${f} stayed on its page`);
         const r = await page.evaluate(() => {
-          const nav = document.querySelector('footer .footer-nav');
-          if(!nav) return null;
-          const links = [...nav.querySelectorAll('a')];
-          const nb = nav.getBoundingClientRect(), first = links[0].getBoundingClientRect(), last = links[links.length - 1].getBoundingClientRect();
-          const rows = new Set(links.map(a => Math.round(a.getBoundingClientRect().top)));
-          return { names: links.map(a => a.textContent.trim()), fb: links.find(a => a.textContent.trim() === 'Facebook').getAttribute('href'),
-            off: rows.size === 1 ? Math.abs((first.left - nb.left) - (nb.right - last.right)) : 0, visible: getComputedStyle(nav.closest('footer')).visibility };
+          const rows = [...document.querySelectorAll('footer .footer-row')];
+          if(rows.length !== 2) return { rows: rows.length };
+          const info = row => {
+            const links = [...row.querySelectorAll('a')], rb = row.getBoundingClientRect();
+            const first = links[0].getBoundingClientRect(), last = links[links.length - 1].getBoundingClientRect();
+            return { names: links.map(a => a.getAttribute('aria-label') || a.textContent.trim()), hrefs: links.map(a => a.getAttribute('href')),
+              icons: links.map(a => !!a.querySelector('svg') && a.textContent.trim() === ''), oneLine: new Set(links.map(a => Math.round(a.getBoundingClientRect().top + a.getBoundingClientRect().height / 2))).size === 1,
+              fits: row.scrollWidth <= row.clientWidth + 1, off: Math.abs((first.left - rb.left) - (rb.right - last.right)),
+              color: getComputedStyle(links[0]).color, size: parseFloat(getComputedStyle(links[0]).fontSize) };
+          };
+          return { rows: 2, top: info(rows[0]), bottom: info(rows[1]), below: rows[1].getBoundingClientRect().top >= rows[0].getBoundingClientRect().bottom - 1, visible: getComputedStyle(rows[0].closest('footer')).visibility };
         });
-        assertEqual(r && [r.names, r.fb, r.visible], [want, 'https://facebook.com/people/Letter-Ladder/61593469157230/', 'visible'], `footer on ${f} (${device || 'desktop'})`);
-        assertEqual(r.off <= 2, true, `footer links centred on ${f} (${device || 'desktop'}), off by ${r.off}px`);
+        const where = `${f} (${device || 'desktop'})`;
+        assertEqual(r.rows, 2, `two footer rows on ${where}`);
+        assertEqual([r.top.names, r.top.hrefs, r.top.icons], [['Leaderboard', 'Instagram', 'Facebook'], ['leaderboard.html', 'https://www.instagram.com/letterladder', 'https://facebook.com/people/Letter-Ladder/61593469157230/'], [false, true, true]], `top row on ${where}`);
+        assertEqual([r.bottom.names, r.bottom.icons], [['About', 'Contact', 'Privacy Policy'], [false, false, false]], `bottom row on ${where}`);
+        assertEqual([r.top.oneLine, r.top.fits, r.bottom.oneLine, r.bottom.fits, r.below, r.visible], [true, true, true, true, true, 'visible'], `each row on one line, top above bottom on ${where}`);
+        assertEqual([r.top.color, r.bottom.color, r.bottom.size < r.top.size], ['rgb(245, 239, 224)', 'rgb(159, 179, 200)', true], `top row cream, bottom row smaller and dim on ${where}`);
+        assertEqual(r.top.off <= 2 && r.bottom.off <= 2, true, `rows centred on ${where} (${r.top.off}px, ${r.bottom.off}px)`);
       }
       await ctx.close();
     }
@@ -133,10 +146,15 @@ module.exports = run('Static pages', [
     await page.goto(base + '/index.html'); await page.waitForTimeout(400);
     await page.click('#howto-btn'); await page.waitForTimeout(300);
     assertEqual(await page.$eval('.howto-card a[href="how-to-play.html"]', a => a.textContent.trim()), 'Read the full rules', 'homepage modal link');
+    const homeModal = (await page.textContent('.howto-card')).replace(/\s+/g, ' ');
+    for(const t of MODAL_TEXT) assertEqual(homeModal.includes(t), true, `homepage modal says "${t}"`);
+    for(const t of REMOVED_TEXT) assertEqual(homeModal.includes(t), false, `homepage modal no longer says "${t}"`);
     await page.goto(base + '/game.html'); await page.waitForFunction(() => accountScopeReady === true); await page.waitForTimeout(300);
     await page.click('#howto-icon-btn'); await page.waitForTimeout(300);
     assertEqual(await page.$eval('.howto-card a[href="how-to-play.html"]', a => a.textContent.trim()), 'Read the full rules', 'game modal link');
-    for(const t of MODAL_TEXT) assertEqual((await page.textContent('.howto-card')).includes(t), true, `game modal still says "${t}"`);
+    const gameModal = (await page.textContent('.howto-card')).replace(/\s+/g, ' ');
+    for(const t of MODAL_TEXT) assertEqual(gameModal.includes(t), true, `game modal says "${t}"`);
+    for(const t of REMOVED_TEXT) assertEqual(gameModal.includes(t), false, `game modal no longer says "${t}"`);
     await ctx.close();
   }],
 ]).then(failed => process.exit(failed ? 1 : 0));

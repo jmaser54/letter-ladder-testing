@@ -30,6 +30,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Warm the cache for the game page while the player is on this page, so
+     tapping Play doesn't wait on these downloads. Keep the ?v= numbers in
+     step with game.html (the dictionary's lives in game.html's DICTIONARY_SRC). -->
+<link rel="prefetch" href="game.html">
+<link rel="prefetch" href="data/words.js?v=5">
+<link rel="prefetch" href="data/hints.js?v=1793974992">
+<link rel="prefetch" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js" crossorigin>
 <style>
   :root{
     --bg: #1B2A41;
@@ -188,7 +195,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     text-decoration: none; touch-action: manipulation; /* no underline on the landing page */
   }
   .past-puzzles-link:hover{ color: var(--amber); }
-  .landing-intro{ color: var(--ink-dim); font-size: 0.92rem; text-align: center; margin: 10px 0 0; }
+  /* Tagline sits directly under the logo, above Play (and above the streak line when there is one). */
+  .landing-intro{ color: var(--ink-dim); font-size: 0.92rem; text-align: center; margin: -26px 0 22px; }
+  .landing-intro + .play-streak{ margin-top: 0; }
   .play-date{
     color: var(--ink-dim);
     font-family: 'Inter', system-ui, sans-serif;
@@ -302,6 +311,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .footer-attribution a{ color: var(--ink-dim); border-bottom: 1px dotted rgba(159,179,200,0.5); }
   .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
   .footer-sep{ color: var(--ink-dim); opacity: 0.5; }
+  /* Footer: two deliberate rows - Leaderboard + social icons (cream), then About/Contact/Privacy (smaller, dim). */
+  footer .footer-row{ display:flex; justify-content:center; align-items:center; flex-wrap:nowrap; white-space:nowrap; }
+  footer .footer-primary{ font-size:0.95rem; gap:0 8px; margin-bottom:6px; }
+  footer .footer-primary a{ color:#F5EFE0; border-bottom:1px dotted rgba(245,239,224,0.6); }
+  footer .footer-primary a.footer-icon{ border-bottom:none; display:inline-flex; padding:6px; }
+  footer .footer-secondary{ font-size:0.78rem; gap:0 4px; }
+  footer .footer-secondary a{ color:#9FB3C8; border-bottom:1px dotted #9FB3C8; }
+  footer .footer-row a:hover{ color:#E8A33D; border-color:#E8A33D; }
+  footer .footer-row .footer-sep{ color:#9FB3C8; opacity:0.5; }
 
   @media(max-width:400px){
     .brand-row{ font-size: 1.55rem; }
@@ -330,6 +348,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <main class="landing-body">
     <img src="og-image.png" alt="" class="brand-logo">
+    <p class="landing-intro">Add one letter, scramble to a new word, climb to the top.</p>
     <div class="play-streak" id="play-streak"></div>
     <div class="play-buttons" id="play-buttons">
       <button type="button" class="btn-primary play-btn-full" id="play-btn-initial">Play</button>
@@ -337,7 +356,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="play-date" id="play-date"></div>
     <div class="play-date-attribution" id="play-date-attribution"></div>
     <a href="past-puzzles.html" class="past-puzzles-link" id="past-puzzles-link">Missed a day? Play <span id="past-puzzles-count"></span>past puzzles here</a>
-    <p class="landing-intro">Add one letter, scramble to a new word, climb to the top.</p>
   </main>
 
   <div class="example-ladders-panel">
@@ -367,18 +385,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 
   <footer>
-    <div class="footer-nav">
+    <div class="footer-row footer-primary">
+      <a href="leaderboard.html">Leaderboard</a>
+      <span class="footer-sep">&middot;</span>
+      <a class="footer-icon" href="https://www.instagram.com/letterladder" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+      <span class="footer-sep">&middot;</span>
+      <a class="footer-icon" href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M12 1a11 11 0 1 0 0 22a11 11 0 1 0 0-22zM13.6 23V14.4h2.6l.45-3.1H13.6V9.5c0-.9.3-1.6 1.6-1.6h1.6V5.2c-.3 0-1.2-.12-2.3-.12-2.3 0-3.9 1.4-3.9 4v2.2H8V14.4h2.6V23z"/></svg></a>
+    </div>
+    <div class="footer-row footer-secondary">
       <a href="about.html">About</a>
       <span class="footer-sep">&middot;</span>
       <a href="contact.html">Contact</a>
       <span class="footer-sep">&middot;</span>
       <a href="privacy.html">Privacy Policy</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="leaderboard.html">Leaderboard</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener">Facebook</a>
     </div>
   </footer>
 </div>
@@ -492,7 +511,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
         <ul>
           <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
-          <li>Words can be guessed in any order</li>
           <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
           <li>Every word must be a real English word</li>
         </ul>

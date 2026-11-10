@@ -32,7 +32,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <title>Letter Ladder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Same stylesheet URL as index.html, so it is already cached when Play is tapped. -->
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Share-modal fonts: loaded without blocking the first paint. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
   :root{
     --bg: #1B2A41;
@@ -421,6 +424,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     touch-action: manipulation;
   }
   .view-solution-link:hover{ color: var(--amber); border-color: var(--amber); }
+  .share-results-link{ margin: 14px auto 4px auto; }
+  .leaderboard-rank{ text-align:center; margin: 4px 0 18px; font-size:0.88rem; color: var(--ink-dim); }
+  .leaderboard-rank-text{ color: var(--ink); font-size:0.95rem; }
+  .leaderboard-rank-link{ margin-top: 14px; }
+  .leaderboard-rank-link a{ color: var(--ink-dim); text-decoration:none; border-bottom:1px dotted var(--ink-dim); touch-action: manipulation; }
+  .leaderboard-rank-link a:hover{ color: var(--amber); border-color: var(--amber); }
+  .timer-lock{ color: var(--ink-dim); margin-left: -1px; flex-shrink: 0; }
+  .timer-widget-btn--locked .timer-display{ min-width: 0; }
+  .checking-word{ color: var(--ink-dim); font-size: 0.88rem; }
+  .practice-note{ text-align:center; margin: 4px 12px 10px; font-size:0.88rem; color: var(--ink-dim); font-style: italic; }
 
   .empty-state{ text-align:center; color: var(--ink-dim); padding: 30px 0; }
 
@@ -591,6 +604,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .footer-attribution a{ color: var(--ink-dim); border-bottom: 1px dotted rgba(159,179,200,0.5); }
   .footer-nav{ font-size: 0.82rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 4px; }
   .footer-sep{ color: var(--ink-dim); opacity: 0.5; }
+  /* Footer: two deliberate rows - Leaderboard + social icons (cream), then About/Contact/Privacy (smaller, dim). */
+  footer .footer-row{ display:flex; justify-content:center; align-items:center; flex-wrap:nowrap; white-space:nowrap; }
+  footer .footer-primary{ font-size:0.95rem; gap:0 8px; margin-bottom:6px; }
+  footer .footer-primary a{ color:#F5EFE0; border-bottom:1px dotted rgba(245,239,224,0.6); }
+  footer .footer-primary a.footer-icon{ border-bottom:none; display:inline-flex; padding:6px; }
+  footer .footer-secondary{ font-size:0.78rem; gap:0 4px; }
+  footer .footer-secondary a{ color:#9FB3C8; border-bottom:1px dotted #9FB3C8; }
+  footer .footer-row a:hover{ color:#E8A33D; border-color:#E8A33D; }
+  footer .footer-row .footer-sep{ color:#9FB3C8; opacity:0.5; }
 
   @media (max-width: 420px){
     .rung{ min-width: calc(var(--rung-minw, 140px) * 0.8); }
@@ -960,29 +982,55 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 
   <footer>
-    <div class="footer-nav">
+    <div class="footer-row footer-primary">
+      <a href="leaderboard.html">Leaderboard</a>
+      <span class="footer-sep">&middot;</span>
+      <a class="footer-icon" href="https://www.instagram.com/letterladder" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.3"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+      <span class="footer-sep">&middot;</span>
+      <a class="footer-icon" href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M12 1a11 11 0 1 0 0 22a11 11 0 1 0 0-22zM13.6 23V14.4h2.6l.45-3.1H13.6V9.5c0-.9.3-1.6 1.6-1.6h1.6V5.2c-.3 0-1.2-.12-2.3-.12-2.3 0-3.9 1.4-3.9 4v2.2H8V14.4h2.6V23z"/></svg></a>
+    </div>
+    <div class="footer-row footer-secondary">
       <a href="about.html">About</a>
       <span class="footer-sep">&middot;</span>
       <a href="contact.html">Contact</a>
       <span class="footer-sep">&middot;</span>
       <a href="privacy.html">Privacy Policy</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="leaderboard.html">Leaderboard</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="https://www.instagram.com/letterladder" target="_blank" rel="noopener">Instagram</a>
-      <span class="footer-sep">&middot;</span>
-      <a href="https://facebook.com/people/Letter-Ladder/61593469157230/" target="_blank" rel="noopener">Facebook</a>
     </div>
   </footer>
 </div>
 
 <!-- Bump the ?v= number below any time you update puzzles.js or the game logic,
      so returning visitors' browsers are guaranteed to fetch the new version
-     instead of a cached copy. -->
-<script src="data/words.js?v=5"></script>
+     instead of a cached copy. The dictionary (data/words.js, ~1.9 MB) is not
+     loaded here: it loads after the game is interactive - see
+     DICTIONARY_SRC below (and keep index.html's prefetch link on the same ?v=). -->
 <script src="data/puzzles.js?v=1793974992"></script>
 <script src="data/hints.js?v=1793974992"></script>
 <script>
+// ---------- dictionary (loaded off the critical path) ----------
+// The word list is only needed to check a submitted guess, so it is fetched
+// once the ladder is up instead of blocking the first paint. A guess
+// submitted before it arrives waits for it ("Checking word…").
+const DICTIONARY_SRC = 'data/words.js?v=5';
+let dictionaryRequested = false;
+const dictionaryWaiters = [];
+function dictionaryReady(){ return typeof WORD_SET !== 'undefined'; }
+function loadDictionary(){
+  if(dictionaryRequested || dictionaryReady()) return;
+  dictionaryRequested = true;
+  const el = document.createElement('script');
+  el.src = DICTIONARY_SRC;
+  el.onload = () => { while(dictionaryWaiters.length) dictionaryWaiters.shift()(); };
+  el.onerror = () => { dictionaryRequested = false; setTimeout(loadDictionary, 2000); }; // retry on a network blip
+  document.head.appendChild(el);
+}
+function whenDictionaryReady(fn){
+  if(dictionaryReady()) return fn();
+  dictionaryWaiters.push(fn);
+  loadDictionary();
+}
+setTimeout(loadDictionary, 4000); // backstop in case startup stalls
+
 // ---------- date helpers ----------
 function bumpGuessCount(tier, L){
   const key = `letterladder:${accountScope}:${dateKey}:${tier}:guessCount:${L}`;
@@ -1179,7 +1227,8 @@ function getHintLetterOrder(word){
   const lower = word.toLowerCase();
   const sorted = lower.split('');
   sorted.sort();
-  if(!WORD_SET.has(sorted.join(''))){
+  const isWord = w => dictionaryReady() ? WORD_SET.has(w) : true; // unknown yet: shuffle to be safe
+  if(!isWord(sorted.join(''))){
     return sorted;
   }
   let attempt = sorted.slice();
@@ -1188,7 +1237,7 @@ function getHintLetterOrder(word){
       const k = Math.floor(Math.random() * (j + 1));
       [attempt[j], attempt[k]] = [attempt[k], attempt[j]];
     }
-    if(!WORD_SET.has(attempt.join(''))) return attempt;
+    if(!isWord(attempt.join(''))) return attempt;
   }
   // Vanishingly unlikely to ever be reached, but don't loop forever.
   return attempt;
@@ -1546,10 +1595,14 @@ function renderTimerWidget(){
     const displayTime = frozenElapsed !== null
       ? formatDurationForShare(Number(frozenElapsed))
       : formatElapsed(getCurrentElapsedMs(activeTier));
-    const tooltipText = 'Timer: On — click to turn off';
+    // Once solved, the time is the player's locked result for the day (not a
+    // live clock) - shown with a small lock, including in practice mode.
+    const locked = frozenElapsed !== null;
+    const tooltipText = locked ? 'Your time for today is locked in' : 'Timer: On — click to turn off';
+    const lockIcon = locked ? `<svg class="timer-lock" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1zm2 0h6V7a3 3 0 0 0-6 0v3z"/></svg>` : '';
     widget.innerHTML = `
-      <button type="button" class="timer-widget-btn" aria-label="${tooltipText}">
-        <span class="timer-emoji">⏱️</span><span class="timer-display">${displayTime}</span>
+      <button type="button" class="timer-widget-btn${locked ? ' timer-widget-btn--locked' : ''}" aria-label="${locked ? `Time locked in: ${displayTime}` : tooltipText}">
+        <span class="timer-emoji">⏱️</span><span class="timer-display">${displayTime}</span>${lockIcon}
         <span class="timer-tooltip">${tooltipText}</span>
       </button>
     `;
@@ -2069,6 +2122,30 @@ function recordHintUsed(tier){
 function getHintsUsed(tier){
   return parseInt(localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:hintsUsed`) || '0', 10);
 }
+// Practice mode: a puzzle solved today can be cleared and re-solved, but its
+// result is locked - time, rank, stats and the shared result never change.
+function wasSolvedToday(tier){
+  return !isArchiveMode
+    && !!localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:solvedCounted`)
+    && !localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:solutionRevealedAsLoss`);
+}
+function isPracticeMode(tier){ return wasSolvedToday(tier) && !isTierComplete(tier); }
+function lockedTimeMs(tier){
+  if(getTimerChoice() !== 'timed') return null;
+  const frozen = localStorage.getItem(timerElapsedKey(tier));
+  return frozen !== null ? Number(frozen) : null;
+}
+function practiceNoteText(tier){
+  const ms = lockedTimeMs(tier);
+  return ms !== null
+    ? `Your time for today is locked in at ${formatDurationForShare(ms)} — this is just practice.`
+    : `You've already solved today's puzzle — this is just practice.`;
+}
+// Hints as they stood when the puzzle was solved (practice hints don't count).
+function hintsForShare(tier){
+  const atSolve = localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${tier}:hintsAtSolve`);
+  return atSolve !== null ? parseInt(atSolve, 10) : getHintsUsed(tier);
+}
 
 function getHintInfo(tier, L){
   try{
@@ -2446,6 +2523,7 @@ function markSolvedIfNeeded(tier, guesses){
   const flagKey = `letterladder:${accountScope}:${dateKey}:${tier}:solvedCounted`;
   if(localStorage.getItem(flagKey)) return;
   localStorage.setItem(flagKey, '1');
+  localStorage.setItem(`letterladder:${accountScope}:${dateKey}:${tier}:hintsAtSolve`, String(getHintsUsed(tier)));
 
   const hasEverStarted = localStorage.getItem(timerStartKey(tier)) !== null || localStorage.getItem(timerAccumulatedKey(tier)) !== null;
   if(hasEverStarted){
@@ -2907,7 +2985,7 @@ function shareResultLines(){
   const timerChoice = getTimerChoice();
   let anyTime = false;
   for(const tier of TIERS){
-    if(!getTodaysPuzzle(tier) || !isTierGenuinelyWon(tier)) continue; // only puzzles actually finished
+    if(!getTodaysPuzzle(tier) || !(isTierGenuinelyWon(tier) || wasSolvedToday(tier))) continue; // only puzzles actually finished (incl. cleared for practice)
     let result = 'solved';
     if(timerChoice === 'timed'){
       const frozenElapsed = localStorage.getItem(timerElapsedKey(tier));
@@ -2916,7 +2994,7 @@ function shareResultLines(){
         anyTime = true;
       }
     }
-    const hints = getHintsUsed(tier);
+    const hints = hintsForShare(tier);
     const hintPart = hints > 0 ? ` (${hints} hint${hints === 1 ? '' : 's'})` : '';
     lines.push(`${tierLabels[tier]}: ${result}${hintPart}`);
   }
@@ -2926,7 +3004,7 @@ function shareResultLines(){
     const streak = live ? (total.currentStreak || 0) : 0;
     if(streak > 0) lines.push(`🔥 Streak: ${streak} day${streak === 1 ? '' : 's'}`);
   }
-  lines.push(anyTime ? 'Can you beat my time?' : 'Can you solve it?');
+  lines.push(anyTime ? 'Can you beat my times?' : 'Can you solve it?');
   return lines;
 }
 // Text for Copy text / clipboard: ends with the clean link.
@@ -2938,7 +3016,7 @@ function shareCardData(tier){
   const [y, m, d] = dateKey.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   const frozen = getTimerChoice() === 'timed' ? localStorage.getItem(timerElapsedKey(tier)) : null;
-  const hints = getHintsUsed(tier);
+  const hints = hintsForShare(tier);
   const rungs = [];                                   // top (final, hidden) to bottom (start)
   rungs.push({ hidden: puzzle.final.length });
   for(let L = puzzle.final.length - 1; L > puzzle.start.length; L--) rungs.push({ checks: L });
@@ -2961,13 +3039,22 @@ function shareCardData(tier){
 // Next puzzle, close.
 let ladderCelebrationActive = false;
 let shareModalAfterCelebration = null;
+// One rule for every tier: the share modal opens ~1.2s after the win
+// celebration has fully finished (the last confetti piece has landed, or the
+// ladder climb and its "completed all three" banner are over).
+const SHARE_MODAL_AFTER_CELEBRATION_MS = 1200;
+let celebrationEndsAt = 0;
 function scheduleShareModal(tier){
-  // Let the win confetti start first; if this solve completed all three
-  // puzzles, wait for the ladder-climb celebration to finish.
+  // Short wait first so a ladder climb started by this same solve (it
+  // begins on the next tick) has registered before deciding.
   setTimeout(() => {
     if(ladderCelebrationActive){ shareModalAfterCelebration = tier; return; }
-    showShareModal(tier);
-  }, 900);
+    const wait = Math.max(0, celebrationEndsAt - Date.now()) + SHARE_MODAL_AFTER_CELEBRATION_MS;
+    setTimeout(() => {
+      if(ladderCelebrationActive){ shareModalAfterCelebration = tier; return; }
+      showShareModal(tier);
+    }, wait);
+  }, 100);
 }
 function showShareModal(tier){
   tier = tier || activeTier;
@@ -2998,7 +3085,7 @@ function showShareModal(tier){
             <span class="sm-pill">${data.tierLabel}</span>
             <span class="sm-big-time">${timeHtml}</span>
           </div>
-          <div class="sm-challenge">${data.time ? 'Can you beat <span>my time</span>?' : 'Can you <span>solve it</span>?'}</div>
+          <div class="sm-challenge">${data.time ? 'Can you beat <span>my times</span>?' : 'Can you <span>solve it</span>?'}</div>
           <div class="sm-date">${data.longDate}</div>
         </div>
       </div>
@@ -3113,7 +3200,7 @@ async function buildShareCardImage(data){
   ctx.fillStyle = '#F5EFE0'; ctx.font = '700 29px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.fillText(timeText, x + pillW + 10, y + 26);
   // Challenge (amber emphasis) and date
   y += 29 + 7 + 14;
-  const parts = data.time ? [['Can you beat ', '#F5EFE0'], ['my time', '#E8A33D'], ['?', '#F5EFE0']] : [['Can you ', '#F5EFE0'], ['solve it', '#E8A33D'], ['?', '#F5EFE0']];
+  const parts = data.time ? [['Can you beat ', '#F5EFE0'], ['my times', '#E8A33D'], ['?', '#F5EFE0']] : [['Can you ', '#F5EFE0'], ['solve it', '#E8A33D'], ['?', '#F5EFE0']];
   ctx.font = '700 15px Archivo, sans-serif';
   const cw = parts.reduce((w, [t]) => w + ctx.measureText(t).width, 0);
   x = (W - cw) / 2;
@@ -3152,9 +3239,9 @@ async function buildShareCardImage(data){
   return await new Promise((resolve, reject) => canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png'));
 }
 
-// Post-solve leaderboard placement for timed solves: "You finished Easy in
-// 30.1s — that's #12 today" (rank among today's visible leaderboard entries
-// for that difficulty), with a link to the leaderboard.
+// Post-solve leaderboard placement for timed solves: "Completed in 30.1s —
+// ranked #6 on today's Easy" (rank among today's visible leaderboard entries
+// for that difficulty), with "View leaderboard" on the line below.
 const leaderboardRankCache = {};
 function fillLeaderboardRank(){
   const tier = activeTier;
@@ -3163,12 +3250,18 @@ function fillLeaderboardRank(){
   const myTime = Number(frozen);
   const key = `${dateKey}:${tier}`;
   const label = { easy: 'Easy', medium: 'Medium', hard: 'Hard' }[tier];
+  // The result goes on its own line; "View leaderboard" is always its own
+  // line below (never a separator). The time shows right away and the rank
+  // is added once the leaderboard query answers.
   function show(rank){
-    const el = document.getElementById('leaderboard-rank');
+    const el = document.getElementById('leaderboard-rank-text');
     if(!el || activeTier !== tier) return;
-    el.innerHTML = `You finished ${label} in ${formatDurationForShare(myTime)} — that's #${rank} today · <a href="leaderboard.html" style="color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">View leaderboard</a>`;
+    el.textContent = rank
+      ? `Completed in ${formatDurationForShare(myTime)} — ranked #${rank} on today's ${label}`
+      : `Completed in ${formatDurationForShare(myTime)}`;
   }
   if(leaderboardRankCache[key]) return show(leaderboardRankCache[key]);
+  show(null);
   const A = window.LetterLadderAuth;
   if(!A || !A.getDocs) return;
   A.getDocs(A.query(A.collection(A.db, 'leaderboardEntries'), A.where('date', '==', dateKey), A.where('tier', '==', tier), A.where('visible', '==', true)))
@@ -3281,10 +3374,13 @@ function spawnConfetti(pieceCount){
     piece.className = 'confetti-piece';
     piece.style.left = (Math.random()*100) + 'vw';
     piece.style.background = colors[Math.floor(Math.random()*colors.length)];
-    piece.style.animationDuration = (2.2 + Math.random()*1.6) + 's';
-    piece.style.animationDelay = (Math.random()*0.4) + 's';
+    const duration = 2.2 + Math.random()*1.6, delay = Math.random()*0.4;
+    piece.style.animationDuration = duration + 's';
+    piece.style.animationDelay = delay + 's';
     document.body.appendChild(piece);
     setTimeout(()=> piece.remove(), 4200);
+    // The share modal waits until the last piece has finished falling.
+    celebrationEndsAt = Math.max(celebrationEndsAt, Date.now() + Math.ceil((duration + delay) * 1000));
   }
 }
 
@@ -3295,14 +3391,14 @@ function triggerTierWinConfetti(){
   spawnConfetti(35);
 }
 
-function showSummitBanner(){
+function showSummitBanner(onDone){
   const banner = document.createElement('div');
   banner.className = 'summit-banner';
   const streak = loadStats().total.currentStreak || 0;
   const streakLine = streak > 0 ? `<br>🔥 ${streak} day streak!` : '';
   banner.innerHTML = `Well done! You&#39;ve completed all three of today&#39;s ladders!${streakLine}`;
   document.body.appendChild(banner);
-  setTimeout(()=> banner.remove(), 4000);
+  setTimeout(()=>{ banner.remove(); if(onDone) onDone(); }, 4000);
 }
 
 function triggerLadderClimbCelebration(finalWord){
@@ -3315,7 +3411,7 @@ function triggerLadderClimbCelebration(finalWord){
   // full word reappears in the box a short pause after they've all
   // exited, right before the usual winning banner shows.
   const anchorEl = document.getElementById('final-word-rung');
-  if(!anchorEl){ if(!isArchiveMode) showSummitBanner(); return; } // safety fallback
+  if(!anchorEl){ if(!isArchiveMode) showSummitBanner(); return; } // safety fallback (no share modal wait)
   ladderCelebrationActive = true; // the share modal waits until this finishes
 
   const rect = anchorEl.getBoundingClientRect();
@@ -3378,9 +3474,16 @@ function triggerLadderClimbCelebration(finalWord){
   setTimeout(()=>{
     overlay.remove();
     anchorEl.textContent = originalText;
-    if(!isArchiveMode) showSummitBanner();
-    ladderCelebrationActive = false;
-    if(shareModalAfterCelebration){ const t = shareModalAfterCelebration; shareModalAfterCelebration = null; showShareModal(t); }
+    // The celebration ends when the "completed all three" banner goes away;
+    // the share modal (which would cover it) follows a moment later.
+    const finish = () => {
+      ladderCelebrationActive = false;
+      if(shareModalAfterCelebration){
+        const t = shareModalAfterCelebration; shareModalAfterCelebration = null;
+        setTimeout(() => showShareModal(t), SHARE_MODAL_AFTER_CELEBRATION_MS);
+      }
+    };
+    if(!isArchiveMode) showSummitBanner(finish); else finish();
   }, exitDuration + pauseAfterExit);
 }
 
@@ -3657,8 +3760,11 @@ function render(focusInput = false, pendingErrors = null){
 
 
   panel.className = `panel ${sizeTier}`;
-  // Finished either way (typed solve or View solution): same post-solve row.
-  const isPostSolve = isWon || isRevealedLoss;
+  // Post-solve, top to bottom: result line, View leaderboard, Next puzzle,
+  // Share results, Clear, View solution, then "Missed a day?" at the bottom.
+  const showRankLine = isWon && !isArchiveMode && getTimerChoice() === 'timed' && localStorage.getItem(timerElapsedKey(activeTier)) !== null;
+  const showShareLink = isWon && !isArchiveMode && !!localStorage.getItem(`letterladder:${accountScope}:${dateKey}:${activeTier}:solvedCounted`);
+  const practiceNoteHtml = (!isWon && !isRevealedLoss && isPracticeMode(activeTier)) ? `<div class="practice-note" id="practice-note">${practiceNoteText(activeTier)}</div>` : '';
   const pastPuzzlesLinkHtml = `<div style="text-align:center;margin:6px 0 10px;"><a href="past-puzzles.html" id="past-puzzles-link" style="font-size:0.88rem;color:var(--ink-dim);text-decoration:none;border-bottom:1px dotted var(--ink-dim);touch-action:manipulation;">Missed a day? Play ${pastPuzzleCount()} past puzzles here</a></div>`;
   // Replacing the panel's contents destroys the currently focused input.
   // On desktop (where the input is genuinely focused) that fires a blur,
@@ -3672,18 +3778,19 @@ function render(focusInput = false, pendingErrors = null){
     <div class="ladder-scroll" id="ladder-scroll"><div class="ladder">${rungsHtml.join('')}</div></div>
     <div class="feedback ${feedbackClassFinal}">${feedbackHtml}</div>
     <div class="hint-display" id="hint-display"></div>
+    ${showRankLine ? `<div class="leaderboard-rank" id="leaderboard-rank"><div class="leaderboard-rank-text" id="leaderboard-rank-text"></div><div class="leaderboard-rank-link"><a href="leaderboard.html" id="leaderboard-rank-link">View leaderboard</a></div></div>` : ''}
     <div class="actions-row" style="justify-content:center;">
       ${nextTierForButton ? `<button class="btn-primary" id="next-puzzle-btn" type="button" style="font-size:1.19rem;padding:13px 23px;">Next puzzle</button>` : ''}
     </div>
-    ${isWon && !isArchiveMode && getTimerChoice() === 'timed' ? `<div class="leaderboard-rank" id="leaderboard-rank" style="text-align:center;margin:6px 0 0;font-size:0.88rem;color:var(--ink-dim);"></div>` : ''}
-    ${isPostSolve ? pastPuzzlesLinkHtml : ''}
+    ${showShareLink ? `<a href="#" id="share-results-link" class="view-solution-link share-results-link">Share results</a>` : ''}
+    ${practiceNoteHtml}
     ${bankHtml}
     ${primaryActionsHtml}
     ${`<div class="actions-row" style="flex-direction:column;align-items:center;gap:10px;">
       ${activeLength != null ? kbToggleHtml : ''}
     </div>`}
     <a href="#" id="solution-link" class="view-solution-link">View solution</a>
-    ${isPostSolve ? '' : pastPuzzlesLinkHtml}
+    ${pastPuzzlesLinkHtml}
   `;
   suppressBlurCommit = false;
   fillLeaderboardRank();
@@ -3717,6 +3824,13 @@ function render(focusInput = false, pendingErrors = null){
     // used to do nothing.
     solutionLink.addEventListener('click', (e) => e.preventDefault());
     bindTapAction(solutionLink, handleViewSolutionClick);
+  }
+
+  const shareResultsLink = document.getElementById('share-results-link');
+  if(shareResultsLink){
+    // Quiet way back to the share modal after it was dismissed.
+    shareResultsLink.addEventListener('click', (e) => e.preventDefault());
+    bindTapAction(shareResultsLink, () => showShareModal(activeTier));
   }
 
   const nextPuzzleBtn = document.getElementById('next-puzzle-btn');
@@ -3992,6 +4106,16 @@ function render(focusInput = false, pendingErrors = null){
         // anything, no error needed for an abandoned/empty attempt.
         activeLength = null;
         render();
+        return;
+      }
+
+      if(!dictionaryReady()){
+        // Word list still downloading (only possible in the first moments
+        // of a cold load): hold this guess and check it once it arrives.
+        committed = false;
+        const fb = panel.querySelector('.feedback');
+        if(fb && !fb.textContent.trim()) fb.innerHTML = '<span class="checking-word">Checking word…</span>';
+        whenDictionaryReady(() => { if(activeInput.isConnected) commit(viaEnter); });
         return;
       }
 
@@ -4346,7 +4470,6 @@ function showHowToPlayPopup(){
       <p>Fill in the missing words by adding exactly one letter to the word below. Rearrange the letters as needed to make a new word.</p>
       <ul>
         <li>For example, <span class="howto-example-word">not</span> could become <span class="howto-example-word">tone</span>, <span class="howto-example-word">note</span>, or <span class="howto-example-word">torn</span></li>
-        <li>Words can be guessed in any order</li>
         <li>A letter can repeat — <span class="howto-example-word">lead</span> could become <span class="howto-example-word">ladle</span> by adding a second "L"</li>
         <li>Every word must be a real English word</li>
       </ul>
@@ -4637,6 +4760,7 @@ let ownerCheckDone = false;
       // safely call syncStatsToCloud. Before this point, accountScope may
       // have been wrong and a sync would have written contaminated data.
       accountScopeReady = true;
+      setTimeout(loadDictionary, 0); // game is interactive: now fetch the word list
 
       // ── Step 6: Timer startup ─────────────────────────────────────────────
       if(!isArchiveMode){
@@ -4705,6 +4829,7 @@ let ownerCheckDone = false;
     if(siteFooterEl) siteFooterEl.style.visibility = '';
     render(!isTouchDevice);
     accountScopeReady = true; // guest session — no cloud sync risk
+    setTimeout(loadDictionary, 0); // game is interactive: now fetch the word list
     if(!isArchiveMode){
       const staleSegment = localStorage.getItem(timerStartKey(activeTier));
       if(staleSegment !== null) localStorage.removeItem(timerStartKey(activeTier));
