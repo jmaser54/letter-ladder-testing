@@ -76,8 +76,8 @@ module.exports = run('Static pages', [
       await ctx.close();
     }
   }],
-  ['homepage: logo → tagline → Play → date → note → "Missed a day?" (no underline, live count)', async ({ browser, base }) => {
-    for(const [device, now] of [[false, NOW], ['Pixel 7', NOW], ['iPhone SE', NOW], [false, new Date('2026-11-04T12:00:00-05:00')], ['Pixel 7', new Date('2026-10-01T12:00:00-04:00')]]){
+  ['homepage: logo → tagline → Play → date → note → demo ladders → "Missed a day?" → footer (no underline, live count)', async ({ browser, base }) => {
+    for(const [device, now] of [[false, NOW], ['Pixel 7', NOW], ['iPhone SE', NOW], [false, new Date('2026-11-04T12:00:00-05:00')], ['iPhone 13', new Date('2026-09-08T12:00:00-04:00')], ['Pixel 7', new Date('2026-10-01T12:00:00-04:00')], ['iPhone 13', new Date('2026-09-29T12:00:00-04:00')]]){
       const { ctx, page } = await newPage(browser, { fake: { user: null }, mobile: device, now });
       await page.goto(base + '/index.html'); await page.waitForTimeout(600);
       const r = await page.evaluate(() => {
@@ -85,15 +85,21 @@ module.exports = run('Static pages', [
         const a = document.getElementById('past-puzzles-link'), cs = getComputedStyle(a);
         return { text: a.textContent.trim(), href: a.getAttribute('href'), line: cs.textDecorationLine, border: cs.borderBottomStyle,
           attr: document.getElementById('play-date-attribution').textContent, intro: document.querySelector('.landing-intro').textContent,
-          order: ['.brand-logo', '.landing-intro', '#play-buttons', '#play-date', '#play-date-attribution', '#past-puzzles-link'].map(s => [Math.round(box(s).top), Math.round(box(s).bottom)]) };
+          logo: [Math.round(box('.brand-logo').width), Math.round(box('.brand-logo').height), getComputedStyle(document.querySelector('.brand-logo')).borderRadius],
+          ladders: [...document.querySelectorAll('.example-ladder')].map(l => [...l.querySelectorAll('.ex-rung')].map(r => r.textContent.trim() || '_').join(' ')),
+          order: ['.brand-logo', '.landing-intro', '#play-buttons', '#play-date', '#play-date-attribution', '.example-ladders-panel', '#past-puzzles-link', 'footer'].map(s => [Math.round(box(s).top), Math.round(box(s).bottom)]) };
       });
       const label = `${device || 'desktop'}${r.attr ? ' with attribution' : ''}`;
       const past = Object.keys(sched.S).filter(k => k < now.toLocaleDateString('en-CA', { timeZone: 'America/New_York' })).reduce((n, k) => n + Object.keys(sched.S[k]).length, 0);
       assertEqual([r.text, r.href, r.line, r.border, r.intro], [`Missed a day? Play ${past} past puzzles here`, 'past-puzzles.html', 'none', 'none', 'Add one letter, scramble to a new word, climb to the top.'], `text on ${label}`);
       for(let i = 1; i < r.order.length; i++){
         if(i === 4 && !r.attr) continue; // empty attribution has no height
-        assertEqual(r.order[i][0] >= r.order[i - 1][1] - 1, true, `${['logo', 'tagline', 'Play', 'date', 'note', 'missed-a-day'][i]} sits below the previous item without overlapping (${label}): ${JSON.stringify(r.order)}`);
+        const prev = i === 5 && !r.attr ? 3 : i - 1;
+        assertEqual(r.order[i][0] >= r.order[prev][1] + (i >= 5 ? 12 : -1), true, `${['logo', 'tagline', 'Play', 'date', 'note', 'demo ladders', 'missed-a-day', 'footer'][i]} sits below the previous item${i >= 5 ? ' with clear space' : ''} (${label}): ${JSON.stringify(r.order)}`);
       }
+      const narrow = (await page.evaluate(() => innerWidth)) <= 400;
+      assertEqual(r.logo, [narrow ? 48 : 56, narrow ? 48 : 56, '50%'], `logo size (${label})`);
+      assertEqual(r.ladders, ['As Say Easy Years', 'Mid Dime Mimed Medium Dummies', 'Had Hard _ _ Trashed Thrashed'], `demo ladders unchanged (${label})`);
       await ctx.close();
     }
   }],
@@ -189,7 +195,9 @@ module.exports = run('Static pages', [
   }],
   ['s/ short share link forwards to the homepage with share tracking', async ({ browser, base }) => {
     const html = raw('s/index.html');
-    assertEqual([html.includes('noindex'), html.includes('"og:image"')], [true, true], 'noindex + preview tags');
+    // No link-preview data at all, so a shared /s/ link stays a small plain link.
+    assertEqual([html.includes('noindex'), /property="og:|name="twitter:/.test(html)], [true, false], 'noindex, and no Open Graph / Twitter tags');
+    assertEqual([/http-equiv="refresh"[^>]*utm_source=share&amp;utm_medium=social&amp;utm_campaign=share_results/.test(html), /location\.replace\('\.\.\/\?utm_source=share&utm_medium=social&utm_campaign=share_results'\)/.test(html), />Play Letter Ladder<\/a>/.test(html)], [true, true, true], 'meta refresh, script redirect and fallback link kept');
     const { ctx, page } = await newPage(browser, { fake: { user: null }, now: NOW });
     await page.goto(base + '/s/index.html'); await page.waitForURL(/utm_source=share/, { timeout: 5000 });
     assertEqual(page.url(), base + '/?utm_source=share&utm_medium=social&utm_campaign=share_results', 'redirect target');
