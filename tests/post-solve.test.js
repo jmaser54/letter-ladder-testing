@@ -125,8 +125,8 @@ module.exports = run('Game page post-solve and loading', [
     const before = await snap();
     const lockedText = await page.evaluate(() => formatDurationForShare(Number(localStorage.getItem(timerElapsedKey('easy')))));
     await page.click('#clear-btn'); await page.waitForSelector('.confirm-ok'); await page.click('.confirm-ok'); await page.waitForTimeout(200);
-    const p = await page.evaluate(() => ({ note: (document.getElementById('practice-note') || {}).textContent, timer: document.querySelector('.timer-display').textContent, lock: !!document.querySelector('.timer-lock'), filled: Object.keys(loadGuesses('easy')).length }));
-    assertEqual(p, { note: `Your time for today is locked in at ${lockedText} — this is just practice.`, timer: lockedText, lock: true, filled: 0 }, 'practice note + locked timer');
+    const p = await page.evaluate(() => ({ note: (document.getElementById('practice-note') || {}).textContent, timer: document.querySelector('.timer-display').textContent, lock: !!document.querySelector('#timer-widget svg, .timer-lock'), filled: Object.keys(loadGuesses('easy')).length }));
+    assertEqual(p, { note: `Your time for today is locked in at ${lockedText} — this is just practice.`, timer: lockedText, lock: false, filled: 0 }, 'practice note (text only) + locked time, no lock icon');
     await page.waitForTimeout(2200);
     assertEqual(await page.$eval('.timer-display', e => e.textContent), lockedText, 'timer does not run in practice');
     await solveEasy(page, ['ante', 'ant']);   // a different path
@@ -136,6 +136,21 @@ module.exports = run('Game page post-solve and loading', [
     assertEqual(after, before, 'time, stats, solved flag, leaderboard writes, analytics and share text all unchanged');
     assertEqual(await page.$eval('#leaderboard-rank-text', (e, t) => e.textContent.startsWith(`Completed in ${t}`), lockedText), true, 'result line shows the locked time');
     await ctx.close();
+  }],
+  ['timer widget: no lock icon after a solve; same size and position solved and unsolved; clear of the title at 390px', async ({ browser, base: b }) => {
+    for(const device of ['iPhone 13', false]){
+      const { ctx, page } = await openGame(browser, b, { device });
+      if(!device) await page.setViewportSize({ width: 390, height: 844 });
+      const box = () => page.evaluate(() => { const w = document.querySelector('.timer-widget-btn').getBoundingClientRect(), em = document.querySelector('.timer-emoji').getBoundingClientRect();
+        const r = document.createRange(); r.selectNodeContents(document.querySelector('h1')); const t = r.getBoundingClientRect();
+        return { left: Math.round(w.left), width: Math.round(w.width), clear: Math.round(em.left - t.right), icon: !!document.querySelector('#timer-widget svg, .timer-lock') }; });
+      const before = await box();
+      await solveEasy(page); await closeModal(page);
+      const after = await box();
+      assertEqual([after.icon, after.left, after.width], [false, before.left, before.width], `no icon; widget unchanged (${device || '390'}): ${JSON.stringify([before, after])}`);
+      assertEqual(before.clear >= 12 && after.clear >= 12, true, `clear space from the title (${before.clear}px / ${after.clear}px)`);
+      await ctx.close();
+    }
   }],
   ['Clear on an unsolved puzzle: words clear, timer keeps running, no practice note', async ({ browser, base: b }) => {
     const { ctx, page } = await openGame(browser, b);

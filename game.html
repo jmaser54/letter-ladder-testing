@@ -431,8 +431,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .leaderboard-rank-link{ margin-top: 14px; }
   .leaderboard-rank-link a{ color: var(--ink-dim); text-decoration:none; border-bottom:1px dotted var(--ink-dim); touch-action: manipulation; }
   .leaderboard-rank-link a:hover{ color: var(--amber); border-color: var(--amber); }
-  .timer-lock{ color: var(--ink-dim); margin-left: -1px; flex-shrink: 0; }
-  .timer-widget-btn--locked .timer-display{ min-width: 0; }
   .checking-word{ color: var(--ink-dim); font-size: 0.88rem; }
   .practice-note{ text-align:center; margin: 4px 12px 10px; font-size:0.88rem; color: var(--ink-dim); font-style: italic; }
 
@@ -504,6 +502,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     position: relative;
     display: block;
   }
+  /* Timed widget: one fixed width (fits every time under 10 minutes, e.g.
+     "9m 59s"), contents right-aligned, so it doesn't change size between the
+     running clock and the recorded finish time or move toward the title. */
+  .timer-widget-btn:not(.timer-widget-btn--off){ min-width: 84px; justify-content: flex-end; }
   .hint-time-penalty-indicator{
     font-family:'Fraunces',serif; font-weight:700; font-variant-numeric: tabular-nums;
     color: var(--amber); font-size: 0.8rem; white-space: nowrap;
@@ -1676,14 +1678,10 @@ function renderTimerWidget(){
     const displayTime = frozenElapsed !== null
       ? formatDurationForShare(Number(frozenElapsed))
       : formatElapsed(getCurrentElapsedMs(activeTier));
-    // Once solved, the time is the player's locked result for the day (not a
-    // live clock) - shown with a small lock, including in practice mode.
-    const locked = frozenElapsed !== null;
-    const tooltipText = locked ? 'Your time for today is locked in' : 'Timer: On — click to turn off';
-    const lockIcon = locked ? `<svg class="timer-lock" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h1zm2 0h6V7a3 3 0 0 0-6 0v3z"/></svg>` : '';
+    const tooltipText = 'Timer: On — click to turn off';
     widget.innerHTML = `
-      <button type="button" class="timer-widget-btn${locked ? ' timer-widget-btn--locked' : ''}" aria-label="${locked ? `Time locked in: ${displayTime}` : tooltipText}">
-        <span class="timer-emoji">⏱️</span><span class="timer-display">${displayTime}</span>${lockIcon}
+      <button type="button" class="timer-widget-btn" aria-label="${tooltipText}">
+        <span class="timer-emoji">⏱️</span><span class="timer-display">${displayTime}</span>
         <span class="timer-tooltip">${tooltipText}</span>
       </button>
     `;
@@ -3048,7 +3046,7 @@ function formatDurationForShare(ms){
 // Spoiler-free share text: date, one line per puzzle finished today (time
 // if timed, hints used), streak for signed-in players, challenge, and a
 // short clean link (the tracked link travels separately - see SHARE_URL).
-const SHARE_LINK_TEXT = 'letterladder.io';
+const SHARE_LINK_TEXT = 'letterladder.io/s/'; // its page has no link-preview tags, so pastes stay a small link
 // Short tracked link for native shares: s/index.html forwards to
 // /?utm_source=share&utm_medium=social&utm_campaign=share_results.
 const SHARE_URL = 'https://letterladder.io/s/';
@@ -3113,23 +3111,14 @@ function shareCardData(tier){
 // "Share my result" (image card via the native share sheet), Copy text,
 // Next puzzle, close.
 let ladderCelebrationActive = false;
-let shareModalAfterCelebration = null;
-// One rule for every tier: the share modal opens ~1.2s after the win
-// celebration has fully finished (the last confetti piece has landed, or the
-// ladder climb and its "completed all three" banner are over).
-const SHARE_MODAL_AFTER_CELEBRATION_MS = 1200;
-let celebrationEndsAt = 0;
+// One rule for every tier: the share modal opens 900ms after the win. The
+// celebration never delays it - confetti and the ladder climb keep playing
+// behind the modal, and the "completed all three" banner waits until the
+// modal is closed.
+const SHARE_MODAL_DELAY_MS = 900;
+let summitBannerAfterModal = null;
 function scheduleShareModal(tier){
-  // Short wait first so a ladder climb started by this same solve (it
-  // begins on the next tick) has registered before deciding.
-  setTimeout(() => {
-    if(ladderCelebrationActive){ shareModalAfterCelebration = tier; return; }
-    const wait = Math.max(0, celebrationEndsAt - Date.now()) + SHARE_MODAL_AFTER_CELEBRATION_MS;
-    setTimeout(() => {
-      if(ladderCelebrationActive){ shareModalAfterCelebration = tier; return; }
-      showShareModal(tier);
-    }, wait);
-  }, 100);
+  setTimeout(() => showShareModal(tier), SHARE_MODAL_DELAY_MS);
 }
 function showShareModal(tier){
   tier = tier || activeTier;
@@ -3208,7 +3197,10 @@ function showShareModal(tier){
       toast('Copy blocked here — try Share instead');
     }
   }
-  function close(){ overlay.remove(); }
+  function close(){
+    overlay.remove();
+    if(summitBannerAfterModal){ const show = summitBannerAfterModal; summitBannerAfterModal = null; setTimeout(show, 300); }
+  }
   bindTapAction(overlay.querySelector('.sm-close-x'), close);
   bindTapAction(overlay.querySelector('.sm-copy-btn'), copyText);
   const nextBtn = overlay.querySelector('.sm-next-btn');
@@ -3455,8 +3447,6 @@ function spawnConfetti(pieceCount){
     piece.style.animationDelay = delay + 's';
     document.body.appendChild(piece);
     setTimeout(()=> piece.remove(), 4200);
-    // The share modal waits until the last piece has finished falling.
-    celebrationEndsAt = Math.max(celebrationEndsAt, Date.now() + Math.ceil((duration + delay) * 1000));
   }
 }
 
@@ -3467,14 +3457,14 @@ function triggerTierWinConfetti(){
   spawnConfetti(35);
 }
 
-function showSummitBanner(onDone){
+function showSummitBanner(){
   const banner = document.createElement('div');
   banner.className = 'summit-banner';
   const streak = loadStats().total.currentStreak || 0;
   const streakLine = streak > 0 ? `<br>🔥 ${streak} day streak!` : '';
   banner.innerHTML = `Well done! You&#39;ve completed all three of today&#39;s ladders!${streakLine}`;
   document.body.appendChild(banner);
-  setTimeout(()=>{ banner.remove(); if(onDone) onDone(); }, 4000);
+  setTimeout(()=> banner.remove(), 4000);
 }
 
 function triggerLadderClimbCelebration(finalWord){
@@ -3488,7 +3478,7 @@ function triggerLadderClimbCelebration(finalWord){
   // exited, right before the usual winning banner shows.
   const anchorEl = document.getElementById('final-word-rung');
   if(!anchorEl){ if(!isArchiveMode) showSummitBanner(); return; } // safety fallback (no share modal wait)
-  ladderCelebrationActive = true; // the share modal waits until this finishes
+  ladderCelebrationActive = true;
 
   const rect = anchorEl.getBoundingClientRect();
   const originalText = anchorEl.textContent;
@@ -3550,16 +3540,11 @@ function triggerLadderClimbCelebration(finalWord){
   setTimeout(()=>{
     overlay.remove();
     anchorEl.textContent = originalText;
-    // The celebration ends when the "completed all three" banner goes away;
-    // the share modal (which would cover it) follows a moment later.
-    const finish = () => {
-      ladderCelebrationActive = false;
-      if(shareModalAfterCelebration){
-        const t = shareModalAfterCelebration; shareModalAfterCelebration = null;
-        setTimeout(() => showShareModal(t), SHARE_MODAL_AFTER_CELEBRATION_MS);
-      }
-    };
-    if(!isArchiveMode) showSummitBanner(finish); else finish();
+    ladderCelebrationActive = false;
+    if(isArchiveMode) return;
+    // If the share modal is open, the banner shows once it is closed.
+    if(document.querySelector('.sm-scrim')) summitBannerAfterModal = () => showSummitBanner();
+    else showSummitBanner();
   }, exitDuration + pauseAfterExit);
 }
 

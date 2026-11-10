@@ -103,13 +103,13 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual((await page.evaluate(() => buildShareText())).split('\n').includes('🔥 Streak: 4 days'), true, 'streak line');
     await ctx.close();
   }],
-  ['Copy text copies clean text ending in letterladder.io (no long UTM URL)', async ({ browser, base }) => {
+  ['Copy text copies clean text ending in the short link letterladder.io/s/ (no long UTM URL)', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base);
     await solveActive(page, 'easy'); await waitModal(page);
     await page.click('.sm-copy-btn'); await page.waitForTimeout(300);
     const text = await page.evaluate(() => navigator.clipboard.readText());
     const lines = text.split('\n');
-    assertEqual([lines[0], lines[lines.length - 2], lines[lines.length - 1], text.includes('utm_')], ['Letter Ladder — Oct 30, 2026', 'Can you beat my time?', 'letterladder.io', false], 'copied text');
+    assertEqual([lines[0], lines[lines.length - 2], lines[lines.length - 1], text.includes('utm_')], ['Letter Ladder — Oct 30, 2026', 'Can you beat my time?', 'letterladder.io/s/', false], 'copied text');
     assertEqual(await page.textContent('.sm-toast'), 'Copied — paste it anywhere', 'toast');
     await ctx.close();
   }],
@@ -172,30 +172,38 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual(fits, true, 'ladder fits the card width');
     await ctx.close();
   }],
-  ['timing: opens ~1.2s after the last confetti piece has landed (1st/2nd puzzle)', async ({ browser, base }) => {
+  ['timing: opens ~0.9s after the final word locks in (first puzzle of the day)', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base);
-    await page.evaluate(() => { const orig = showShareModal; window.showShareModal = showShareModal = function(t){ window.__modalAt = Date.now(); window.__celebrationEnd = celebrationEndsAt; return orig(t); }; });
-    await solveActive(page, 'easy'); await waitModal(page);
-    const t = await page.evaluate(() => ({ gap: window.__modalAt - window.__celebrationEnd, confettiEnd: window.__celebrationEnd }));
-    assertEqual(t.confettiEnd > 0 && t.gap >= 1100 && t.gap <= 1500, true, `modal ${t.gap}ms after the confetti finished`);
+    await page.evaluate(() => {
+      const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
+      new MutationObserver(() => { if(document.querySelector('.sm-scrim') && !window.__modalAt) window.__modalAt = performance.now(); }).observe(document.body, { childList: true });
+    });
+    await solveActive(page, 'easy'); await waitModal(page, 4000);
+    const ms = await page.evaluate(() => Math.round(window.__modalAt - window.__wonAt));
+    console.log(`        measured: modal visible ${ms}ms after the win (Easy, 1st puzzle)`);
+    assertEqual(ms >= 800 && ms <= 1300, true, `modal ${ms}ms after the win`);
     await ctx.close();
   }],
-  ['timing: completing all three waits for the ladder climb and its banner, then ~1.2s', async ({ browser, base }) => {
+  ['timing: third puzzle of the day also ~0.9s; climb runs behind the modal; "completed all three" banner shows after it closes', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base, { tier: 'hard', solved: ['easy', 'medium'] });
     await page.evaluate(() => {
+      const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
       new MutationObserver(() => {
-        if(document.querySelector('.ladder-climb-overlay')) window.__climbSeen = true;
-        if(document.querySelector('.summit-banner')) window.__bannerSeen = true;
-        if(window.__bannerSeen && !document.querySelector('.summit-banner') && !window.__bannerGoneAt) window.__bannerGoneAt = Date.now();
-        if(document.querySelector('.sm-scrim') && !window.__modalAt){ window.__modalAt = Date.now(); window.__overlap = !!(document.querySelector('.summit-banner') || document.querySelector('.ladder-climb-overlay')); }
-      }).observe(document.body, { childList: true, subtree: true });
+        if(document.querySelector('.sm-scrim') && !window.__modalAt){ window.__modalAt = performance.now(); window.__climbBehind = !!document.querySelector('.ladder-climb-overlay'); }
+        if(document.querySelector('.summit-banner') && document.querySelector('.sm-scrim')) window.__bannerOverModal = true;
+        if(document.querySelector('.summit-banner') && !window.__bannerAt) window.__bannerAt = performance.now();
+      }).observe(document.body, { childList: true });
     });
-    await solveActive(page, 'hard');
-    await waitModal(page, 22000);
-    const t = await page.evaluate(() => ({ climb: !!window.__climbSeen, banner: !!window.__bannerSeen, overlap: window.__overlap, gap: window.__modalAt - window.__bannerGoneAt }));
-    assertEqual([t.climb, t.banner, t.overlap], [true, true, false], 'climb + banner first, modal never on top of them');
-    assertEqual(t.gap >= 1100 && t.gap <= 1500, true, `modal ${t.gap}ms after the celebration ended`);
-    assertEqual((await modalInfo(page)).pill, 'HARD', 'shown afterwards for Hard');
+    await solveActive(page, 'hard'); await waitModal(page, 4000);
+    const t = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), climb: window.__climbBehind }));
+    console.log(`        measured: modal visible ${t.ms}ms after the win (Hard, 3rd puzzle)`);
+    assertEqual([t.ms >= 800 && t.ms <= 1300, t.climb], [true, true], `modal ${t.ms}ms after the win, ladder climb still playing behind it`);
+    assertEqual((await modalInfo(page)).pill, 'HARD', 'Hard result');
+    await page.waitForTimeout(7000); // climb finishes while the modal is open
+    assertEqual(await page.evaluate(() => [!!window.__bannerAt, !!window.__bannerOverModal]), [false, false], 'banner held while the modal is open');
+    await page.click('.sm-close-x');
+    await page.waitForSelector('.summit-banner', { timeout: 2000 });
+    assertEqual(await page.evaluate(() => !!window.__bannerOverModal), false, 'banner shown after the modal closed, never on top of it');
     await ctx.close();
   }],
   ['does not reappear on reload', async ({ browser, base }) => {

@@ -35,10 +35,21 @@ const timerState = page => page.evaluate(() => ({
 const ON = { choice: 'timed', cloud: 'timed', running: true };
 const OFF = { choice: 'untimed', cloud: 'untimed', running: false };
 
+// The widget redraws once a second; if it is being replaced at the moment we
+// look, there is no box yet - look again rather than failing the test.
+async function timerBox(page){
+  for(let i = 0; i < 20; i++){
+    const box = await page.locator('#timer-widget button').boundingBox().catch(() => null);
+    if(box) return box;
+    await page.waitForTimeout(50);
+  }
+  throw new Error('timer button not found');
+}
+
 // Raw touch sequence on the timer control via CDP: start at its centre, then
 // move by each [dx, dy] in `moves`, then end (or cancel).
 async function touchTimer(ctx, page, moves = [], end = 'touchEnd'){
-  const box = await page.locator('#timer-widget button').boundingBox();
+  const box = await timerBox(page);
   const x = box.x + box.width / 2, y = box.y + box.height / 2;
   const cdp = await ctx.newCDPSession(page);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
@@ -93,7 +104,7 @@ module.exports = run('Timer clock button (touch + click)', [
   }],
   ['Android: a real scroll gesture starting on the clock leaves the timer on', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base, ANDROID);
-    const box = await page.locator('#timer-widget button').boundingBox();
+    const box = await timerBox(page);
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('Input.synthesizeScrollGesture', { x: box.x + box.width / 2, y: box.y + box.height / 2, yDistance: -300, gestureSourceType: 'touch', speed: 800 });
     await page.waitForTimeout(600);
