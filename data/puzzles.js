@@ -539,5 +539,40 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "sir", "final": "misery" },
     "medium": { "start": "sip", "final": "despair" },
     "hard": { "start": "deer", "final": "depression" }
+  },
+  "2026-11-12": {
+    "easy": { "start": "us", "final": "mushy" },
+    "medium": { "start": "ops", "final": "prowess" },
+    "hard": { "start": "case", "final": "desecrate" }
+  },
+  "2026-11-13": {
+    "easy": { "start": "do", "final": "cloud" },
+    "medium": { "start": "dare", "final": "dressage" },
+    "hard": { "start": "tennis", "final": "sentiment" }
+  },
+  "2026-11-14": {
+    "easy": { "start": "is", "final": "spine" },
+    "medium": { "start": "eve", "final": "preserve" },
+    "hard": { "start": "sure", "final": "precludes" }
+  },
+  "2026-11-15": {
+    "easy": { "start": "it", "final": "remit" },
+    "medium": { "start": "or", "final": "devour" },
+    "hard": { "start": "tale", "final": "plastered" }
+  },
+  "2026-11-16": {
+    "easy": { "start": "at", "final": "extra" },
+    "medium": { "start": "it", "final": "mutiny" },
+    "hard": { "start": "mean", "final": "remainder" }
+  },
+  "2026-11-17": {
+    "easy": { "start": "ow", "final": "flown" },
+    "medium": { "start": "rile", "final": "calories" },
+    "hard": { "start": "lid", "final": "implored" }
+  },
+  "2026-11-18": {
+    "easy": { "start": "as", "final": "beast" },
+    "medium": { "start": "my", "final": "armory" },
+    "hard": { "start": "anti", "final": "stanchion" }
   }
 };

@@ -542,5 +542,40 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "sir", "final": "misery", "solution": ["sir","rims","miser","misery"] },
     "medium": { "start": "sip", "final": "despair", "solution": ["sip","pies","spire","praise","despair"] },
     "hard": { "start": "deer", "final": "depression", "solution": ["deer","reeds","sender","senders","spenders","dispenser","depression"] }
+  },
+  "2026-11-12": {
+    "easy": { "start": "us", "final": "mushy", "solution": ["us","sum","hums","mushy"] },
+    "medium": { "start": "ops", "final": "prowess", "solution": ["ops","pose","ropes","spores","prowess"] },
+    "hard": { "start": "case", "final": "desecrate", "solution": ["case","races","scared","creased","decrease","desecrate"] }
+  },
+  "2026-11-13": {
+    "easy": { "start": "do", "final": "cloud", "solution": ["do","old","cold","cloud"] },
+    "medium": { "start": "dare", "final": "dressage", "solution": ["dare","reads","grades","greased","dressage"] },
+    "hard": { "start": "tennis", "final": "sentiment", "solution": ["tennis","intense","sentient","sentiment"] }
+  },
+  "2026-11-14": {
+    "easy": { "start": "is", "final": "spine", "solution": ["is","sin","spin","spine"] },
+    "medium": { "start": "eve", "final": "preserve", "solution": ["eve","ever","veers","server","reverse","preserve"] },
+    "hard": { "start": "sure", "final": "precludes", "solution": ["sure","super","purees","repulse","preludes","precludes"] }
+  },
+  "2026-11-15": {
+    "easy": { "start": "it", "final": "remit", "solution": ["it","tie","time","remit"] },
+    "medium": { "start": "or", "final": "devour", "solution": ["or","ore","over","roved","devour"] },
+    "hard": { "start": "tale", "final": "plastered", "solution": ["tale","elate","elated","pleated","pedestal","plastered"] }
+  },
+  "2026-11-16": {
+    "easy": { "start": "at", "final": "extra", "solution": ["at","rat","tear","extra"] },
+    "medium": { "start": "it", "final": "mutiny", "solution": ["it","tin","tiny","unity","mutiny"] },
+    "hard": { "start": "mean", "final": "remainder", "solution": ["mean","ramen","meaner","meander","remained","remainder"] }
+  },
+  "2026-11-17": {
+    "easy": { "start": "ow", "final": "flown", "solution": ["ow","owl","fowl","flown"] },
+    "medium": { "start": "rile", "final": "calories", "solution": ["rile","relic","recoil","recoils","calories"] },
+    "hard": { "start": "lid", "final": "implored", "solution": ["lid","deli","piled","dimple","implode","implored"] }
+  },
+  "2026-11-18": {
+    "easy": { "start": "as", "final": "beast", "solution": ["as","sea","base","beast"] },
+    "medium": { "start": "my", "final": "armory", "solution": ["my","yam","army","mayor","armory"] },
+    "hard": { "start": "anti", "final": "stanchion", "solution": ["anti","antic","action","actions","sanction","stanchion"] }
   }
 };
