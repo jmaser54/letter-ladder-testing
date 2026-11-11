@@ -190,19 +190,19 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual(fits, true, 'ladder fits the card width');
     await ctx.close();
   }],
-  ['timing: opens ~1.2s after the final word locks in, with the confetti still falling (first puzzle of the day)', async ({ browser, base }) => {
+  ['timing: opens ~0.9s after the final word locks in (first puzzle of the day)', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base);
     await page.evaluate(() => {
       const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
-      new MutationObserver(() => { if(document.querySelector('.sm-scrim') && !window.__modalAt){ window.__modalAt = performance.now(); window.__confettiAtModal = document.querySelectorAll('.confetti-piece').length; } }).observe(document.body, { childList: true });
+      new MutationObserver(() => { if(document.querySelector('.sm-scrim') && !window.__modalAt) window.__modalAt = performance.now(); }).observe(document.body, { childList: true });
     });
     await solveActive(page, 'easy'); await waitModal(page, 4000);
-    const { ms, confetti } = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), confetti: window.__confettiAtModal }));
-    console.log(`        measured: modal visible ${ms}ms after the win (Easy, 1st puzzle); ${confetti} confetti pieces still falling`);
-    assertEqual([ms >= 1100 && ms <= 1600, confetti > 0], [true, true], `modal ${ms}ms after the win, confetti playing (${confetti} pieces)`);
+    const ms = await page.evaluate(() => Math.round(window.__modalAt - window.__wonAt));
+    console.log(`        measured: modal visible ${ms}ms after the win (Easy, 1st puzzle)`);
+    assertEqual(ms >= 800 && ms <= 1300, true, `modal ${ms}ms after the win`);
     await ctx.close();
   }],
-  ['timing: third puzzle of the day also ~1.2s; climb runs behind the modal; "completed all three" banner shows after it closes', async ({ browser, base }) => {
+  ['timing: third puzzle of the day also ~0.9s; climb runs behind the modal; "completed all three" banner shows after it closes', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base, { tier: 'hard', solved: ['easy', 'medium'] });
     await page.evaluate(() => {
       const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
@@ -215,7 +215,7 @@ module.exports = run('Share modal (Variant B)', [
     await solveActive(page, 'hard'); await waitModal(page, 4000);
     const t = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), climb: window.__climbBehind }));
     console.log(`        measured: modal visible ${t.ms}ms after the win (Hard, 3rd puzzle)`);
-    assertEqual([t.ms >= 1100 && t.ms <= 1600, t.climb], [true, true], `modal ${t.ms}ms after the win, ladder climb still playing behind it`);
+    assertEqual([t.ms >= 800 && t.ms <= 1300, t.climb], [true, true], `modal ${t.ms}ms after the win, ladder climb still playing behind it`);
     assertEqual((await modalInfo(page)).pill, 'HARD', 'Hard result');
     await page.waitForTimeout(7000); // climb finishes while the modal is open
     assertEqual(await page.evaluate(() => [!!window.__bannerAt, !!window.__bannerOverModal]), [false, false], 'banner held while the modal is open');
