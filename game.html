@@ -3108,11 +3108,12 @@ function shareCardData(tier){
 // "Share my result" (image card via the native share sheet), Copy text,
 // Next puzzle, close.
 let ladderCelebrationActive = false;
-// One rule for every tier: the share modal opens 900ms after the win. The
+// One rule for every tier: the share modal opens 1.2s after the win (a full
+// beat for the confetti and the result line). The
 // celebration never delays it - confetti and the ladder climb keep playing
 // behind the modal, and the "completed all three" banner waits until the
 // modal is closed.
-const SHARE_MODAL_DELAY_MS = 900;
+const SHARE_MODAL_DELAY_MS = 1200;
 let summitBannerAfterModal = null;
 function scheduleShareModal(tier){
   setTimeout(() => showShareModal(tier), SHARE_MODAL_DELAY_MS);
@@ -3462,7 +3463,7 @@ function triggerTierWinConfetti(){
   // A lighter burst for the 1st and 2nd puzzle completed each day - the
   // 3rd (finishing all three) gets the bigger ladder-climb celebration
   // below instead, not confetti.
-  spawnConfetti(70); // was 35 - a fuller celebration
+  spawnConfetti(140); // a dense burst (was 70, originally 35)
 }
 
 function showSummitBanner(){

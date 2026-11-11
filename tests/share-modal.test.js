@@ -15,7 +15,7 @@ const WORDS = {
 };
 
 // fresh: no localStorage at all (a first-time visitor's browser).
-function setup({ fresh = false, timer = 'timed', tier = 'easy', solved = [], hints = {}, account = false, stats } = {}){
+function setup({ fresh = false, timer = 'timed', tier = 'easy', solved = [], hints = {}, account = false, stats, docs } = {}){
   const scope = account ? 'dad' : 'guest';
   const ls = fresh ? {} : { 'letterladder:timerChoice': timer, 'letterladder:timerChoiceMade': '1', 'letterladder:lastViewedDateKey': DAY, 'letterladder:activeTier': tier, 'letterladder:keyboardEnabled': 'true' };
   for(const t of solved){
@@ -30,6 +30,7 @@ function setup({ fresh = false, timer = 'timed', tier = 'easy', solved = [], hin
     fake.user = { uid: 'dad', isAnonymous: false };
     fake.docs = { 'players/dad': { username: 'dad' } };
   }
+  if(docs) fake.docs = { ...(fake.docs || {}), ...docs };
   return { fake, localStorage: ls };
 }
 
@@ -190,7 +191,7 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual(fits, true, 'ladder fits the card width');
     await ctx.close();
   }],
-  ['timing: opens ~0.9s after the final word locks in (first puzzle of the day)', async ({ browser, base }) => {
+  ['timing: opens ~1.2s after the final word locks in (first puzzle of the day)', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base);
     await page.evaluate(() => {
       const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
@@ -199,10 +200,10 @@ module.exports = run('Share modal (Variant B)', [
     await solveActive(page, 'easy'); await waitModal(page, 4000);
     const ms = await page.evaluate(() => Math.round(window.__modalAt - window.__wonAt));
     console.log(`        measured: modal visible ${ms}ms after the win (Easy, 1st puzzle)`);
-    assertEqual(ms >= 800 && ms <= 1300, true, `modal ${ms}ms after the win`);
+    assertEqual(ms >= 1100 && ms <= 1600, true, `modal ${ms}ms after the win`);
     await ctx.close();
   }],
-  ['timing: third puzzle of the day also ~0.9s; climb runs behind the modal; "completed all three" banner shows after it closes', async ({ browser, base }) => {
+  ['timing: third puzzle of the day also ~1.2s; climb runs behind the modal; "completed all three" banner shows after it closes', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base, { tier: 'hard', solved: ['easy', 'medium'] });
     await page.evaluate(() => {
       const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
@@ -215,7 +216,7 @@ module.exports = run('Share modal (Variant B)', [
     await solveActive(page, 'hard'); await waitModal(page, 4000);
     const t = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), climb: window.__climbBehind }));
     console.log(`        measured: modal visible ${t.ms}ms after the win (Hard, 3rd puzzle)`);
-    assertEqual([t.ms >= 800 && t.ms <= 1300, t.climb], [true, true], `modal ${t.ms}ms after the win, ladder climb still playing behind it`);
+    assertEqual([t.ms >= 1100 && t.ms <= 1600, t.climb], [true, true], `modal ${t.ms}ms after the win, ladder climb still playing behind it`);
     assertEqual((await modalInfo(page)).pill, 'HARD', 'Hard result');
     await page.waitForTimeout(7000); // climb finishes while the modal is open
     assertEqual(await page.evaluate(() => [!!window.__bannerAt, !!window.__bannerOverModal]), [false, false], 'banner held while the modal is open');
@@ -224,18 +225,20 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual(await page.evaluate(() => !!window.__bannerOverModal), false, 'banner shown after the modal closed, never on top of it');
     await ctx.close();
   }],
-  ['confetti: 70 pieces, each falling 2.9-4.5s, still falling behind the modal at ~0.9s', async ({ browser, base }) => {
-    const { ctx, page } = await openGame(browser, base);
+  ['confetti: 140 pieces, each falling 2.9-4.5s, still falling behind the modal at ~1.2s; result line visible a beat before the modal', async ({ browser, base }) => {
+    const { ctx, page } = await openGame(browser, base, { docs: { 'leaderboardEntries/a': { date: '2026-10-30', tier: 'easy', timeMs: 100, visible: true, uid: 'x1' } } });
     await page.evaluate(() => {
+      window.__FAKE_FB.readDelayMs = 700; // leaderboard query takes ~0.7s, as on the live site
+      new MutationObserver(() => { const el = document.getElementById('leaderboard-rank-text'); if(el && /ranked #/.test(el.textContent) && !window.__rankAt) window.__rankAt = performance.now(); }).observe(document.body, { childList: true, subtree: true, characterData: true });
       const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
       new MutationObserver(() => { if(document.querySelector('.sm-scrim') && !window.__modalAt){ window.__modalAt = performance.now();
         const ps = [...document.querySelectorAll('.confetti-piece')]; window.__pieces = ps.length;
         window.__durations = ps.map(p => parseFloat(p.style.animationDuration)); } }).observe(document.body, { childList: true });
     });
     await solveActive(page, 'easy'); await waitModal(page, 4000);
-    const r = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), n: window.__pieces, min: Math.min(...window.__durations), max: Math.max(...window.__durations) }));
-    console.log(`        measured: ${r.n} confetti pieces falling when the modal opened at ${r.ms}ms; falls ${r.min.toFixed(2)}-${r.max.toFixed(2)}s`);
-    assertEqual([r.n, r.min >= 2.9 && r.max <= 4.5, r.ms >= 800 && r.ms <= 1300], [70, true, true], 'denser, longer confetti; modal still ~0.9s');
+    const r = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), n: window.__pieces, min: Math.min(...window.__durations), max: Math.max(...window.__durations), rank: Math.round(window.__rankAt - window.__wonAt) }));
+    console.log(`        measured: ${r.n} confetti pieces falling when the modal opened at ${r.ms}ms; falls ${r.min.toFixed(2)}-${r.max.toFixed(2)}s; result line (with rank) shown at ${r.rank}ms, ${r.ms - r.rank}ms before the modal`);
+    assertEqual([r.n, r.min >= 2.9 && r.max <= 4.5, r.ms >= 1100 && r.ms <= 1600, r.ms - r.rank >= 300], [140, true, true, true], 'dense confetti; modal ~1.2s; result line visible a beat first');
     await ctx.close();
   }],
   ['does not reappear on reload', async ({ browser, base }) => {
