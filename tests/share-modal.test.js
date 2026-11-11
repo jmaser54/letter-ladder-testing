@@ -224,6 +224,20 @@ module.exports = run('Share modal (Variant B)', [
     assertEqual(await page.evaluate(() => !!window.__bannerOverModal), false, 'banner shown after the modal closed, never on top of it');
     await ctx.close();
   }],
+  ['confetti: 70 pieces, each falling 2.9-4.5s, still falling behind the modal at ~0.9s', async ({ browser, base }) => {
+    const { ctx, page } = await openGame(browser, base);
+    await page.evaluate(() => {
+      const orig = markSolvedIfNeeded; window.markSolvedIfNeeded = markSolvedIfNeeded = function(...a){ if(!window.__wonAt) window.__wonAt = performance.now(); return orig.apply(this, a); };
+      new MutationObserver(() => { if(document.querySelector('.sm-scrim') && !window.__modalAt){ window.__modalAt = performance.now();
+        const ps = [...document.querySelectorAll('.confetti-piece')]; window.__pieces = ps.length;
+        window.__durations = ps.map(p => parseFloat(p.style.animationDuration)); } }).observe(document.body, { childList: true });
+    });
+    await solveActive(page, 'easy'); await waitModal(page, 4000);
+    const r = await page.evaluate(() => ({ ms: Math.round(window.__modalAt - window.__wonAt), n: window.__pieces, min: Math.min(...window.__durations), max: Math.max(...window.__durations) }));
+    console.log(`        measured: ${r.n} confetti pieces falling when the modal opened at ${r.ms}ms; falls ${r.min.toFixed(2)}-${r.max.toFixed(2)}s`);
+    assertEqual([r.n, r.min >= 2.9 && r.max <= 4.5, r.ms >= 800 && r.ms <= 1300], [70, true, true], 'denser, longer confetti; modal still ~0.9s');
+    await ctx.close();
+  }],
   ['does not reappear on reload', async ({ browser, base }) => {
     const { ctx, page } = await openGame(browser, base);
     await solveActive(page, 'easy'); await waitModal(page);

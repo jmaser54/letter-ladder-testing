@@ -3432,11 +3432,13 @@ function spawnConfetti(pieceCount){
     piece.className = 'confetti-piece';
     piece.style.left = (Math.random()*100) + 'vw';
     piece.style.background = colors[Math.floor(Math.random()*colors.length)];
-    const duration = 2.2 + Math.random()*1.6, delay = Math.random()*0.4;
+    // Each piece falls for 2.9-4.5s (0.7s longer than the original
+    // 2.2-3.8s), starting within the first 0.4s.
+    const duration = 2.9 + Math.random()*1.6, delay = Math.random()*0.4;
     piece.style.animationDuration = duration + 's';
     piece.style.animationDelay = delay + 's';
     document.body.appendChild(piece);
-    setTimeout(()=> piece.remove(), 4200);
+    setTimeout(()=> piece.remove(), 4900); // longest fall (4.5s) + delay (0.4s)
   }
 }
 
@@ -3444,7 +3446,7 @@ function triggerTierWinConfetti(){
   // A lighter burst for the 1st and 2nd puzzle completed each day - the
   // 3rd (finishing all three) gets the bigger ladder-climb celebration
   // below instead, not confetti.
-  spawnConfetti(35);
+  spawnConfetti(70); // was 35 - a fuller celebration
 }
 
 function showSummitBanner(){
