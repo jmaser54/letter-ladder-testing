@@ -426,7 +426,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   @media (min-width: 768px){ .wrap > footer{ margin-top: auto; padding-top: 12px; } }
   .share-results-link{ margin: 14px auto 4px auto; }
   .leaderboard-rank{ text-align:center; margin: 4px 0 18px; font-size:0.88rem; color: var(--ink-dim); }
-  .leaderboard-rank-text{ color: var(--ink); font-size:0.95rem; font-weight: 700; font-style: italic; }
+  .leaderboard-rank-text{ color: var(--ink); font-size:0.95rem; font-weight: 700; font-style: italic; min-height: 1.25em; /* holds its line while the rank loads */ }
   .leaderboard-rank-time{ color: var(--amber); }
   .leaderboard-rank-link{ margin-top: 14px; }
   .leaderboard-rank-link a{ color: var(--ink-dim); text-decoration:none; border-bottom:1px dotted var(--ink-dim); touch-action: manipulation; }
@@ -3300,6 +3300,8 @@ async function buildShareCardImage(data){
 // ranked #6 on today's Easy" (rank among today's visible leaderboard entries
 // for that difficulty), with "View leaderboard" on the line below.
 const leaderboardRankCache = {};
+const leaderboardRankPending = {};   // day:tier -> { startedAt } while the rank query is running
+const RANK_WAIT_MS = 2000;           // after this, show the time on its own (rank follows if it arrives)
 function fillLeaderboardRank(){
   const tier = activeTier;
   const frozen = localStorage.getItem(timerElapsedKey(tier));
@@ -3308,8 +3310,10 @@ function fillLeaderboardRank(){
   const key = `${dateKey}:${tier}`;
   const label = { easy: 'Easy', medium: 'Medium', hard: 'Hard' }[tier];
   // The result goes on its own line; "View leaderboard" is always its own
-  // line below (never a separator). The time shows right away and the rank
-  // is added once the leaderboard query answers.
+  // line below (never a separator). The time and rank appear together in
+  // one render once the rank is known (cache, or the leaderboard query). If
+  // the query hasn't answered within RANK_WAIT_MS, fails, or the leaderboard
+  // can't be read, the time shows on its own; a late rank still fills in.
   function show(rank){
     const el = document.getElementById('leaderboard-rank-text');
     if(!el || activeTier !== tier) return;
@@ -3319,9 +3323,17 @@ function fillLeaderboardRank(){
       : `Completed in ${timeHtml}`;
   }
   if(leaderboardRankCache[key]) return show(leaderboardRankCache[key]);
-  show(null);
   const A = window.LetterLadderAuth;
-  if(!A || !A.getDocs) return;
+  if(!A || !A.getDocs) return show(null);              // leaderboard can't be read
+  const timeOnlyIfStillWaiting = () => { if(!leaderboardRankCache[key]) show(null); };
+  const pending = leaderboardRankPending[key];
+  if(pending){                                         // re-render while the query is running
+    const waited = Date.now() - pending.startedAt;
+    if(waited >= RANK_WAIT_MS) show(null); else setTimeout(timeOnlyIfStillWaiting, RANK_WAIT_MS - waited);
+    return;
+  }
+  leaderboardRankPending[key] = { startedAt: Date.now() };
+  setTimeout(timeOnlyIfStillWaiting, RANK_WAIT_MS);
   A.getDocs(A.query(A.collection(A.db, 'leaderboardEntries'), A.where('date', '==', dateKey), A.where('tier', '==', tier), A.where('visible', '==', true)))
     .then(snap => {
       const me = A.getCurrentUser();
@@ -3329,9 +3341,13 @@ function fillLeaderboardRank(){
       let faster = 0;
       snap.docs.forEach(d => { const r = d.data(); if(r.uid !== myUid && typeof r.timeMs === 'number' && r.timeMs < myTime) faster++; });
       leaderboardRankCache[key] = faster + 1;
+      delete leaderboardRankPending[key];
       show(faster + 1);
     })
-    .catch(() => {});
+    .catch(() => {
+      delete leaderboardRankPending[key];              // a later render may try again
+      show(null);
+    });
 }
 
 // "Missed a day?" link: count of puzzles from days before today.

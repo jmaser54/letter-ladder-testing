@@ -89,6 +89,28 @@ module.exports = run('Game page post-solve and loading', [
     assertEqual([st.weight, st.style, st.color, /^[\d.]+s$/.test(st.time), st.timeColor, st.linkWeight], ['700', 'italic', 'rgb(245, 239, 224)', true, 'rgb(232, 163, 61)', '400'], 'result line bold italic, time in amber, View leaderboard unchanged');
     await ctx.close();
   }],
+  ['result line appears once, complete with the rank - no time-only flash first; a slow query (>2s) shows the time, then the rank', async ({ browser, base: b }) => {
+    const docs = { 'leaderboardEntries/a': { date: DAY, tier: 'easy', timeMs: 100, visible: true, uid: 'x1' } };
+    for(const [delay, label] of [[700, 'answer in 0.7s'], [3200, 'answer in 3.2s']]){
+      const { ctx, page } = await openGame(browser, b, { fake: { user: null, docs } });
+      // Record every distinct text the result line shows, from the moment it exists.
+      await page.evaluate(d => {
+        window.__seen = []; window.__t0 = null;
+        new MutationObserver(() => { const el = document.getElementById('leaderboard-rank-text'); if(!el) return; if(window.__t0 === null) window.__t0 = performance.now();
+          const t = el.textContent.trim(); if(t && window.__seen[window.__seen.length - 1]?.t !== t) window.__seen.push({ t, at: Math.round(performance.now() - window.__t0) }); }).observe(document.body, { childList: true, subtree: true, characterData: true });
+        window.__FAKE_FB.readDelayMs = d;
+      }, delay);
+      await solveEasy(page); await closeModal(page);
+      await page.waitForFunction(() => /ranked #/.test((document.getElementById('leaderboard-rank-text') || {}).textContent || ''), null, { timeout: 8000 });
+      const seen = await page.evaluate(() => window.__seen);
+      if(delay < 2000){
+        assertEqual([seen.length, /^Completed in [\d.]+s — ranked #2 on today's Easy$/.test(seen[0].t)], [1, true], `${label}: shown once, complete: ${JSON.stringify(seen)}`);
+      } else {
+        assertEqual([seen.length, /^Completed in [\d.]+s$/.test(seen[0].t), seen[0].at >= 1800 && seen[0].at <= 2600, /ranked #2/.test(seen[1].t)], [2, true, true, true], `${label}: time alone at ~2s, then the rank: ${JSON.stringify(seen)}`);
+      }
+      await ctx.close();
+    }
+  }],
   ['rank lookup fails: still "Completed in …" with View leaderboard below, never a dangling "·"', async ({ browser, base: b }) => {
     const { ctx, page } = await openGame(browser, b);
     await solveEasy(page); await closeModal(page);
