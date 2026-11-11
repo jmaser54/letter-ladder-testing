@@ -662,7 +662,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       // want the user fully logged in before reaching the game, we do the
       // auth directly here using the same Firebase SDK we already imported.
       try{
-        const { getFirestore, collection, query, where, getDocs, setDoc, doc } =
+        const { getFirestore, collection, query, where, limit, getDocs, setDoc, doc } =
           await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
         const { createUserWithEmailAndPassword, signInWithEmailAndPassword } =
           await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
@@ -673,7 +673,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         function usernameToSyntheticEmail(u){ return `${normalizeUsername(u)}@letterladder.user`; }
 
         async function findPlayerByUsername(u){
-          const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(u)));
+          const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(u)), limit(1));
           const snap = await getDocs(q);
           if(snap.empty) return null;
           const d = snap.docs[0];
@@ -825,10 +825,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           errorEl.textContent = '';
           try{
             const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-            const { getFirestore, collection, query, where, getDocs, doc, getDoc } =
+            const { getFirestore, collection, query, where, limit, getDocs, doc, getDoc } =
               await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
             const db2 = getFirestore(app);
-            const q = query(collection(db2, 'players'), where('usernameLower', '==', username.toLowerCase().trim()));
+            const q = query(collection(db2, 'players'), where('usernameLower', '==', username.toLowerCase().trim()), limit(1));
             const snap = await getDocs(q);
             if(snap.empty){ errorEl.textContent = 'No recovery email on file for that username.'; return; }
             const uid = snap.docs[0].id;

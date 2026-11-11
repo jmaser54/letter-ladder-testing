@@ -252,7 +252,9 @@ document.getElementById('stats-list').innerHTML =
 
   async function fetchTierTimeStats(uid, tier){
     const myQ = query(collection(db, 'scores'), where('uid', '==', uid), where('tier', '==', tier));
-    const globalQ = query(collection(db, 'scores'), where('tier', '==', tier));
+    // Global Average: from the public leaderboard (visible entries only), not
+    // every player's scores - other players' scores aren't readable.
+    const globalQ = query(collection(db, 'leaderboardEntries'), where('tier', '==', tier), where('visible', '==', true));
     const [mySnap, globalSnap] = await Promise.all([getDocs(myQ), getDocs(globalQ)]);
     const myTimes = mySnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');
     const globalTimes = globalSnap.docs.map(d => d.data().timeMs).filter(t => typeof t === 'number');

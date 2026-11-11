@@ -774,7 +774,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     return username.trim().toLowerCase().replace(/[^a-z0-9_.-]/g, '');
   }
   async function findPlayerByUsername(username){
-    const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(username)));
+    const q = query(collection(db, 'players'), where('usernameLower', '==', normalizeUsername(username)), limit(1));
     const snap = await getDocs(q);
     if(snap.empty) return null;
     const docSnap = snap.docs[0];
