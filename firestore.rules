@@ -1,0 +1,74 @@
+// Letter Ladder Firestore rules - paste into the Firebase console
+// (Firestore Database > Rules) to publish. This file is NOT deployed by
+// GitHub Pages; the console is the only place rules take effect, for both
+// the test and live sites (they share one Firebase project).
+//
+// Change from the rules published on 2026-11-11: playerRecovery is readable
+// only by its owner (single-document get was open to anyone). Publish only
+// after the typed-email password reset is live on both sites.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /players/{uid} {
+      // A player's own document only (visible leaderboard entries carry
+      // account IDs, so a public get would map them to sign-in emails).
+      allow get: if request.auth != null && request.auth.uid == uid;
+      // Login looks a player up by usernameLower before signing in, and only
+      // ever needs one match. Capping list queries at one result stops anyone
+      // dumping every player (usernames and sign-in emails) in one request.
+      allow list: if request.query.limit <= 1;
+      allow create, update, delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /playerRecovery/{uid} {
+      // Owner only. Password reset now sends to the email the player types,
+      // so nothing reads this before sign-in.
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list: if false;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /playerStats/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /scores/{scoreId} {
+      // Private event log: a player can read only their own scores.
+      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      // Append-only: written once (first solve counts), never overwritten.
+      allow create: if
+        (request.resource.data.isGuest == true && request.resource.data.uid == null) ||
+        (request.auth != null && request.auth.uid == request.resource.data.uid);
+      allow update, delete: if false;
+    }
+
+    match /dailyProgress/{docId} {
+      allow read, write: if request.auth != null && docId.matches(request.auth.uid + '_.*');
+    }
+
+    match /leaderboardEntries/{entryId} {
+      // Anyone can read entries shown on the board; a player can also read
+      // their own entries whatever their visibility. Anything else (another
+      // player's hidden entry, or an entry that doesn't exist) is denied, so a
+      // denial never reveals whether a hidden entry exists.
+      allow read: if resource.data.visible == true
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow create: if
+        request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.timeMs > 0;
+      allow update: if
+        request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.timeMs == resource.data.timeMs
+        && request.resource.data.displayName == resource.data.displayName
+        && request.resource.data.date == resource.data.date
+        && request.resource.data.tier == resource.data.tier
+        && request.resource.data.hintsUsed == resource.data.hintsUsed
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if false;
+    }
+  }
+}

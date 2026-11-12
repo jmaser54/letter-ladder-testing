@@ -50,12 +50,34 @@ const STUBS = {
       }
       return () => {};
     }
-    export async function signOut(){ auth.currentUser = null; notify(); }
+    // Email/password accounts (window.__FAKE_FB.accounts: [{ uid, email, password }]),
+    // kept for the tab like the fake database. Signing in persists the user
+    // across page loads, as Firebase does.
+    const persistCfg = mut => { try{ const c = JSON.parse(sessionStorage.getItem('__fake_fb') || '{}'); mut(c); sessionStorage.setItem('__fake_fb', JSON.stringify(c)); }catch(e){} };
+    const accounts = () => (window.__FAKE_FB.accounts = window.__FAKE_FB.accounts || []);
+    const setUser = u => { auth.currentUser = mkUser(u); window.__FAKE_FB.user = u; persistCfg(c => { c.user = u; c.accounts = accounts(); }); setTimeout(notify, 0); return { user: auth.currentUser }; };
+    const authError = code => Object.assign(new Error(code), { code });
+    export async function signOut(){ auth.currentUser = null; window.__FAKE_FB.user = null; persistCfg(c => { c.user = null; }); notify(); }
     export async function signInAnonymously(){ auth.currentUser = mkUser({ uid: 'anon1', isAnonymous: true }); setTimeout(notify, 0); return { user: auth.currentUser }; }
-    export async function signInWithEmailAndPassword(){ throw Object.assign(new Error('fake'), { code: 'auth/invalid-credential' }); }
-    export async function createUserWithEmailAndPassword(){ throw Object.assign(new Error('fake'), { code: 'auth/operation-not-allowed' }); }
-    export async function sendPasswordResetEmail(){}
-    export async function updatePassword(){}
+    export async function signInWithEmailAndPassword(a, email, password){
+      const acct = accounts().find(x => x.email === String(email).trim().toLowerCase());
+      if(!acct || acct.password !== password) throw authError('auth/invalid-credential');
+      return setUser({ uid: acct.uid, email: acct.email, isAnonymous: false });
+    }
+    export async function createUserWithEmailAndPassword(a, email, password){
+      const e = String(email).trim().toLowerCase();
+      if(accounts().some(x => x.email === e)) throw authError('auth/email-already-in-use');
+      const acct = { uid: 'u' + (accounts().length + 1) + '_' + e.replace(/[^a-z0-9]/g, '').slice(0, 8), email: e, password };
+      accounts().push(acct);
+      return setUser({ uid: acct.uid, email: acct.email, isAnonymous: false });
+    }
+    // Records every reset request (the address it went to) in sessionStorage.
+    export async function sendPasswordResetEmail(a, email){
+      const sent = JSON.parse(sessionStorage.getItem('__fake_resets') || '[]'); sent.push(email); sessionStorage.setItem('__fake_resets', JSON.stringify(sent));
+    }
+    export async function updatePassword(user, password){
+      const acct = accounts().find(x => x.uid === user.uid); if(acct){ acct.password = password; persistCfg(c => { c.accounts = accounts(); }); }
+    }
     export async function verifyBeforeUpdateEmail(){}
     export async function deleteUser(){}
   `,
@@ -76,7 +98,11 @@ const STUBS = {
     export const orderBy = (field, dir) => ({ orderBy: { field, dir: dir || 'asc' } });
     export const limit = (n) => ({ limit: n });
     export const query = (c, ...constraints) => ({ col: c.col, constraints });
+    // Every read is logged (window.__FAKE_FB_READS) so tests can check which
+    // documents a flow looked at.
+    const reads = () => (window.__FAKE_FB_READS = window.__FAKE_FB_READS || []);
     async function read(ref){
+      reads().push(ref.path);
       await wait();
       if(cfg().failReads) throw new Error('fake network failure');
       const fp = cfg().failReadPaths;
@@ -87,6 +113,7 @@ const STUBS = {
     export const getDoc = read;
     export const getDocFromServer = read;
     export async function getDocs(q){
+      reads().push('query:' + (q && q.col));
       await wait();
       if(cfg().failReads) throw new Error('fake network failure');
       const cs = (q && q.constraints) || [];
@@ -99,12 +126,14 @@ const STUBS = {
       const docs = rows.map(r => ({ id: r.id, data: () => r.data, ref: { path: q.col + '/' + r.id } }));
       return { empty: docs.length === 0, docs, size: docs.length, forEach(fn){ docs.forEach(fn); } };
     }
+    export const deleteField = () => ({ __fakeDeleteField: true });
+    const applyDeletes = o => { for(const k of Object.keys(o)) if(o[k] && o[k].__fakeDeleteField) delete o[k]; return o; };
     export async function setDoc(ref, data, opts){
       if(ref.path.startsWith('leaderboardEntries/') && store()[ref.path] !== undefined && !(opts && opts.merge)){
         throw Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' });
       }
       writes().push({ path: ref.path, data: clone(data), merge: !!(opts && opts.merge), at: Date.now() });
-      store()[ref.path] = (opts && opts.merge) ? Object.assign({}, store()[ref.path] || {}, clone(data)) : clone(data);
+      store()[ref.path] = applyDeletes((opts && opts.merge) ? Object.assign({}, store()[ref.path] || {}, clone(data)) : clone(data));
       persist();
     }
     export async function addDoc(c, data){ writes().push({ path: c.col + '/(new)', data: clone(data) }); return { id: 'x' }; }

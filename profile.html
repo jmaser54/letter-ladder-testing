@@ -104,7 +104,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, onAuthStateChanged, updatePassword, verifyBeforeUpdateEmail, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, writeBatch, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  // Real sign-in emails are stored only encrypted with the password.
+  import { isSyntheticEmail, syncEncryptedEmail } from "./email-crypto.js?v=1";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -217,6 +219,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if(newPassword){
           await updatePassword(user, newPassword);
           updates.push('password');
+          // The encrypted sign-in email was made with the old password;
+          // save it again with the new one so username login keeps working.
+          try{ console.info('[account] sign-in email:', await syncEncryptedEmail({ user, password: newPassword, db, doc, getDoc, setDoc, deleteField })); }
+          catch(e){ console.error('[account] could not re-encrypt the sign-in email after the password change:', e); }
         }
         let emailVerificationSent = false;
         if(newEmail && newEmail !== existingEmail){
@@ -266,8 +272,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             if(!name) return true; // nothing to rebuild the doc from; same default the game uses
             const lower = name.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
             const created = Date.parse(user.metadata && user.metadata.creationTime);
+            // Synthetic sign-in address only; a real email is saved encrypted
+            // at the next sign-in (this page doesn't have the password).
+            const signInEmail = user.email || `${lower}@players.letterladder.io`;
             await setDoc(playerRef, { username: name, usernameLower: lower, createdAt: Number.isFinite(created) ? created : Date.now(),
-              authEmail: user.email || `${lower}@players.letterladder.io`, leaderboardVisible: true }, { merge: true });
+              ...(isSyntheticEmail(signInEmail) ? { authEmail: signInEmail } : {}), leaderboardVisible: true }, { merge: true });
             console.warn(`[leaderboard] players doc for "${name}" was missing - recreated with leaderboardVisible: true`);
             return true;
           }catch(e){ lastError = e; }

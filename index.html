@@ -627,7 +627,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <div class="leaderboard-prompt-card">
         <div class="leaderboard-form-title">${isLogin ? 'Log in' : 'Create account'}</div>
         <div class="leaderboard-form-error" id="auth-error"></div>
-        <input type="text" class="leaderboard-form-field" id="auth-username" placeholder="Username" autocomplete="username">
+        <input type="text" class="leaderboard-form-field" id="auth-username" placeholder="${isLogin ? 'Username or email' : 'Username'}" autocomplete="username">
         <input type="password" class="leaderboard-form-field" id="auth-password" placeholder="Password" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
         ${!isLogin ? `
           <input type="email" class="leaderboard-form-field" id="auth-email" placeholder="Email (optional)" autocomplete="email">
@@ -662,8 +662,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       // want the user fully logged in before reaching the game, we do the
       // auth directly here using the same Firebase SDK we already imported.
       try{
-        const { getFirestore, collection, query, where, limit, getDocs, setDoc, doc } =
+        const { getFirestore, collection, query, where, limit, getDocs, setDoc, getDoc, doc, deleteField } =
           await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+        // Real sign-in emails are stored only encrypted with the password.
+        const { encryptEmail, isSyntheticEmail, resolveSignInEmail, syncEncryptedEmail, ENCRYPTED_LOGIN_FAILED } = await import('./email-crypto.js?v=1');
         const { createUserWithEmailAndPassword, signInWithEmailAndPassword } =
           await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
 
@@ -681,14 +683,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         }
 
         if(isLogin){
-          const player = await findPlayerByUsername(username);
-          const registeredEmail = (player && player.authEmail) || usernameToSyntheticEmail(username);
+          // Username (or an email typed in its place) -> the address to sign in with.
+          const r = await resolveSignInEmail({ input: username, password, findPlayerByUsername, usernameToSyntheticEmail });
+          if(!r.email){ errorEl.textContent = ENCRYPTED_LOGIN_FAILED; return; }
           // Save anon UID before signing in so backfill can delete old guest docs
           if(auth.currentUser && auth.currentUser.isAnonymous){
             sessionStorage.setItem('letterladder:anonUidForCleanup', auth.currentUser.uid);
           }
-          await signInWithEmailAndPassword(auth, registeredEmail, password);
-          const loggedInUsername = player ? player.username : username;
+          const cred = await signInWithEmailAndPassword(auth, r.email, password);
+          let loggedInUsername = r.player ? r.player.username : username;
+          if(r.via === 'email'){
+            const own = await getDoc(doc(db, 'players', cred.user.uid)).catch(() => null);
+            if(!own || !own.exists()){ await auth.signOut(); errorEl.textContent = 'No Letter Ladder account uses that email address.'; return; }
+            loggedInUsername = own.data().username;
+          }
+          // Real email: keep only an encrypted copy (migrates a plain-text one,
+          // re-encrypts after a password reset).
+          try{ console.info('[account] sign-in email:', await syncEncryptedEmail({ user: cred.user, password, db, doc, getDoc, setDoc, deleteField })); }
+          catch(e){ console.error('[account] could not save the encrypted sign-in email:', e); }
           localStorage.setItem('letterladder:accountUsername', loggedInUsername);
           // Migrate guest localStorage keys and signal game.html to backfill
           // scores/stats — same as the create account path.
@@ -747,12 +759,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           }
 
           const cred = await createUserWithEmailAndPassword(auth, registeredEmail, password);
+          // Synthetic sign-in address in plain text (not personal); a real
+          // email only encrypted with the password just chosen.
           const playerDoc = {
             username: username.trim(),
             usernameLower: normalizeUsername(username),
             createdAt: Date.now(),
-            authEmail: registeredEmail,
           };
+          if(isSyntheticEmail(registeredEmail)) playerDoc.authEmail = registeredEmail;
+          else playerDoc.authEmailEnc = await encryptEmail(registeredEmail, password, cred.user.uid);
           await setDoc(doc(db, 'players', cred.user.uid), playerDoc);
           if(trimmedEmail){
             await setDoc(doc(db, 'playerRecovery', cred.user.uid), { recoveryEmail: trimmedEmail });
@@ -806,9 +821,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         resetOverlay.innerHTML = `
           <div class="leaderboard-prompt-card">
             <div class="leaderboard-prompt-title">Reset your password</div>
-            <div class="leaderboard-form-hint" style="text-align:center; margin-bottom:10px;">Enter your username to receive a password reset link to the email on file.</div>
+            <div class="leaderboard-form-hint" style="text-align:center; margin-bottom:10px;">Enter the email address on your account and we'll send you a reset link.</div>
             <div class="leaderboard-form-error" id="reset-error"></div>
-            <input type="text" class="leaderboard-form-field" id="reset-username" placeholder="Username" autocomplete="username">
+            <input type="email" class="leaderboard-form-field" id="reset-email" placeholder="Email address" autocomplete="email">
             <div class="leaderboard-prompt-actions">
               <button type="button" class="btn-primary" id="reset-submit">Send reset email</button>
               <button type="button" class="btn-ghost" id="reset-cancel">Cancel</button>
@@ -819,27 +834,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         setTimeout(()=>{ resetOverlay.addEventListener('click', e=>{ if(e.target===resetOverlay) resetOverlay.remove(); }); }, 0);
         resetOverlay.querySelector('#reset-cancel').addEventListener('click', ()=> resetOverlay.remove());
         resetOverlay.querySelector('#reset-submit').addEventListener('click', async ()=>{
-          const username = resetOverlay.querySelector('#reset-username').value.trim();
+          const email = resetOverlay.querySelector('#reset-email').value.trim();
           const errorEl = resetOverlay.querySelector('#reset-error');
-          if(!username){ errorEl.textContent = 'Please enter your username.'; return; }
+          if(!email){ errorEl.textContent = 'Please enter your email address.'; return; }
+          if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errorEl.textContent = 'Please enter the email address on your account.'; return; }
           errorEl.textContent = '';
           try{
+            // Sent to the typed address. No player or recovery document is read,
+            // and the result never says whether that address has an account.
             const { sendPasswordResetEmail } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
-            const { getFirestore, collection, query, where, limit, getDocs, doc, getDoc } =
-              await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-            const db2 = getFirestore(app);
-            const q = query(collection(db2, 'players'), where('usernameLower', '==', username.toLowerCase().trim()), limit(1));
-            const snap = await getDocs(q);
-            if(snap.empty){ errorEl.textContent = 'No recovery email on file for that username.'; return; }
-            const uid = snap.docs[0].id;
-            const recoverySnap = await getDoc(doc(db2, 'playerRecovery', uid));
-            if(!recoverySnap.exists() || !recoverySnap.data().recoveryEmail){
-              errorEl.textContent = 'No recovery email on file for that username.'; return;
+            try{
+              await sendPasswordResetEmail(auth, email, {
+                url: 'https://letterladder.io/',
+                handleCodeInApp: false,
+              });
+            }catch(err){
+              if(!err || err.code !== 'auth/user-not-found') throw err;
             }
-            await sendPasswordResetEmail(auth, recoverySnap.data().recoveryEmail, {
-              url: 'https://letterladder.io/',
-              handleCodeInApp: false,
-            });
             const card = resetOverlay.querySelector('.leaderboard-prompt-card');
             card.innerHTML = `
               <div class="leaderboard-prompt-title" style="font-weight:bold;">Check your email</div>

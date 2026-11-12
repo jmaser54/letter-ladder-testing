@@ -743,8 +743,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, collection, doc, setDoc, getDoc, getDocFromServer, addDoc, deleteDoc,
-    query, where, orderBy, limit, getDocs, writeBatch
+    query, where, orderBy, limit, getDocs, writeBatch, deleteField
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  // Sign-in email protection: real emails are stored only encrypted with the
+  // player's password (see email-crypto.js).
+  import { encryptEmail, isSyntheticEmail, looksLikeEmail, resolveSignInEmail, syncEncryptedEmail, ENCRYPTED_LOGIN_FAILED } from "./email-crypto.js?v=1";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCBnp4e0ea-eWy4x2WLtTyNyV5r5TpdNdM",
@@ -828,24 +831,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       // synthetic-email path got this for free by always lowercasing;
       // this keeps that same behavior now that login may need to look
       // this record up directly instead of just computing an email).
-      // authEmail is the address the account actually signs in with -
-      // safe to keep on the publicly-readable players doc, since login
-      // needs it pre-auth and it's just an opaque login identifier. The
-      // player's personal recoveryEmail is deliberately NOT stored here -
-      // it goes in the separate, locked-down playerRecovery collection
-      // below, so the public players doc never exposes personal emails.
+      // The sign-in address login needs before the player is signed in:
+      // a synthetic address is kept as authEmail (it's not personal); a
+      // real email is kept only encrypted with the password just chosen
+      // (authEmailEnc), never in plain text.
       const playerDoc = {
         username: username.trim(),
         usernameLower: normalizeUsername(username),
         createdAt: Date.now(),
-        authEmail: registeredEmail,
       };
+      if(isSyntheticEmail(registeredEmail)) playerDoc.authEmail = registeredEmail;
+      else playerDoc.authEmailEnc = await encryptEmail(registeredEmail, password, cred.user.uid);
       await setDoc(doc(db, 'players', cred.user.uid), playerDoc);
       if(trimmedEmail){
-        // Personal recovery email lives in its own collection, readable
-        // only as a single-document get (never enumerable), so it can
-        // still be fetched pre-auth for password reset but can't be
-        // harvested across all accounts.
+        // Personal recovery email lives in its own owner-only collection.
         await setDoc(doc(db, 'playerRecovery', cred.user.uid), { recoveryEmail: trimmedEmail });
       }
       return { success: true, uid: cred.user.uid, username: username.trim() };
@@ -854,51 +853,45 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
   }
 
+  // `username` may also be the account's email address (signs in directly,
+  // no lookup) - needed after a password reset, when the encrypted copy
+  // was made with the old password.
   async function login(username, password){
     try{
-      const player = await findPlayerByUsername(username);
-      // If this username has a real registered email on file, that's what
-      // the account actually needs to sign in with - otherwise (unknown
-      // username, or a known one that never provided an email) fall back
-      // to the deterministic synthetic formula, which correctly covers
-      // both those cases the same way account creation would have.
-      // authEmail is the safe, public login identifier - the personal
-      // recoveryEmail is no longer stored on this doc.
-      const registeredEmail = (player && player.authEmail) || usernameToSyntheticEmail(username);
-      const cred = await signInWithEmailAndPassword(auth, registeredEmail, password);
+      const r = await resolveSignInEmail({ input: username, password, findPlayerByUsername, usernameToSyntheticEmail });
+      if(!r.email) return { success: false, error: ENCRYPTED_LOGIN_FAILED };
+      const cred = await signInWithEmailAndPassword(auth, r.email, password);
+      let name = r.player && r.player.username;
+      if(!name && r.via === 'email'){
+        try{ const own = await getDoc(doc(db, 'players', cred.user.uid)); if(own.exists()) name = own.data().username; }catch(e){}
+        if(!name){ await signOut(auth); return { success: false, error: 'No Letter Ladder account uses that email address.' }; }
+      }
+      name = name || username.trim();
       // Accounts whose players doc went missing get it recreated here, so
       // their leaderboard setting has a real document behind it.
-      try{ await ensurePlayerDoc(cred.user, (player && player.username) || username.trim()); }catch(e){ console.error('[leaderboard] could not check/backfill players doc on sign-in:', e); }
-      return { success: true, uid: cred.user.uid, username: (player && player.username) || username.trim() };
+      try{ await ensurePlayerDoc(cred.user, name); }catch(e){ console.error('[leaderboard] could not check/backfill players doc on sign-in:', e); }
+      // Real email: keep only an encrypted copy (migrates a plain-text one,
+      // re-encrypts after a password reset).
+      try{ console.info('[account] sign-in email:', await syncEncryptedEmail({ user: cred.user, password, db, doc, getDoc, setDoc, deleteField })); }
+      catch(e){ console.error('[account] could not save the encrypted sign-in email:', e); }
+      return { success: true, uid: cred.user.uid, username: name };
     }catch(error){
       return { success: false, error: friendlyAuthError(error) };
     }
   }
 
-  async function requestPasswordReset(username){
+  // Sends a reset link to the email the player types. No lookup of any
+  // player or recovery document, and the result never says whether that
+  // address has an account.
+  async function requestPasswordReset(email){
+    const typed = String(email || '').trim();
+    if(!looksLikeEmail(typed)) return { success: false, error: 'Please enter the email address on your account.' };
     try{
-      const player = await findPlayerByUsername(username);
-      if(!player){
-        return { success: false, error: 'No recovery email is on file for that username.' };
-      }
-      // The personal recovery email now lives in the locked-down
-      // playerRecovery collection, fetched here as a single get by the
-      // uid we just resolved from the username - never enumerable.
-      let recoveryEmail = null;
-      try{
-        const recoverySnap = await getDoc(doc(db, 'playerRecovery', player.uid));
-        if(recoverySnap.exists()) recoveryEmail = recoverySnap.data().recoveryEmail;
-      }catch(e){}
-      if(!recoveryEmail){
-        return { success: false, error: 'No recovery email is on file for that username.' };
-      }
-      const actionCodeSettings = {
-        url: 'https://letterladder.io/',
-        handleCodeInApp: false,
-      };
-      await sendPasswordResetEmail(auth, recoveryEmail, actionCodeSettings);
+      await sendPasswordResetEmail(auth, typed, { url: 'https://letterladder.io/', handleCodeInApp: false });
       return { success: true };
     }catch(error){
+      if(error && error.code === 'auth/user-not-found') return { success: true }; // don't reveal whether an account exists
+      if(error && error.code === 'auth/invalid-email') return { success: false, error: 'Please enter a valid email address.' };
       return { success: false, error: 'Something went wrong. Please try again.' };
     }
   }
@@ -943,9 +936,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       username,
       usernameLower: normalizeUsername(username),
       createdAt: Number.isFinite(created) ? created : Date.now(),
-      authEmail: user.email || usernameToSyntheticEmail(username),
       leaderboardVisible: true,
     };
+    // Synthetic sign-in address only. A real email can't be written here -
+    // it's stored encrypted with the password, which this backfill doesn't
+    // have; the next sign-in (login() calls syncEncryptedEmail) adds it.
+    const signInEmail = user.email || usernameToSyntheticEmail(username);
+    if(isSyntheticEmail(signInEmail)) data.authEmail = signInEmail;
+    else console.warn('[account] players doc recreated without its sign-in email; it is saved encrypted at the next sign-in');
     await setDoc(ref, data, { merge: true });
     console.warn(`[leaderboard] players doc for "${username}" was missing - recreated with leaderboardVisible: true`);
     return { status: 'backfilled', data };
@@ -2364,7 +2362,7 @@ function showAccountForm(mode){
     <div class="leaderboard-prompt-card">
       ${isLogin ? `<div class="leaderboard-prompt-title">Log in</div>` : `<div class="leaderboard-form-title">Create account</div>`}
       <div class="leaderboard-form-error" id="acct-form-error"></div>
-      <input type="text" class="leaderboard-form-field" id="acct-username-field" placeholder="Username" autocomplete="username">
+      <input type="text" class="leaderboard-form-field" id="acct-username-field" placeholder="${isLogin ? 'Username or email' : 'Username'}" autocomplete="username">
       <input type="password" class="leaderboard-form-field" id="acct-password-field" placeholder="Password" autocomplete="${isLogin ? 'current-password' : 'new-password'}">
       ${isLogin ? '' : `
         <input type="email" class="leaderboard-form-field" id="acct-email-field" placeholder="Email (optional)" autocomplete="email">
@@ -2463,9 +2461,9 @@ function showForgotPasswordForm(){
   overlay.innerHTML = `
     <div class="leaderboard-prompt-card">
       <div class="leaderboard-prompt-title">Reset your password</div>
-      <div class="leaderboard-form-hint" style="text-align:center; margin-bottom:10px;">Enter your username to receive a password reset link to the email on file.</div>
+      <div class="leaderboard-form-hint" style="text-align:center; margin-bottom:10px;">Enter the email address on your account and we'll send you a reset link.</div>
       <div class="leaderboard-form-error" id="fp-form-error"></div>
-      <input type="text" class="leaderboard-form-field" id="fp-username-field" placeholder="Username" autocomplete="username">
+      <input type="email" class="leaderboard-form-field" id="fp-email-field" placeholder="Email address" autocomplete="email">
       <div class="leaderboard-prompt-actions">
         <button type="button" class="btn-primary" id="fp-submit-btn">Send reset email</button>
         <button type="button" class="btn-ghost" id="fp-cancel-btn">Cancel</button>
@@ -2479,15 +2477,15 @@ function showForgotPasswordForm(){
 
   const errorEl = overlay.querySelector('#fp-form-error');
   const fpSubmitBtn = overlay.querySelector('#fp-submit-btn');
-  bindEnterToSubmit([overlay.querySelector('#fp-username-field')], fpSubmitBtn);
+  bindEnterToSubmit([overlay.querySelector('#fp-email-field')], fpSubmitBtn);
   bindTapAction(fpSubmitBtn, async ()=>{
-    const username = overlay.querySelector('#fp-username-field').value.trim();
-    if(!username){
-      errorEl.textContent = 'Please enter your username.';
+    const email = overlay.querySelector('#fp-email-field').value.trim();
+    if(!email){
+      errorEl.textContent = 'Please enter your email address.';
       return;
     }
     errorEl.textContent = '';
-    const result = await window.LetterLadderAuth.requestPasswordReset(username);
+    const result = await window.LetterLadderAuth.requestPasswordReset(email);
     if(!result.success){
       errorEl.textContent = result.error;
       return;
