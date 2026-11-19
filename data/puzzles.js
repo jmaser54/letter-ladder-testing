@@ -574,5 +574,10 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "as", "final": "beast" },
     "medium": { "start": "my", "final": "armory" },
     "hard": { "start": "anti", "final": "stanchion" }
+  },
+  "2026-11-19": {
+    "easy": { "start": "at", "final": "steam" },
+    "medium": { "start": "are", "final": "renames" },
+    "hard": { "start": "rad", "final": "reenacted" }
   }
 };

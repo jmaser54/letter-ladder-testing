@@ -577,5 +577,10 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "as", "final": "beast", "solution": ["as","sea","base","beast"] },
     "medium": { "start": "my", "final": "armory", "solution": ["my","yam","army","mayor","armory"] },
     "hard": { "start": "anti", "final": "stanchion", "solution": ["anti","antic","action","actions","sanction","stanchion"] }
+  },
+  "2026-11-19": {
+    "easy": { "start": "at", "final": "steam", "solution": ["at","eat","teas","steam"] },
+    "medium": { "start": "are", "final": "renames", "solution": ["are","near","ramen","meaner","renames"] },
+    "hard": { "start": "rad", "final": "reenacted", "solution": ["rad","read","tread","carted","catered","recanted","reenacted"] }
   }
 };
