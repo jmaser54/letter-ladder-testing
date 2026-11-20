@@ -582,5 +582,15 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "at", "final": "steam", "solution": ["at","eat","teas","steam"] },
     "medium": { "start": "are", "final": "renames", "solution": ["are","near","ramen","meaner","renames"] },
     "hard": { "start": "rad", "final": "reenacted", "solution": ["rad","read","tread","carted","catered","recanted","reenacted"] }
+  },
+  "2026-11-20": {
+    "easy": { "start": "it", "final": "relit", "solution": ["it","lit","tile","relit"] },
+    "medium": { "start": "on", "final": "yeoman", "solution": ["on","one","omen","money","yeoman"] },
+    "hard": { "start": "rubs", "final": "brushing", "solution": ["rubs","brush","hubris","burnish","brushing"] }
+  },
+  "2026-11-21": {
+    "easy": { "start": "in", "final": "owing", "solution": ["in","win","wing","owing"] },
+    "medium": { "start": "tiring", "final": "diverting", "solution": ["tiring","tiering","riveting","diverting"] },
+    "hard": { "start": "race", "final": "clearing", "solution": ["race","clear","eclair","glacier","clearing"] }
   }
 };

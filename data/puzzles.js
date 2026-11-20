@@ -579,5 +579,15 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "at", "final": "steam" },
     "medium": { "start": "are", "final": "renames" },
     "hard": { "start": "rad", "final": "reenacted" }
+  },
+  "2026-11-20": {
+    "easy": { "start": "it", "final": "relit" },
+    "medium": { "start": "on", "final": "yeoman" },
+    "hard": { "start": "rubs", "final": "brushing" }
+  },
+  "2026-11-21": {
+    "easy": { "start": "in", "final": "owing" },
+    "medium": { "start": "tiring", "final": "diverting" },
+    "hard": { "start": "race", "final": "clearing" }
   }
 };
