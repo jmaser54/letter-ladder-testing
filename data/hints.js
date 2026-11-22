@@ -592,5 +592,20 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "in", "final": "owing", "solution": ["in","win","wing","owing"] },
     "medium": { "start": "tiring", "final": "diverting", "solution": ["tiring","tiering","riveting","diverting"] },
     "hard": { "start": "race", "final": "clearing", "solution": ["race","clear","eclair","glacier","clearing"] }
+  },
+  "2026-11-22": {
+    "easy": { "start": "re", "final": "deter", "solution": ["re","ere","tree","deter"] },
+    "medium": { "start": "ego", "final": "boggler", "solution": ["ego","gore","gorge","logger","boggler"] },
+    "hard": { "start": "gale", "final": "vigilance", "solution": ["gale","angle","genial","leaving","cleaving","vigilance"] }
+  },
+  "2026-11-23": {
+    "easy": { "start": "pa", "final": "sharp", "solution": ["pa","rap","harp","sharp"] },
+    "medium": { "start": "lie", "final": "twinkle", "solution": ["lie","line","inlet","tinkle","twinkle"] },
+    "hard": { "start": "if", "final": "filtered", "solution": ["if","fit","flit","filet","filter","flirted","filtered"] }
+  },
+  "2026-11-24": {
+    "easy": { "start": "aw", "final": "swear", "solution": ["aw","raw","wear","swear"] },
+    "medium": { "start": "cue", "final": "trucked", "solution": ["cue","cute","truce","tucker","trucked"] },
+    "hard": { "start": "dune", "final": "introduced", "solution": ["dune","dunce","induce","induced","inducted","deduction","introduced"] }
   }
 };

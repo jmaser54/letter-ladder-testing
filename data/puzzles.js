@@ -589,5 +589,20 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "in", "final": "owing" },
     "medium": { "start": "tiring", "final": "diverting" },
     "hard": { "start": "race", "final": "clearing" }
+  },
+  "2026-11-22": {
+    "easy": { "start": "re", "final": "deter" },
+    "medium": { "start": "ego", "final": "boggler" },
+    "hard": { "start": "gale", "final": "vigilance" }
+  },
+  "2026-11-23": {
+    "easy": { "start": "pa", "final": "sharp" },
+    "medium": { "start": "lie", "final": "twinkle" },
+    "hard": { "start": "if", "final": "filtered" }
+  },
+  "2026-11-24": {
+    "easy": { "start": "aw", "final": "swear" },
+    "medium": { "start": "cue", "final": "trucked" },
+    "hard": { "start": "dune", "final": "introduced" }
   }
 };
