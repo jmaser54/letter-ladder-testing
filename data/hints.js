@@ -607,5 +607,15 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "aw", "final": "swear", "solution": ["aw","raw","wear","swear"] },
     "medium": { "start": "cue", "final": "trucked", "solution": ["cue","cute","truce","tucker","trucked"] },
     "hard": { "start": "dune", "final": "introduced", "solution": ["dune","dunce","induce","induced","inducted","deduction","introduced"] }
+  },
+  "2026-11-25": {
+    "easy": { "start": "uh", "final": "humps", "solution": ["uh","hum","mush","humps"] },
+    "medium": { "start": "spa", "final": "sharpen", "solution": ["spa","spar","sharp","phrase","sharpen"] },
+    "hard": { "start": "is", "final": "clippings", "solution": ["is","sin","sing","sling","clings","slicing","splicing","clippings"] }
+  },
+  "2026-11-26": {
+    "easy": { "start": "me", "final": "metal", "solution": ["me","elm","meal","metal"] },
+    "medium": { "start": "ire", "final": "premium", "solution": ["ire","pier","prime","umpire","premium"] },
+    "hard": { "start": "crag", "final": "caroling", "solution": ["crag","cigar","caring","organic","caroling"] }
   }
 };

@@ -604,5 +604,15 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "aw", "final": "swear" },
     "medium": { "start": "cue", "final": "trucked" },
     "hard": { "start": "dune", "final": "introduced" }
+  },
+  "2026-11-25": {
+    "easy": { "start": "uh", "final": "humps" },
+    "medium": { "start": "spa", "final": "sharpen" },
+    "hard": { "start": "is", "final": "clippings" }
+  },
+  "2026-11-26": {
+    "easy": { "start": "me", "final": "metal" },
+    "medium": { "start": "ire", "final": "premium" },
+    "hard": { "start": "crag", "final": "caroling" }
   }
 };
