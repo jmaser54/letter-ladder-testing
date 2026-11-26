@@ -614,5 +614,25 @@ const PUZZLE_SCHEDULE = {
     "easy": { "start": "me", "final": "metal" },
     "medium": { "start": "ire", "final": "premium" },
     "hard": { "start": "crag", "final": "caroling" }
+  },
+  "2026-11-27": {
+    "easy": { "start": "as", "final": "grass" },
+    "medium": { "start": "lo", "final": "mobile" },
+    "hard": { "start": "rids", "final": "reshipped" }
+  },
+  "2026-11-28": {
+    "easy": { "start": "to", "final": "baton" },
+    "medium": { "start": "tie", "final": "private" },
+    "hard": { "start": "he", "final": "watcher" }
+  },
+  "2026-11-29": {
+    "easy": { "start": "we", "final": "wiped" },
+    "medium": { "start": "ire", "final": "trickle" },
+    "hard": { "start": "fling", "final": "flittering" }
+  },
+  "2026-11-30": {
+    "easy": { "start": "la", "final": "blaze" },
+    "medium": { "start": "pa", "final": "pulsate" },
+    "hard": { "start": "cons", "final": "reactions" }
   }
 };

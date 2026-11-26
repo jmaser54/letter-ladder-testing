@@ -617,5 +617,25 @@ const HINTS_SCHEDULE = {
     "easy": { "start": "me", "final": "metal", "solution": ["me","elm","meal","metal"] },
     "medium": { "start": "ire", "final": "premium", "solution": ["ire","pier","prime","umpire","premium"] },
     "hard": { "start": "crag", "final": "caroling", "solution": ["crag","cigar","caring","organic","caroling"] }
+  },
+  "2026-11-27": {
+    "easy": { "start": "as", "final": "grass", "solution": ["as","sag","rags","grass"] },
+    "medium": { "start": "lo", "final": "mobile", "solution": ["lo","oil","boil","limbo","mobile"] },
+    "hard": { "start": "rids", "final": "reshipped", "solution": ["rids","rides","spider","preside","perished","reshipped"] }
+  },
+  "2026-11-28": {
+    "easy": { "start": "to", "final": "baton", "solution": ["to","oat","boat","baton"] },
+    "medium": { "start": "tie", "final": "private", "solution": ["tie","tier","irate","pirate","private"] },
+    "hard": { "start": "he", "final": "watcher", "solution": ["he","the","etch","retch","wretch","watcher"] }
+  },
+  "2026-11-29": {
+    "easy": { "start": "we", "final": "wiped", "solution": ["we","wed","wide","wiped"] },
+    "medium": { "start": "ire", "final": "trickle", "solution": ["ire","tire","liter","kilter","trickle"] },
+    "hard": { "start": "fling", "final": "flittering", "solution": ["fling","filing","rifling","trifling","filtering","flittering"] }
+  },
+  "2026-11-30": {
+    "easy": { "start": "la", "final": "blaze", "solution": ["la","lab","bale","blaze"] },
+    "medium": { "start": "pa", "final": "pulsate", "solution": ["pa","pat","past","spate","staple","pulsate"] },
+    "hard": { "start": "cons", "final": "reactions", "solution": ["cons","scone","crones","cronies","corniest","reactions"] }
   }
 };
